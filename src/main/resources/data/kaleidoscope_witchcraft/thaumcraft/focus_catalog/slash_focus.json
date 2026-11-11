@@ -1,0 +1,131 @@
+{
+  "focus_profiles": [
+    {
+      "focus": "kaleidoscope_witchcraft:slash_focus",
+      "color": 8754118,
+      "client_presentation": {
+        "depth_texture": "kaleidoscope_witchcraft:textures/item/slash_focus_depth.png",
+        "depth_frame_count": 1,
+        "depth_frame_sequence": [
+          0
+        ]
+      },
+      "base_cost": {
+        "ordo": 150,
+        "perditio": 100
+      },
+      "ranks": [
+        [
+          "thaumcraft:frugal",
+          "kaleidoscope_witchcraft:efficacy",
+          "kaleidoscope_witchcraft:surge",
+          "kaleidoscope_witchcraft:penetration",
+          "kaleidoscope_witchcraft:black_flash",
+          "kaleidoscope_witchcraft:fission"
+        ],
+        [
+          "thaumcraft:frugal",
+          "kaleidoscope_witchcraft:efficacy",
+          "kaleidoscope_witchcraft:surge",
+          "kaleidoscope_witchcraft:penetration",
+          "kaleidoscope_witchcraft:black_flash",
+          "kaleidoscope_witchcraft:fission"
+        ],
+        [
+          "thaumcraft:frugal",
+          "kaleidoscope_witchcraft:efficacy",
+          "kaleidoscope_witchcraft:surge",
+          "kaleidoscope_witchcraft:penetration",
+          "kaleidoscope_witchcraft:black_flash",
+          "kaleidoscope_witchcraft:fission"
+        ],
+        [
+          "thaumcraft:frugal",
+          "kaleidoscope_witchcraft:efficacy",
+          "kaleidoscope_witchcraft:surge",
+          "kaleidoscope_witchcraft:penetration",
+          "kaleidoscope_witchcraft:black_flash",
+          "kaleidoscope_witchcraft:fission"
+        ],
+        [
+          "thaumcraft:frugal",
+          "kaleidoscope_witchcraft:efficacy",
+          "kaleidoscope_witchcraft:surge",
+          "kaleidoscope_witchcraft:penetration",
+          "kaleidoscope_witchcraft:black_flash",
+          "kaleidoscope_witchcraft:fission"
+        ]
+      ],
+      "parameters": {
+        "efficacy_cost": 0.95,
+        "flight_range": 30,
+        "flight_speed_start": 15,
+        "flight_speed_end": 40,
+        "blade_initial": 1.5,
+        "blade_final": 8,
+        "vis_discount": {
+          "base": 0,
+          "per_level": {
+            "thaumcraft:frugal": 0.1
+          },
+          "min": 0,
+          "max": 1
+        },
+        "cooldown": 0,
+        "efficacy_base": 1.25,
+        "surge_base": 1.25
+      },
+      "pipeline": {
+        "modules": [
+          "thaumcraft:focus_actions",
+          "kaleidoscope_witchcraft:slash_cast"
+        ],
+        "bindings": [
+          {
+            "id": "kaleidoscope_witchcraft:predict",
+            "stage": "thaumcraft:cast/predict",
+            "handler": "kaleidoscope_witchcraft:slash_prediction",
+            "priority": 0
+          },
+          {
+            "id": "kaleidoscope_witchcraft:actions/cast",
+            "stage": "thaumcraft:cast/step",
+            "handler": "thaumcraft:focus_actions",
+            "priority": -100
+          },
+          {
+            "id": "kaleidoscope_witchcraft:actions/block",
+            "stage": "thaumcraft:use/before_formation",
+            "handler": "thaumcraft:focus_actions",
+            "priority": -100
+          },
+          {
+            "id": "kaleidoscope_witchcraft:actions/input",
+            "stage": "thaumcraft:client/input_after_block",
+            "handler": "thaumcraft:focus_actions",
+            "priority": -100
+          },
+          {
+            "id": "kaleidoscope_witchcraft:cost",
+            "stage": "thaumcraft:cast/cost",
+            "handler": "kaleidoscope_witchcraft:efficacy_cost",
+            "priority": 0
+          },
+          {
+            "id": "kaleidoscope_witchcraft:tooltip",
+            "stage": "thaumcraft:focus/cost_tooltip",
+            "handler": "kaleidoscope_witchcraft:efficacy_tooltip",
+            "priority": 0
+          },
+          {
+            "id": "kaleidoscope_witchcraft:label",
+            "stage": "thaumcraft:focus/cost_label",
+            "handler": "thaumcraft:cost/per_cast",
+            "priority": 0
+          }
+        ],
+        "casts": {}
+      }
+    }
+  ]
+}

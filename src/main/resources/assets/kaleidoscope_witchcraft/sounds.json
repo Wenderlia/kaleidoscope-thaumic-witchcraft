@@ -1,0 +1,125 @@
+{
+  "slash.release": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/release"
+    ]
+  },
+  "slash.contact": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/contact"
+    ]
+  },
+  "slash.blocked_stone": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_stone"
+    ]
+  },
+  "slash.blocked_bedrock": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_bedrock"
+    ]
+  },
+  "ritual.gold_offering": {
+    "sounds": [
+      "kaleidoscope_witchcraft:ritual/gold_offering1",
+      "kaleidoscope_witchcraft:ritual/gold_offering2",
+      "kaleidoscope_witchcraft:ritual/gold_offering3",
+      "kaleidoscope_witchcraft:ritual/gold_offering4"
+    ]
+  },
+  "slash.blocked_hardness_1": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_1"
+    ]
+  },
+  "slash.blocked_hardness_2": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_2"
+    ]
+  },
+  "slash.blocked_hardness_3": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_3"
+    ]
+  },
+  "slash.blocked_hardness_4": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_4"
+    ]
+  },
+  "slash.blocked_hardness_5": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_5"
+    ]
+  },
+  "slash.blocked_hardness_6": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_6"
+    ]
+  },
+  "slash.blocked_hardness_7": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_7"
+    ]
+  },
+  "slash.blocked_hardness_8": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_8"
+    ]
+  },
+  "slash.blocked_hardness_9": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_9"
+    ]
+  },
+  "slash.blocked_hardness_10": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_10"
+    ]
+  },
+  "slash.blocked_hardness_11": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_11"
+    ]
+  },
+  "slash.blocked_hardness_12": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_12"
+    ]
+  },
+  "slash.blocked_hardness_13": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_13"
+    ]
+  },
+  "slash.blocked_hardness_14": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_14"
+    ]
+  },
+  "slash.blocked_hardness_15": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_hardness_15"
+    ]
+  },
+  "slash.blocked_obsidian": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_obsidian"
+    ]
+  },
+  "slash.blocked_iron": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/blocked_iron"
+    ]
+  },
+  "ritual.chalk": {
+    "sounds": [
+      "kaleidoscope_witchcraft:ritual/chalk"
+    ]
+  },
+  "ritual.heart_click": {
+    "sounds": [
+      "kaleidoscope_witchcraft:ritual/heart_click"
+    ]
+  }
+}

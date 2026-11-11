@@ -1,0 +1,181 @@
+{
+  "variants": {
+    "part=0": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/cap"
+    },
+    "part=1": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/cap_x"
+    },
+    "part=2": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/crown"
+    },
+    "part=3": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/crown_x"
+    },
+    "part=4": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_0_2"
+    },
+    "part=5": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_0_3"
+    },
+    "part=6": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_0_4"
+    },
+    "part=7": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_0_5"
+    },
+    "part=8": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_1"
+    },
+    "part=9": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_2"
+    },
+    "part=10": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_3"
+    },
+    "part=11": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_4"
+    },
+    "part=12": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_5"
+    },
+    "part=13": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_1_6"
+    },
+    "part=14": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_0"
+    },
+    "part=15": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_1"
+    },
+    "part=16": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_2"
+    },
+    "part=17": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_3"
+    },
+    "part=18": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_4"
+    },
+    "part=19": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_5"
+    },
+    "part=20": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_6"
+    },
+    "part=21": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_2_7"
+    },
+    "part=22": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_0"
+    },
+    "part=23": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_1"
+    },
+    "part=24": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_2"
+    },
+    "part=25": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_3"
+    },
+    "part=26": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_4"
+    },
+    "part=27": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_5"
+    },
+    "part=28": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_6"
+    },
+    "part=29": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_3_7"
+    },
+    "part=30": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_0"
+    },
+    "part=31": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_1"
+    },
+    "part=32": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_2"
+    },
+    "part=33": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_3"
+    },
+    "part=34": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_4"
+    },
+    "part=35": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_5"
+    },
+    "part=36": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_6"
+    },
+    "part=37": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_4_7"
+    },
+    "part=38": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_0"
+    },
+    "part=39": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_1"
+    },
+    "part=40": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_2"
+    },
+    "part=41": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_3"
+    },
+    "part=42": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_4"
+    },
+    "part=43": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_5"
+    },
+    "part=44": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_6"
+    },
+    "part=45": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_5_7"
+    },
+    "part=46": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_1"
+    },
+    "part=47": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_2"
+    },
+    "part=48": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_3"
+    },
+    "part=49": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_4"
+    },
+    "part=50": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_5"
+    },
+    "part=51": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_6_6"
+    },
+    "part=52": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_7_2"
+    },
+    "part=53": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_7_3"
+    },
+    "part=54": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_7_4"
+    },
+    "part=55": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/rim_gill_7_5"
+    },
+    "part=56": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/stem"
+    },
+    "part=57": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/tuft"
+    },
+    "part=58": {
+      "model": "kaleidoscope_witchcraft:block/vishroom_tree/young_x"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button",
+  "textures": {
+    "texture": "kaleidoscope_witchcraft:block/years_planks"
+  }
+}

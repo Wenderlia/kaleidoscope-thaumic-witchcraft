@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "kaleidoscope_witchcraft:models/block/years_fruit_0.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": true,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_0",
+    "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_0"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "moisture": "0"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_dry"
+      }
+    },
+    {
+      "when": {
+        "moisture": "1"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "2"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "3"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "4"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "5"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "6"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    },
+    {
+      "when": {
+        "moisture": "7"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_farmland_wet"
+      }
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "textures": {
+    "root": "kaleidoscope_witchcraft:block/root_bark",
+    "particle": "kaleidoscope_witchcraft:block/root_bark"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        6.5,
+        6.5
+      ],
+      "to": [
+        8,
+        9.5,
+        9.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "up": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "north": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "south": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "west": {
+          "texture": "#root"
+        },
+        "east": {
+          "texture": "#root"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        6.8,
+        6.8
+      ],
+      "to": [
+        4,
+        9.2,
+        9.2
+      ],
+      "faces": {
+        "down": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "up": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "north": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "south": {
+          "texture": "#root",
+          "rotation": 90
+        },
+        "west": {
+          "texture": "#root"
+        },
+        "east": {
+          "texture": "#root"
+        }
+      }
+    }
+  ]
+}

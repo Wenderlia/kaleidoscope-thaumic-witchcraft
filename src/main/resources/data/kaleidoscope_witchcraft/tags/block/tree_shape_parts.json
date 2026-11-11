@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "#kaleidoscope_witchcraft:years_logs",
+    "kaleidoscope_witchcraft:years_leaves",
+    "kaleidoscope_witchcraft:years_fruit",
+    "kaleidoscope_witchcraft:years_planks",
+    "kaleidoscope_witchcraft:years_wood",
+    "kaleidoscope_witchcraft:years_stairs",
+    "kaleidoscope_witchcraft:years_slab",
+    "kaleidoscope_witchcraft:years_fence",
+    "kaleidoscope_witchcraft:years_fence_gate",
+    "kaleidoscope_witchcraft:years_button",
+    "kaleidoscope_witchcraft:years_pressure_plate",
+    "kaleidoscope_witchcraft:years_door",
+    "kaleidoscope_witchcraft:years_trapdoor",
+    "kaleidoscope_witchcraft:years_sign",
+    "kaleidoscope_witchcraft:years_wall_sign",
+    "kaleidoscope_witchcraft:years_hanging_sign",
+    "kaleidoscope_witchcraft:years_wall_hanging_sign",
+    "kaleidoscope_witchcraft:stripped_years_wood"
+  ]
+}

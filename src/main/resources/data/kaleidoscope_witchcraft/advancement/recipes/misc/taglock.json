@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bone_spike": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {"items": [{"items": "kaleidoscope_witchcraft:bone_spike"}]}
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {"recipe": "kaleidoscope_witchcraft:taglock"}
+    }
+  },
+  "requirements": [["has_bone_spike", "has_the_recipe"]],
+  "rewards": {"recipes": ["kaleidoscope_witchcraft:taglock"]}
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "kaleidoscope_witchcraft:block/stripped_years_log_top",
+    "side": "kaleidoscope_witchcraft:block/stripped_years_log"
+  }
+}

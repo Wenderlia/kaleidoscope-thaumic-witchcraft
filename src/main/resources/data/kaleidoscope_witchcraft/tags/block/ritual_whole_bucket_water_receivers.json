@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    {"id": "#botania:apothecaries", "required": false},
+    {"id": "botania:apothecary_default", "required": false},
+    {"id": "botania:apothecary_forest", "required": false},
+    {"id": "botania:apothecary_plains", "required": false},
+    {"id": "botania:apothecary_mountain", "required": false},
+    {"id": "botania:apothecary_fungal", "required": false},
+    {"id": "botania:apothecary_swamp", "required": false},
+    {"id": "botania:apothecary_desert", "required": false},
+    {"id": "botania:apothecary_taiga", "required": false},
+    {"id": "botania:apothecary_mesa", "required": false},
+    {"id": "botania:apothecary_mossy", "required": false},
+    {"id": "botania:apothecary_livingrock", "required": false},
+    {"id": "botania:apothecary_deepslate", "required": false}
+  ]
+}

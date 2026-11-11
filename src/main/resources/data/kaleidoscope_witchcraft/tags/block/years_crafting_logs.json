@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "kaleidoscope_witchcraft:years_log",
+    "kaleidoscope_witchcraft:stripped_years_log",
+    "kaleidoscope_witchcraft:years_wood",
+    "kaleidoscope_witchcraft:stripped_years_wood"
+  ]
+}

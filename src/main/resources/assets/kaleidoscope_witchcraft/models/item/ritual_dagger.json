@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "particle": "kaleidoscope_witchcraft:item/ritual_dagger_icon"
+  },
+  "base": {
+    "parent": "kaleidoscope_witchcraft:item/ritual_dagger_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "kaleidoscope_witchcraft:item/ritual_dagger_icon"
+    }
+  }
+}

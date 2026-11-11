@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    {
+      "tag": "kaleidoscope_witchcraft:years_crafting_logs"
+    }
+  ],
+  "result": {
+    "count": 4,
+    "id": "kaleidoscope_witchcraft:years_planks"
+  }
+}

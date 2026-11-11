@@ -1,0 +1,113 @@
+{
+  "item": "kaleidoscope_witchcraft:dawn_fruit_wine",
+  "effects": [
+    [
+      {
+        "effect": "minecraft:nausea",
+        "duration": 5,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 30,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:regeneration",
+        "duration": 5,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:absorption",
+        "duration": 240,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 20,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:regeneration",
+        "duration": 10,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:absorption",
+        "duration": 360,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 15,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:regeneration",
+        "duration": 15,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:absorption",
+        "duration": 450,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 10,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:regeneration",
+        "duration": 20,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:absorption",
+        "duration": 540,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 5,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:regeneration",
+        "duration": 30,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:absorption",
+        "duration": 600,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ]
+  ]
+}

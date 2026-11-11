@@ -1,0 +1,11 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "thaumcraft"}],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {"tag": "c:ingots/gold"},
+    {"item": "thaumcraft:salis_mundus"},
+    {"item": "minecraft:blaze_powder"}
+  ],
+  "result": {"id": "kaleidoscope_witchcraft:golden_chalk", "count": 2}
+}

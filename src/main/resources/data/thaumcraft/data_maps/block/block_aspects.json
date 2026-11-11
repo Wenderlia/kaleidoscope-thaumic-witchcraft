@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": {
+    "kaleidoscope_witchcraft:years_rhizome": {
+      "mode": "replace",
+      "aspects": {
+        "perfodio": 4,
+        "praecantatio": 4,
+        "motus": 2,
+        "vacuos": 6,
+        "herba": 2
+      }
+    }
+  }
+}

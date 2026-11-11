@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "kaleidoscope_witchcraft:models/block/amber_vault.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": true,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "resin": "kaleidoscope_witchcraft:block/amber_vault_resin",
+    "particle": "kaleidoscope_witchcraft:block/amber_vault_resin"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": [
+    {
+      "item": "kaleidoscope_witchcraft:years_log"
+    },
+    {
+      "item": "kaleidoscope_witchcraft:stripped_years_log"
+    }
+  ],
+  "result": {
+    "id": "minecraft:charcoal"
+  },
+  "experience": 0.15,
+  "cookingtime": 200
+}

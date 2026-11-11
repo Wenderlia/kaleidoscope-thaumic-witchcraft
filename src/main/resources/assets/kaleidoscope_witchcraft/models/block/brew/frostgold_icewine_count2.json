@@ -1,0 +1,3733 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "glass": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_glass",
+    "parts": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_parts",
+    "foil": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_foil",
+    "label": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_label",
+    "surface": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_surface",
+    "liquid": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_liquid",
+    "liquid_side": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_liquid_side",
+    "particle": "kaleidoscope_witchcraft:item/frostgold_icewine",
+    "cap_00": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_00",
+    "cap_01": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_01",
+    "cap_02": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_02",
+    "cap_03": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_03",
+    "cap_04": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_04",
+    "cap_05": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_05",
+    "cap_06": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_06",
+    "cap_07": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_07",
+    "cap_08": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_08",
+    "cap_09": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_09",
+    "cap_10": "kaleidoscope_witchcraft:block/brew/frostgold_icewine_cap_10"
+  },
+  "elements": [
+    {
+      "name": "glass / clear heel / front and back",
+      "from": [
+        3.25,
+        0,
+        5.85
+      ],
+      "to": [
+        5.75,
+        0.4,
+        10.15
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            7,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            7,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / side",
+      "from": [
+        2.3499999999999996,
+        0,
+        6.75
+      ],
+      "to": [
+        3.25,
+        0.4,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / side",
+      "from": [
+        5.75,
+        0,
+        6.75
+      ],
+      "to": [
+        6.65,
+        0.4,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        2.6136038969321076,
+        0,
+        6.113603896932108
+      ],
+      "to": [
+        3.8863961030678924,
+        0.4,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.25,
+          0.2,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        2.6136038969321076,
+        0,
+        8.613603896932107
+      ],
+      "to": [
+        3.8863961030678924,
+        0.4,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.25,
+          0.2,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        5.113603896932107,
+        0,
+        6.113603896932108
+      ],
+      "to": [
+        6.386396103067893,
+        0.4,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.75,
+          0.2,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        5.113603896932107,
+        0,
+        8.613603896932107
+      ],
+      "to": [
+        6.386396103067893,
+        0.4,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.75,
+          0.2,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / front and back",
+      "from": [
+        3.25,
+        0.4,
+        5.85
+      ],
+      "to": [
+        5.75,
+        10.1,
+        10.15
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / side",
+      "from": [
+        2.3499999999999996,
+        0.4,
+        6.75
+      ],
+      "to": [
+        3.25,
+        10.1,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            5.0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / side",
+      "from": [
+        5.75,
+        0.4,
+        6.75
+      ],
+      "to": [
+        6.65,
+        10.1,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            5.0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        2.6136038969321076,
+        0.4,
+        6.113603896932108
+      ],
+      "to": [
+        3.8863961030678924,
+        10.1,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.25,
+          5.25,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        2.6136038969321076,
+        0.4,
+        8.613603896932107
+      ],
+      "to": [
+        3.8863961030678924,
+        10.1,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.25,
+          5.25,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        5.113603896932107,
+        0.4,
+        6.113603896932108
+      ],
+      "to": [
+        6.386396103067893,
+        10.1,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.75,
+          5.25,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        5.113603896932107,
+        0.4,
+        8.613603896932107
+      ],
+      "to": [
+        6.386396103067893,
+        10.1,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.75,
+          5.25,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / front and back",
+      "from": [
+        3.3200000000000003,
+        0.5,
+        6.03
+      ],
+      "to": [
+        5.68,
+        9.88,
+        9.97
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / side",
+      "from": [
+        2.5300000000000002,
+        0.5,
+        6.82
+      ],
+      "to": [
+        3.3200000000000003,
+        9.88,
+        9.18
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            4.72,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / side",
+      "from": [
+        5.68,
+        0.5,
+        6.82
+      ],
+      "to": [
+        6.470000000000001,
+        9.88,
+        9.18
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            4.72,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        2.7613856428626278,
+        0.5,
+        6.261385642862628
+      ],
+      "to": [
+        3.878614357137373,
+        9.88,
+        7.378614357137373
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.3200000000000003,
+          5.19,
+          6.82
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        2.7613856428626278,
+        0.5,
+        8.621385642862627
+      ],
+      "to": [
+        3.878614357137373,
+        9.88,
+        9.738614357137372
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.3200000000000003,
+          5.19,
+          9.18
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        5.121385642862627,
+        0.5,
+        6.261385642862628
+      ],
+      "to": [
+        6.238614357137372,
+        9.88,
+        7.378614357137373
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.68,
+          5.19,
+          6.82
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        5.121385642862627,
+        0.5,
+        8.621385642862627
+      ],
+      "to": [
+        6.238614357137372,
+        9.88,
+        9.738614357137372
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.68,
+          5.19,
+          9.18
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / front and back",
+      "from": [
+        3.3,
+        10.1,
+        6.1
+      ],
+      "to": [
+        5.700000000000001,
+        10.55,
+        9.9
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / side",
+      "from": [
+        2.5999999999999996,
+        10.1,
+        6.8
+      ],
+      "to": [
+        3.3,
+        10.55,
+        9.200000000000001
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.8,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / side",
+      "from": [
+        5.700000000000001,
+        10.1,
+        6.8
+      ],
+      "to": [
+        6.4,
+        10.55,
+        9.200000000000001
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.8,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        2.8050252531694166,
+        10.1,
+        6.305025253169417
+      ],
+      "to": [
+        3.794974746830583,
+        10.55,
+        7.294974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.3,
+          10.325,
+          6.8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        2.8050252531694166,
+        10.1,
+        8.705025253169417
+      ],
+      "to": [
+        3.794974746830583,
+        10.55,
+        9.694974746830585
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.3,
+          10.325,
+          9.200000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        5.205025253169417,
+        10.1,
+        6.305025253169417
+      ],
+      "to": [
+        6.194974746830585,
+        10.55,
+        7.294974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.700000000000001,
+          10.325,
+          6.8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        5.205025253169417,
+        10.1,
+        8.705025253169417
+      ],
+      "to": [
+        6.194974746830585,
+        10.55,
+        9.694974746830585
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.700000000000001,
+          10.325,
+          9.200000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / front and back",
+      "from": [
+        3.5,
+        10.55,
+        6.45
+      ],
+      "to": [
+        5.5,
+        11,
+        9.55
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / side",
+      "from": [
+        2.95,
+        10.55,
+        7.0
+      ],
+      "to": [
+        3.5,
+        11,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.0,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / side",
+      "from": [
+        5.5,
+        10.55,
+        7.0
+      ],
+      "to": [
+        6.050000000000001,
+        11,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.0,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        3.1110912703473987,
+        10.55,
+        6.611091270347399
+      ],
+      "to": [
+        3.8889087296526013,
+        11,
+        7.388908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.5,
+          10.775,
+          7.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        3.1110912703473987,
+        10.55,
+        8.6110912703474
+      ],
+      "to": [
+        3.8889087296526013,
+        11,
+        9.3889087296526
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.5,
+          10.775,
+          9.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        5.1110912703474,
+        10.55,
+        6.611091270347399
+      ],
+      "to": [
+        5.8889087296526,
+        11,
+        7.388908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.5,
+          10.775,
+          7.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        5.1110912703474,
+        10.55,
+        8.6110912703474
+      ],
+      "to": [
+        5.8889087296526,
+        11,
+        9.3889087296526
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.5,
+          10.775,
+          9.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / front and back",
+      "from": [
+        3.6550000000000002,
+        11,
+        6.775
+      ],
+      "to": [
+        5.344999999999999,
+        11.45,
+        9.225
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / side",
+      "from": [
+        3.2750000000000004,
+        11,
+        7.155
+      ],
+      "to": [
+        3.6550000000000002,
+        11.45,
+        8.844999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            3.3800000000000003,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / side",
+      "from": [
+        5.344999999999999,
+        11,
+        7.155
+      ],
+      "to": [
+        5.725,
+        11.45,
+        8.844999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            3.3800000000000003,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        3.3862994231491124,
+        11,
+        6.886299423149112
+      ],
+      "to": [
+        3.923700576850888,
+        11.45,
+        7.423700576850888
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.6550000000000002,
+          11.225,
+          7.155
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        3.3862994231491124,
+        11,
+        8.576299423149111
+      ],
+      "to": [
+        3.923700576850888,
+        11.45,
+        9.113700576850887
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.6550000000000002,
+          11.225,
+          8.844999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        5.076299423149111,
+        11,
+        6.886299423149112
+      ],
+      "to": [
+        5.613700576850887,
+        11.45,
+        7.423700576850888
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.344999999999999,
+          11.225,
+          7.155
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        5.076299423149111,
+        11,
+        8.576299423149111
+      ],
+      "to": [
+        5.613700576850887,
+        11.45,
+        9.113700576850887
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.344999999999999,
+          11.225,
+          8.844999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / long neck",
+      "from": [
+        3.6799999999999997,
+        11.4,
+        7.18
+      ],
+      "to": [
+        5.32,
+        14.65,
+        8.82
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "gold / neck binding",
+      "from": [
+        3.58,
+        11.75,
+        7.08
+      ],
+      "to": [
+        5.42,
+        12.05,
+        8.92
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / long capsule",
+      "from": [
+        3.5999999999999996,
+        13.2,
+        7.1
+      ],
+      "to": [
+        5.4,
+        15.35,
+        8.9
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "south": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / crown",
+      "from": [
+        3.49,
+        14.7,
+        6.99
+      ],
+      "to": [
+        5.51,
+        15.55,
+        9.01
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / narrow ray",
+      "from": [
+        3.5999999999999996,
+        2.1,
+        5.835
+      ],
+      "to": [
+        5.4,
+        7.9,
+        5.835
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#label",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / reverse diamond",
+      "from": [
+        4.1,
+        1.2,
+        10.165
+      ],
+      "to": [
+        4.9,
+        2,
+        10.165
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#label",
+          "uv": [
+            8,
+            8,
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0",
+      "from": [
+        2.3125,
+        0,
+        5.8125
+      ],
+      "to": [
+        6.6875,
+        0,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_00",
+          "uv": [
+            0,
+            8.75,
+            8.75,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0.4",
+      "from": [
+        2.3125,
+        0.4,
+        5.8125
+      ],
+      "to": [
+        6.6875,
+        0.4,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_01",
+          "uv": [
+            0,
+            8.75,
+            8.75,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible down at 0.5",
+      "from": [
+        2.5,
+        0.5,
+        6.0
+      ],
+      "to": [
+        6.5,
+        0.5,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_02",
+          "uv": [
+            0,
+            16.0,
+            16.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 9.88",
+      "from": [
+        2.5,
+        9.88,
+        6.0
+      ],
+      "to": [
+        6.5,
+        9.88,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_03",
+          "uv": [
+            0,
+            0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 10.1",
+      "from": [
+        2.3125,
+        10.1,
+        5.8125
+      ],
+      "to": [
+        6.6875,
+        10.1,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_04",
+          "uv": [
+            0,
+            0,
+            8.75,
+            8.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 10.55",
+      "from": [
+        3.25,
+        10.55,
+        7.4375
+      ],
+      "to": [
+        5.75,
+        10.55,
+        8.5625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_05",
+          "uv": [
+            0,
+            4.5,
+            10.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 10.55",
+      "from": [
+        2.5625,
+        10.55,
+        6.0625
+      ],
+      "to": [
+        6.4375,
+        10.55,
+        9.9375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_06",
+          "uv": [
+            0,
+            0,
+            15.5,
+            15.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 11",
+      "from": [
+        2.9375,
+        11,
+        6.4375
+      ],
+      "to": [
+        6.0625,
+        11,
+        9.5625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_07",
+          "uv": [
+            0,
+            0,
+            12.5,
+            12.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 11.45",
+      "from": [
+        3.25,
+        11.45,
+        6.75
+      ],
+      "to": [
+        5.75,
+        11.45,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_08",
+          "uv": [
+            0,
+            0,
+            10.0,
+            10.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / visible down at 14.7",
+      "from": [
+        3.4375,
+        14.7,
+        6.9375
+      ],
+      "to": [
+        5.5625,
+        14.7,
+        9.0625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_09",
+          "uv": [
+            0,
+            8.5,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / visible up at 15.55",
+      "from": [
+        3.4375,
+        15.55,
+        6.9375
+      ],
+      "to": [
+        5.5625,
+        15.55,
+        9.0625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_10",
+          "uv": [
+            0,
+            0,
+            8.5,
+            8.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / front and back",
+      "from": [
+        10.25,
+        0,
+        5.85
+      ],
+      "to": [
+        12.75,
+        0.4,
+        10.15
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            7,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            7,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / side",
+      "from": [
+        9.35,
+        0,
+        6.75
+      ],
+      "to": [
+        10.25,
+        0.4,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / side",
+      "from": [
+        12.75,
+        0,
+        6.75
+      ],
+      "to": [
+        13.65,
+        0.4,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.0,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        9.613603896932108,
+        0,
+        6.113603896932108
+      ],
+      "to": [
+        10.886396103067892,
+        0.4,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.25,
+          0.2,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        9.613603896932108,
+        0,
+        8.613603896932107
+      ],
+      "to": [
+        10.886396103067892,
+        0.4,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.25,
+          0.2,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        12.113603896932107,
+        0,
+        6.113603896932108
+      ],
+      "to": [
+        13.386396103067893,
+        0.4,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.75,
+          0.2,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / clear heel / bevel",
+      "from": [
+        12.113603896932107,
+        0,
+        8.613603896932107
+      ],
+      "to": [
+        13.386396103067893,
+        0.4,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.75,
+          0.2,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / front and back",
+      "from": [
+        10.25,
+        0.4,
+        5.85
+      ],
+      "to": [
+        12.75,
+        10.1,
+        10.15
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / side",
+      "from": [
+        9.35,
+        0.4,
+        6.75
+      ],
+      "to": [
+        10.25,
+        10.1,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            5.0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / side",
+      "from": [
+        12.75,
+        0.4,
+        6.75
+      ],
+      "to": [
+        13.65,
+        10.1,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            5.0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        9.613603896932108,
+        0.4,
+        6.113603896932108
+      ],
+      "to": [
+        10.886396103067892,
+        10.1,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.25,
+          5.25,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        9.613603896932108,
+        0.4,
+        8.613603896932107
+      ],
+      "to": [
+        10.886396103067892,
+        10.1,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.25,
+          5.25,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        12.113603896932107,
+        0.4,
+        6.113603896932108
+      ],
+      "to": [
+        13.386396103067893,
+        10.1,
+        7.386396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.75,
+          5.25,
+          6.75
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / slender body / bevel",
+      "from": [
+        12.113603896932107,
+        0.4,
+        8.613603896932107
+      ],
+      "to": [
+        13.386396103067893,
+        10.1,
+        9.886396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            0,
+            2.5455844122715714,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.75,
+          5.25,
+          9.25
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / front and back",
+      "from": [
+        10.32,
+        0.5,
+        6.03
+      ],
+      "to": [
+        12.68,
+        9.88,
+        9.97
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / side",
+      "from": [
+        9.530000000000001,
+        0.5,
+        6.82
+      ],
+      "to": [
+        10.32,
+        9.88,
+        9.18
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            4.72,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / side",
+      "from": [
+        12.68,
+        0.5,
+        6.82
+      ],
+      "to": [
+        13.47,
+        9.88,
+        9.18
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            4.72,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        9.761385642862628,
+        0.5,
+        6.261385642862628
+      ],
+      "to": [
+        10.878614357137373,
+        9.88,
+        7.378614357137373
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.32,
+          5.19,
+          6.82
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        9.761385642862628,
+        0.5,
+        8.621385642862627
+      ],
+      "to": [
+        10.878614357137373,
+        9.88,
+        9.738614357137372
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.32,
+          5.19,
+          9.18
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        12.121385642862627,
+        0.5,
+        6.261385642862628
+      ],
+      "to": [
+        13.238614357137372,
+        9.88,
+        7.378614357137373
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.68,
+          5.19,
+          6.82
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / champagne gold / bevel",
+      "from": [
+        12.121385642862627,
+        0.5,
+        8.621385642862627
+      ],
+      "to": [
+        13.238614357137372,
+        9.88,
+        9.738614357137372
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            2.2344574285494905,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.68,
+          5.19,
+          9.18
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / front and back",
+      "from": [
+        10.3,
+        10.1,
+        6.1
+      ],
+      "to": [
+        12.700000000000001,
+        10.55,
+        9.9
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / side",
+      "from": [
+        9.6,
+        10.1,
+        6.8
+      ],
+      "to": [
+        10.3,
+        10.55,
+        9.200000000000001
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.8,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / side",
+      "from": [
+        12.700000000000001,
+        10.1,
+        6.8
+      ],
+      "to": [
+        13.4,
+        10.55,
+        9.200000000000001
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.8,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        9.805025253169417,
+        10.1,
+        6.305025253169417
+      ],
+      "to": [
+        10.794974746830583,
+        10.55,
+        7.294974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.3,
+          10.325,
+          6.8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        9.805025253169417,
+        10.1,
+        8.705025253169417
+      ],
+      "to": [
+        10.794974746830583,
+        10.55,
+        9.694974746830585
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.3,
+          10.325,
+          9.200000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        12.205025253169417,
+        10.1,
+        6.305025253169417
+      ],
+      "to": [
+        13.194974746830585,
+        10.55,
+        7.294974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.700000000000001,
+          10.325,
+          6.8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 0 / bevel",
+      "from": [
+        12.205025253169417,
+        10.1,
+        8.705025253169417
+      ],
+      "to": [
+        13.194974746830585,
+        10.55,
+        9.694974746830585
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.9798989873223332,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.700000000000001,
+          10.325,
+          9.200000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / front and back",
+      "from": [
+        10.5,
+        10.55,
+        6.45
+      ],
+      "to": [
+        12.5,
+        11,
+        9.55
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / side",
+      "from": [
+        9.95,
+        10.55,
+        7.0
+      ],
+      "to": [
+        10.5,
+        11,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.0,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / side",
+      "from": [
+        12.5,
+        10.55,
+        7.0
+      ],
+      "to": [
+        13.05,
+        11,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            4.0,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        10.111091270347398,
+        10.55,
+        6.611091270347399
+      ],
+      "to": [
+        10.888908729652602,
+        11,
+        7.388908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.5,
+          10.775,
+          7.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        10.111091270347398,
+        10.55,
+        8.6110912703474
+      ],
+      "to": [
+        10.888908729652602,
+        11,
+        9.3889087296526
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.5,
+          10.775,
+          9.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        12.1110912703474,
+        10.55,
+        6.611091270347399
+      ],
+      "to": [
+        12.8889087296526,
+        11,
+        7.388908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.5,
+          10.775,
+          7.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 1 / bevel",
+      "from": [
+        12.1110912703474,
+        10.55,
+        8.6110912703474
+      ],
+      "to": [
+        12.8889087296526,
+        11,
+        9.3889087296526
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.5556349186104048,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.5,
+          10.775,
+          9.0
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / front and back",
+      "from": [
+        10.655000000000001,
+        11,
+        6.775
+      ],
+      "to": [
+        12.344999999999999,
+        11.45,
+        9.225
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            5,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / side",
+      "from": [
+        10.275,
+        11,
+        7.155
+      ],
+      "to": [
+        10.655000000000001,
+        11.45,
+        8.844999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            3.3800000000000003,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / side",
+      "from": [
+        12.344999999999999,
+        11,
+        7.155
+      ],
+      "to": [
+        12.725,
+        11.45,
+        8.844999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            3.3800000000000003,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        10.386299423149111,
+        11,
+        6.886299423149112
+      ],
+      "to": [
+        10.923700576850887,
+        11.45,
+        7.423700576850888
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.655000000000001,
+          11.225,
+          7.155
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        10.386299423149111,
+        11,
+        8.576299423149111
+      ],
+      "to": [
+        10.923700576850887,
+        11.45,
+        9.113700576850887
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.655000000000001,
+          11.225,
+          8.844999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        12.076299423149111,
+        11,
+        6.886299423149112
+      ],
+      "to": [
+        12.613700576850887,
+        11.45,
+        7.423700576850888
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.344999999999999,
+          11.225,
+          7.155
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / shoulder 2 / bevel",
+      "from": [
+        12.076299423149111,
+        11,
+        8.576299423149111
+      ],
+      "to": [
+        12.613700576850887,
+        11.45,
+        9.113700576850887
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            11,
+            1.0748023074035524,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.344999999999999,
+          11.225,
+          8.844999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / long neck",
+      "from": [
+        10.68,
+        11.4,
+        7.18
+      ],
+      "to": [
+        12.32,
+        14.65,
+        8.82
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "gold / neck binding",
+      "from": [
+        10.58,
+        11.75,
+        7.08
+      ],
+      "to": [
+        12.42,
+        12.05,
+        8.92
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            7,
+            8,
+            12,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / long capsule",
+      "from": [
+        10.6,
+        13.2,
+        7.1
+      ],
+      "to": [
+        12.4,
+        15.35,
+        8.9
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "south": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            5,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / crown",
+      "from": [
+        10.49,
+        14.7,
+        6.99
+      ],
+      "to": [
+        12.51,
+        15.55,
+        9.01
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#foil",
+          "uv": [
+            0,
+            0,
+            6,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / narrow ray",
+      "from": [
+        10.6,
+        2.1,
+        5.835
+      ],
+      "to": [
+        12.4,
+        7.9,
+        5.835
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#label",
+          "uv": [
+            0,
+            0,
+            6,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / reverse diamond",
+      "from": [
+        11.1,
+        1.2,
+        10.165
+      ],
+      "to": [
+        11.9,
+        2,
+        10.165
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#label",
+          "uv": [
+            8,
+            8,
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0",
+      "from": [
+        9.3125,
+        0,
+        5.8125
+      ],
+      "to": [
+        13.6875,
+        0,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_00",
+          "uv": [
+            0,
+            8.75,
+            8.75,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0.4",
+      "from": [
+        9.3125,
+        0.4,
+        5.8125
+      ],
+      "to": [
+        13.6875,
+        0.4,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_01",
+          "uv": [
+            0,
+            8.75,
+            8.75,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible down at 0.5",
+      "from": [
+        9.5,
+        0.5,
+        6.0
+      ],
+      "to": [
+        13.5,
+        0.5,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_02",
+          "uv": [
+            0,
+            16.0,
+            16.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 9.88",
+      "from": [
+        9.5,
+        9.88,
+        6.0
+      ],
+      "to": [
+        13.5,
+        9.88,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_03",
+          "uv": [
+            0,
+            0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 10.1",
+      "from": [
+        9.3125,
+        10.1,
+        5.8125
+      ],
+      "to": [
+        13.6875,
+        10.1,
+        10.1875
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_04",
+          "uv": [
+            0,
+            0,
+            8.75,
+            8.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 10.55",
+      "from": [
+        10.25,
+        10.55,
+        7.4375
+      ],
+      "to": [
+        12.75,
+        10.55,
+        8.5625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_05",
+          "uv": [
+            0,
+            4.5,
+            10.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 10.55",
+      "from": [
+        9.5625,
+        10.55,
+        6.0625
+      ],
+      "to": [
+        13.4375,
+        10.55,
+        9.9375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_06",
+          "uv": [
+            0,
+            0,
+            15.5,
+            15.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 11",
+      "from": [
+        9.9375,
+        11,
+        6.4375
+      ],
+      "to": [
+        13.0625,
+        11,
+        9.5625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_07",
+          "uv": [
+            0,
+            0,
+            12.5,
+            12.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 11.45",
+      "from": [
+        10.25,
+        11.45,
+        6.75
+      ],
+      "to": [
+        12.75,
+        11.45,
+        9.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_08",
+          "uv": [
+            0,
+            0,
+            10.0,
+            10.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / visible down at 14.7",
+      "from": [
+        10.4375,
+        14.7,
+        6.9375
+      ],
+      "to": [
+        12.5625,
+        14.7,
+        9.0625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_09",
+          "uv": [
+            0,
+            8.5,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "foil / visible up at 15.55",
+      "from": [
+        10.4375,
+        15.55,
+        6.9375
+      ],
+      "to": [
+        12.5625,
+        15.55,
+        9.0625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_10",
+          "uv": [
+            0,
+            0,
+            8.5,
+            8.5
+          ]
+        }
+      }
+    }
+  ]
+}

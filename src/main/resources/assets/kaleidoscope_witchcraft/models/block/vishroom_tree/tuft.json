@@ -1,0 +1,283 @@
+{
+  "textures": {
+    "top": "kaleidoscope_witchcraft:block/vishroom_tree/tuft",
+    "side": "kaleidoscope_witchcraft:block/vishroom_tree/tuft",
+    "bottom": "kaleidoscope_witchcraft:block/vishroom_tree/tuft",
+    "particle": "kaleidoscope_witchcraft:block/vishroom_tree/tuft"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        12,
+        2
+      ],
+      "to": [
+        15,
+        16,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top",
+          "uv": [
+            1,
+            2,
+            15,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#bottom",
+          "uv": [
+            1,
+            2,
+            15,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            1,
+            0,
+            15,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            1,
+            0,
+            15,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            2,
+            0,
+            14,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            2,
+            0,
+            14,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        3,
+        3
+      ],
+      "to": [
+        6,
+        12,
+        8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top",
+          "uv": [
+            2,
+            3,
+            6,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#bottom",
+          "uv": [
+            2,
+            3,
+            6,
+            8
+          ]
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            2,
+            4,
+            6,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            2,
+            4,
+            6,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            3,
+            4,
+            8,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            3,
+            4,
+            8,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        11,
+        12,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top",
+          "uv": [
+            7,
+            7,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#bottom",
+          "uv": [
+            7,
+            7,
+            11,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            7,
+            4,
+            11,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            7,
+            4,
+            11,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            7,
+            4,
+            11,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            7,
+            4,
+            11,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        6,
+        3
+      ],
+      "to": [
+        14,
+        12,
+        6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top",
+          "uv": [
+            11,
+            3,
+            14,
+            6
+          ]
+        },
+        "down": {
+          "texture": "#bottom",
+          "uv": [
+            11,
+            3,
+            14,
+            6
+          ]
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            11,
+            4,
+            14,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            11,
+            4,
+            14,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            3,
+            4,
+            6,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            3,
+            4,
+            6,
+            10
+          ]
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block"
+}

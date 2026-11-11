@@ -1,0 +1,292 @@
+{
+  "variants": {
+    "design=0,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_0_0"
+    },
+    "design=0,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_0_1"
+    },
+    "design=0,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_0_2"
+    },
+    "design=0,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_0_3"
+    },
+    "design=1,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_1_0"
+    },
+    "design=1,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_1_1"
+    },
+    "design=1,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_1_2"
+    },
+    "design=1,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_1_3"
+    },
+    "design=2,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_2_0"
+    },
+    "design=2,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_2_1"
+    },
+    "design=2,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_2_2"
+    },
+    "design=2,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_2_3"
+    },
+    "design=3,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_3_0"
+    },
+    "design=3,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_3_1"
+    },
+    "design=3,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_3_2"
+    },
+    "design=3,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_3_3"
+    },
+    "design=4,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_4_0"
+    },
+    "design=4,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_4_1"
+    },
+    "design=4,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_4_2"
+    },
+    "design=4,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_4_3"
+    },
+    "design=5,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_5_0"
+    },
+    "design=5,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_5_1"
+    },
+    "design=5,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_5_2"
+    },
+    "design=5,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_5_3"
+    },
+    "design=6,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_6_0"
+    },
+    "design=6,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_6_1"
+    },
+    "design=6,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_6_2"
+    },
+    "design=6,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_6_3"
+    },
+    "design=7,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_7_0"
+    },
+    "design=7,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_7_1"
+    },
+    "design=7,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_7_2"
+    },
+    "design=7,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_7_3"
+    },
+    "design=8,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_8_0"
+    },
+    "design=8,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_8_1"
+    },
+    "design=8,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_8_2"
+    },
+    "design=8,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_8_3"
+    },
+    "design=9,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_9_0"
+    },
+    "design=9,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_9_1"
+    },
+    "design=9,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_9_2"
+    },
+    "design=9,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_9_3"
+    },
+    "design=10,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_10_0"
+    },
+    "design=10,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_10_1"
+    },
+    "design=10,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_10_2"
+    },
+    "design=10,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_10_3"
+    },
+    "design=11,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_11_0"
+    },
+    "design=11,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_11_1"
+    },
+    "design=11,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_11_2"
+    },
+    "design=11,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_11_3"
+    },
+    "design=12,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_12_0"
+    },
+    "design=12,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_12_1"
+    },
+    "design=12,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_12_2"
+    },
+    "design=12,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_12_3"
+    },
+    "design=13,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_13_0"
+    },
+    "design=13,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_13_1"
+    },
+    "design=13,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_13_2"
+    },
+    "design=13,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_13_3"
+    },
+    "design=14,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_14_0"
+    },
+    "design=14,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_14_1"
+    },
+    "design=14,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_14_2"
+    },
+    "design=14,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_14_3"
+    },
+    "design=15,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_15_0"
+    },
+    "design=15,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_15_1"
+    },
+    "design=15,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_15_2"
+    },
+    "design=15,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_15_3"
+    },
+    "design=16,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_16_0"
+    },
+    "design=16,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_16_1"
+    },
+    "design=16,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_16_2"
+    },
+    "design=16,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_16_3"
+    },
+    "design=17,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_17_0"
+    },
+    "design=17,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_17_1"
+    },
+    "design=17,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_17_2"
+    },
+    "design=17,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_17_3"
+    },
+    "design=18,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_18_0"
+    },
+    "design=18,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_18_1"
+    },
+    "design=18,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_18_2"
+    },
+    "design=18,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_18_3"
+    },
+    "design=19,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_19_0"
+    },
+    "design=19,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_19_1"
+    },
+    "design=19,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_19_2"
+    },
+    "design=19,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_19_3"
+    },
+    "design=20,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_20_0"
+    },
+    "design=20,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_20_1"
+    },
+    "design=20,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_20_2"
+    },
+    "design=20,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_20_3"
+    },
+    "design=21,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_21_0"
+    },
+    "design=21,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_21_1"
+    },
+    "design=21,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_21_2"
+    },
+    "design=21,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_21_3"
+    },
+    "design=22,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_22_0"
+    },
+    "design=22,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_22_1"
+    },
+    "design=22,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_22_2"
+    },
+    "design=22,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_22_3"
+    },
+    "design=23,rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_23_0"
+    },
+    "design=23,rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_23_1"
+    },
+    "design=23,rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_23_2"
+    },
+    "design=23,rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/chalk_23_3"
+    }
+  }
+}

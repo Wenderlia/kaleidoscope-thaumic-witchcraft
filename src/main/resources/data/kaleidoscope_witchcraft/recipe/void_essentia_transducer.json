@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "thaumcraft"}],
+  "type": "thaumcraft:infusion",
+  "research": "kaleidoscope_witchcraft:VOID_ESSENTIA_TRANSDUCER",
+  "central": {"item": "kaleidoscope_witchcraft:essentia_transducer"},
+  "components": [{"item": "thaumcraft:void_ingot"}],
+  "instability": 2,
+  "aspects": {"permutatio": 16, "praecantatio": 16, "potentia": 16},
+  "result": {"id": "kaleidoscope_witchcraft:void_essentia_transducer", "count": 1}
+}

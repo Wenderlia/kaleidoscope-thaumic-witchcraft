@@ -1,0 +1,1692 @@
+{
+  "categories": [
+    {
+      "key": "kaleidoscope_witchcraft:witch",
+      "icon": "kaleidoscope_witchcraft:textures/gui/research/witch_icon.png",
+      "background": "kaleidoscope_witchcraft:textures/gui/research/witch_background.png",
+      "sort_order": 1000
+    }
+  ],
+  "entries": [
+    {
+      "key": "kaleidoscope_witchcraft:WITCHERY_INTRO",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:knowledge_fragment"
+        }
+      },
+      "flags": [
+        "AUTO_UNLOCK",
+        "ROUND",
+        "STUB"
+      ],
+      "labels": [],
+      "silent": true,
+      "parents": [],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {},
+      "complexity": 1,
+      "display_column": 0,
+      "display_row": 0,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_INTRO.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_INTRO.1",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:ritual_chalk"
+        }
+      },
+      "flags": [],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_INTRO",
+        "thaumcraft:CRUCIBLE"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "ordo": 3,
+        "herba": 3,
+        "praecantatio": 3
+      },
+      "complexity": 1,
+      "display_column": 2,
+      "display_row": -1,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:ritual_chalk"
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:golden_chalk"
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:ritual_dagger"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.2",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_small",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_small",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_medium",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_medium",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_large",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.ring_large",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.3",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS.3",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:CRUCIBLE_STABILITY",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:crucible"
+        }
+      },
+      "flags": [
+        "SECONDARY"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_MEDIUM"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "ordo": 3,
+        "praecantatio": 3
+      },
+      "complexity": 1,
+      "display_column": 2,
+      "display_row": -5,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_STABILITY.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_STABILITY.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_STABILITY.2",
+              "join": "PARAGRAPH"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_STABILITY.golden_heart",
+              "join": "PARAGRAPH"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_STABILITY.land_ward",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:CRUCIBLE_AUTOWATER",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "minecraft:water_bucket"
+        }
+      },
+      "flags": [
+        "SECONDARY"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:CRUCIBLE_STABILITY"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "aqua": 3,
+        "vacuos": 3,
+        "motus": 3
+      },
+      "complexity": 1,
+      "display_column": 4,
+      "display_row": -7,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_AUTOWATER.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_AUTOWATER.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_AUTOWATER.water_relay",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:CRUCIBLE_AUTOWATER.water_relay",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:MATRIX_CIRCLE_STABILITY",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:runic_matrix"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:CRUCIBLE_STABILITY",
+        "thaumcraft:INFUSION"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "ordo": 6,
+        "praecantatio": 3,
+        "auram": 3
+      },
+      "complexity": 2,
+      "display_column": -1,
+      "display_row": -6,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:MATRIX_CIRCLE_STABILITY.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:MATRIX_CIRCLE_STABILITY.1",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:STRUCTURAL_RITUALS",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "TEXTURE",
+        "texture": "thaumcraft:textures/misc/r_crucible.png"
+      },
+      "flags": [
+        "SPECIAL"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_MEDIUM"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "praecantatio": 6,
+        "herba": 3,
+        "ordo": 3
+      },
+      "complexity": 2,
+      "display_column": 5,
+      "display_row": -2,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:STRUCTURAL_RITUALS.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:STRUCTURAL_RITUALS.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:STRUCTURAL_RITUALS.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:RITUAL_TRANSPIRATION",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:nitor"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:STRUCTURAL_RITUALS",
+        "thaumcraft:NITOR"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "potentia": 6,
+        "ignis": 3,
+        "motus": 3
+      },
+      "complexity": 2,
+      "display_column": 8,
+      "display_row": -4,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:RITUAL_TRANSPIRATION.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_TRANSPIRATION.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_TRANSPIRATION.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:essentia_tube"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:STRUCTURAL_RITUALS",
+        "thaumcraft:TUBES"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "vacuos": 6,
+        "motus": 3,
+        "ordo": 3
+      },
+      "complexity": 2,
+      "display_column": 8,
+      "display_row": -1,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.suction_relay",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.suction_relay",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.travel_conduit",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:RITUAL_SUCTION_CHANNEL.travel_conduit",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "CRUCIBLE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:essentia_conduit"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:TIMEWOOD_RHIZOME",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:temporal_tissue"
+        }
+      },
+      "flags": [
+        "HIDDEN"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_INTRO"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [
+        {
+          "item": "kaleidoscope_witchcraft:temporal_tissue"
+        },
+        {
+          "block": "kaleidoscope_witchcraft:years_rhizome"
+        }
+      ],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "herba": 3,
+        "vacuos": 3,
+        "motus": 3
+      },
+      "complexity": 1,
+      "display_column": 2,
+      "display_row": 3,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_RHIZOME.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_RHIZOME.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_RHIZOME.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:AMBER_PITH",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "TEXTURE",
+        "texture": "kaleidoscope_witchcraft:textures/block/amber_marrow.png"
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:TIMEWOOD_RHIZOME"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "vacuos": 6,
+        "terra": 3
+      },
+      "complexity": 1,
+      "display_column": 1,
+      "display_row": 6,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:AMBER_PITH.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_PITH.1",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:TIMEWOOD_TREE",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:years_core"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:TIMEWOOD_RHIZOME"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "arbor": 6,
+        "vacuos": 6,
+        "motus": 3
+      },
+      "complexity": 2,
+      "display_column": 5,
+      "display_row": 4,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_TREE.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_TREE.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_TREE.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:AMBER_FRUIT",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:years_fruit",
+          "components": {
+            "minecraft:custom_model_data": 1
+          }
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:TIMEWOOD_TREE"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "messis": 3,
+        "fames": 3,
+        "praecantatio": 3
+      },
+      "complexity": 1,
+      "display_column": 8,
+      "display_row": 3,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.breeding_cores",
+              "join": "PARAGRAPH"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:dawn_years_node"
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:honey_years_node"
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:ice_years_node"
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:dusk_years_node"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.2",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.3",
+              "join": "PARAGRAPH"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:AMBER_FRUIT.4",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:LIQUID_GOLD_VODKA",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:liujin_vodka"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:AMBER_FRUIT"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "corpus": 6,
+        "motus": 3,
+        "permutatio": 3,
+        "praecantatio": 3
+      },
+      "complexity": 2,
+      "display_column": 10,
+      "display_row": 5,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:LIQUID_GOLD_VODKA.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:LIQUID_GOLD_VODKA.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:LIQUID_GOLD_VODKA.2",
+              "join": "PARAGRAPH"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:LIQUID_GOLD_VODKA.3",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:TIMEWOOD_OWNERSHIP",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:taglock"
+        }
+      },
+      "flags": [
+        "SPECIAL",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:TIMEWOOD_TREE",
+        "kaleidoscope_witchcraft:WITCHERY_MEDIUM"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "spiritus": 6,
+        "vinculum": 6,
+        "arbor": 3,
+        "praecantatio": 3
+      },
+      "complexity": 3,
+      "display_column": 4,
+      "display_row": 1,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_OWNERSHIP.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_OWNERSHIP.1",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:TIMEWOOD_OWNERSHIP.2",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:HORIZON_STONE",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:turtle_rune"
+        }
+      },
+      "flags": [
+        "SPECIAL",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:TIMEWOOD_TREE"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "iter": 6,
+        "alienis": 6,
+        "vacuos": 3,
+        "tutamen": 3
+      },
+      "complexity": 3,
+      "display_column": 6,
+      "display_row": 7,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:HORIZON_STONE.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:HORIZON_STONE.1",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:FOCUS_SLASH",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:slash_focus"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_INTRO",
+        "thaumcraft:INFUSION"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "permutatio": 6,
+        "telum": 3,
+        "ordo": 3,
+        "perditio": 3
+      },
+      "complexity": 3,
+      "display_column": -3,
+      "display_row": 1,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:FOCUS_SLASH.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:FOCUS_SLASH.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:slash_focus"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:FOCUS_SLASH.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:FOCUS_SLASH.2",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:BINDING_MODERATION",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:ritual_dagger"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:FOCUS_SLASH",
+        "thaumcraft:INFUSION",
+        "kaleidoscope_witchcraft:WITCHERY_MEDIUM"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "vinculum": 6,
+        "ordo": 3,
+        "tutamen": 3
+      },
+      "complexity": 2,
+      "display_column": -1,
+      "display_row": -2,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:BINDING_MODERATION.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:BINDING_MODERATION.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:restraint"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:BINDING_MODERATION.inverse_and_chant",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:BINDING_MODERATION.inverse_and_chant",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:restraint_inverse"
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:chant"
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:chant_inverse"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:ALCHEMY_BACKPACK",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:alchemy_backpack"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "thaumcraft:INFUSION",
+        "thaumcraft:TUBES"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "vacuos": 3,
+        "metallum": 3,
+        "praecantatio": 3
+      },
+      "complexity": 1,
+      "display_column": -4,
+      "display_row": -3,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:ALCHEMY_BACKPACK.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:ALCHEMY_BACKPACK.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:alchemy_backpack"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:SILVERWOOD_ALCHEMY_BACKPACK",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:silverwood_alchemy_backpack"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:ALCHEMY_BACKPACK",
+        "kaleidoscope_witchcraft:MATRIX_CIRCLE_STABILITY"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "vacuos": 6,
+        "praecantatio": 6,
+        "ordo": 6
+      },
+      "complexity": 1,
+      "display_column": -4,
+      "display_row": -6,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:SILVERWOOD_ALCHEMY_BACKPACK.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:SILVERWOOD_ALCHEMY_BACKPACK.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:silverwood_alchemy_backpack"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:essentia_transducer"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:ALCHEMY_BACKPACK",
+        "thaumcraft:VISPOWER"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "permutatio": 3,
+        "potentia": 3
+      },
+      "complexity": 1,
+      "display_column": -7,
+      "display_row": -2,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "CRUCIBLE_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:essentia_transducer"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER.frost_module",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER.frost_module",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:frost_module"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:VOID_ESSENTIA_TRANSDUCER",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:void_essentia_transducer"
+        }
+      },
+      "flags": [
+        "SECONDARY",
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER",
+        "thaumcraft:VOIDMETAL"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "permutatio": 3,
+        "praecantatio": 3,
+        "potentia": 3
+      },
+      "complexity": 1,
+      "display_column": -9,
+      "display_row": -4,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:VOID_ESSENTIA_TRANSDUCER.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:VOID_ESSENTIA_TRANSDUCER.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "INFUSION_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:void_essentia_transducer"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:DRILLING_RITUALS",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "thaumcraft:arcane_bore"
+        }
+      },
+      "flags": [
+        "CONCEALED"
+      ],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_MEDIUM",
+        "thaumcraft:ARCANEBORE"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "perfodio": 6,
+        "machina": 3,
+        "ordo": 3
+      },
+      "complexity": 2,
+      "display_column": 5,
+      "display_row": -5,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:DRILLING_RITUALS.deep_drilling",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:DRILLING_RITUALS.deep_drilling",
+              "join": "NONE"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:DRILLING_RITUALS.bore_repair",
+              "join": "PARAGRAPH"
+            },
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:DRILLING_RITUALS.temporal_infusion",
+              "join": "PARAGRAPH"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kaleidoscope_witchcraft:WITCHERY_MEDIUM",
+      "category": "kaleidoscope_witchcraft:witch",
+      "icon": {
+        "type": "STACK",
+        "stack": {
+          "id": "kaleidoscope_witchcraft:taglock"
+        }
+      },
+      "flags": [],
+      "labels": [],
+      "silent": false,
+      "parents": [
+        "kaleidoscope_witchcraft:WITCHERY_CIRCLE_BASICS"
+      ],
+      "hidden_parents": [],
+      "siblings": [],
+      "object_triggers": [],
+      "entity_triggers": [],
+      "aspect_triggers": [],
+      "warp": 0,
+      "aspects": {
+        "ordo": 3,
+        "herba": 3,
+        "praecantatio": 3
+      },
+      "complexity": 1,
+      "display_column": 3,
+      "display_row": -3,
+      "pages": [
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_MEDIUM.1",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "FLOW"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_MEDIUM.1",
+              "join": "NONE"
+            }
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:bone_spike"
+          ]
+        },
+        {
+          "type": "NORMAL_CRAFTING",
+          "value": "",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "COMPLETED_SINGLE",
+          "recipe_ids": [
+            "kaleidoscope_witchcraft:taglock"
+          ]
+        },
+        {
+          "type": "TEXT",
+          "value": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_MEDIUM.2",
+          "aspects": {},
+          "compound_blueprint": "",
+          "recipe_link_policy": "DISABLED",
+          "recipe_ids": [],
+          "placement": {
+            "mode": "ORDERED"
+          },
+          "text": [
+            {
+              "key": "tc.research_page.kaleidoscope_witchcraft:WITCHERY_MEDIUM.2",
+              "join": "NONE"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

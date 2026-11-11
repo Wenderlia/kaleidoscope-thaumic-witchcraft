@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "great_tree=false": {"model": "kaleidoscope_witchcraft:block/years_leaves"},
+    "great_tree=true": {"model": "kaleidoscope_witchcraft:block/years_leaves_great"}
+  }
+}

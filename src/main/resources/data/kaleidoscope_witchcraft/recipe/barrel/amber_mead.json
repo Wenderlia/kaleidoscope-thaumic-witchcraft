@@ -1,0 +1,23 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "kaleidoscope_tavern"
+    }
+  ],
+  "type": "kaleidoscope_tavern:barrel",
+  "carrier": {
+    "item": "kaleidoscope_tavern:empty_bottle"
+  },
+  "fluid": "kaleidoscope_witchcraft:honeyed_pulp",
+  "ingredients": [
+    {
+      "item": "minecraft:honeycomb"
+    }
+  ],
+  "result": {
+    "id": "kaleidoscope_witchcraft:amber_mead",
+    "count": 1
+  },
+  "unit_time": 3600
+}

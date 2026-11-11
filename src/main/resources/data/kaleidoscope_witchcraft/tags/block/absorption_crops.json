@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:crops",
+    {
+      "id": "#c:crops",
+      "required": false
+    },
+    "minecraft:nether_wart",
+    "minecraft:cocoa",
+    "minecraft:sweet_berry_bush",
+    "minecraft:melon_stem",
+    "minecraft:pumpkin_stem",
+    "minecraft:sugar_cane",
+    {
+      "id": "thaumcraft:mana_pod",
+      "required": false
+    },
+    "kaleidoscope_witchcraft:vishroom_core"
+  ]
+}

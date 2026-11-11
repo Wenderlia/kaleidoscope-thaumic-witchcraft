@@ -1,0 +1,1411 @@
+{
+  "credit": "Original taglock kit model and native16 atlas for Kaleidoscope: Thaumic Witchcraft",
+  "texture_size": [
+    16,
+    16
+  ],
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "kit": "kaleidoscope_witchcraft:item/taglock",
+    "particle": "kaleidoscope_witchcraft:item/taglock"
+  },
+  "elements": [
+    {
+      "name": "thick_glass_heel",
+      "from": [
+        5.5,
+        1.2,
+        5.5
+      ],
+      "to": [
+        10.5,
+        2,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "hollow_bottle_body",
+      "from": [
+        5.5,
+        2.0,
+        5.5
+      ],
+      "to": [
+        10.5,
+        9.5,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            0,
+            6,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            0,
+            10,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            0,
+            10,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "lower_shoulder",
+      "from": [
+        5.75,
+        9.5,
+        5.75
+      ],
+      "to": [
+        10.25,
+        10.15,
+        10.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "upper_shoulder",
+      "from": [
+        6.2,
+        10.15,
+        6.2
+      ],
+      "to": [
+        9.8,
+        10.7,
+        9.8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            6,
+            8,
+            10,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "short_bottle_neck",
+      "from": [
+        6.5,
+        10.7,
+        6.5
+      ],
+      "to": [
+        9.5,
+        12.35,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            4,
+            14,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            4,
+            14,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            4,
+            16,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            4,
+            16,
+            7
+          ]
+        }
+      }
+    },
+    {
+      "name": "raised_glass_lip",
+      "from": [
+        6.15,
+        12.1,
+        6.15
+      ],
+      "to": [
+        9.85,
+        12.65,
+        9.85
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            8,
+            6,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            0,
+            16,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "stopper_plug",
+      "from": [
+        6.65,
+        12.35,
+        6.65
+      ],
+      "to": [
+        9.35,
+        13.2,
+        9.35
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            8,
+            14,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            8,
+            14,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            8,
+            16,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            8,
+            16,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            10,
+            14,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            10,
+            14,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "stopper_head",
+      "from": [
+        6.45,
+        13.2,
+        6.45
+      ],
+      "to": [
+        9.55,
+        13.8,
+        9.55
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            8,
+            14,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            8,
+            14,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            8,
+            16,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            14,
+            8,
+            16,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            10,
+            10,
+            14,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "name": "bone_spike_base",
+      "from": [
+        4.45,
+        2.7,
+        10.12
+      ],
+      "to": [
+        5.55,
+        4.0,
+        11.08
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            10,
+            3,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            10,
+            3,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "bone_spike_shaft",
+      "from": [
+        4.65,
+        4.0,
+        10.25
+      ],
+      "to": [
+        5.35,
+        10.7,
+        10.95
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            10,
+            3,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            0,
+            10,
+            3,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "bone_spike_point_0",
+      "from": [
+        4.72,
+        10.7,
+        10.32
+      ],
+      "to": [
+        5.28,
+        11.8,
+        10.879999999999999
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "bone_spike_point_1",
+      "from": [
+        4.8,
+        11.8,
+        10.4
+      ],
+      "to": [
+        5.2,
+        12.8,
+        10.799999999999999
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "bone_spike_point_2",
+      "from": [
+        4.88,
+        12.8,
+        10.48
+      ],
+      "to": [
+        5.12,
+        13.8,
+        10.719999999999999
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "bone_spike_point_3",
+      "from": [
+        4.95,
+        13.8,
+        10.549999999999999
+      ],
+      "to": [
+        5.05,
+        14.8,
+        10.65
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            3,
+            10,
+            5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            5,
+            10,
+            7,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.0,
+          8.0,
+          10.6
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "front_binding",
+      "from": [
+        5.7,
+        10.0,
+        10.23
+      ],
+      "to": [
+        10.3,
+        10.43,
+        10.48
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "back_binding",
+      "from": [
+        5.7,
+        10.0,
+        5.52
+      ],
+      "to": [
+        10.3,
+        10.43,
+        5.77
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "left_binding",
+      "from": [
+        5.52,
+        10.0,
+        5.75
+      ],
+      "to": [
+        5.77,
+        10.43,
+        10.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "right_binding",
+      "from": [
+        10.23,
+        10.0,
+        5.75
+      ],
+      "to": [
+        10.48,
+        10.43,
+        10.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "bone_retaining_knot",
+      "from": [
+        5.48,
+        9.83,
+        10.38
+      ],
+      "to": [
+        6.18,
+        10.57,
+        11.1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            12,
+            10,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            12,
+            10,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            12,
+            10,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            12,
+            10,
+            14
+          ]
+        },
+        "up": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#kit",
+          "uv": [
+            7,
+            10,
+            10,
+            12
+          ]
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        8,
+        0,
+        0
+      ],
+      "translation": [
+        0.8,
+        0.2,
+        0
+      ],
+      "scale": [
+        1.1,
+        1.1,
+        1.1
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.6,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        1
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        1
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        160,
+        -8
+      ],
+      "translation": [
+        1.1,
+        1.5,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        200,
+        8
+      ],
+      "translation": [
+        1.1,
+        1.5,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "head": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        13,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  }
+}

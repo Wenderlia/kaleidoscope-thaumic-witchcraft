@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    {"id": "thaumcraft:crucible", "required": false},
+    "#kaleidoscope_witchcraft:ritual_whole_bucket_water_receivers"
+  ]
+}

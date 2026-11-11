@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "kaleidoscope_witchcraft:block/years_leaves"
+  },
+  "render_type": "minecraft:cutout"
+}

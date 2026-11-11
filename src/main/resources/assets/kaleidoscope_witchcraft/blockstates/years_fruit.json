@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "grade=0": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_0"
+    },
+    "grade=1": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_1"
+    },
+    "grade=2": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_2"
+    },
+    "grade=3": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_3"
+    },
+    "grade=4": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_4"
+    },
+    "grade=5": {
+      "model": "kaleidoscope_witchcraft:block/years_fruit_5"
+    }
+  }
+}

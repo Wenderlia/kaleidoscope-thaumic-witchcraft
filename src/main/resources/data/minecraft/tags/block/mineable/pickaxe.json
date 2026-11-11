@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "kaleidoscope_witchcraft:amber_marrow",
+    {
+      "id": "kaleidoscope_witchcraft:essentia_conduit",
+      "required": false
+    }
+  ]
+}

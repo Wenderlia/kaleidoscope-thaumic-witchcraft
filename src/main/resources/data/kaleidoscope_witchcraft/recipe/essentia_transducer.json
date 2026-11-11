@@ -1,0 +1,13 @@
+{
+  "neoforge:conditions": [
+    {"type": "neoforge:mod_loaded", "modid": "thaumcraft"}
+  ],
+  "type": "thaumcraft:crucible",
+  "research": "kaleidoscope_witchcraft:ESSENTIA_TRANSDUCER",
+  "catalyst": {"item": "thaumcraft:node_transducer"},
+  "result": {"id": "kaleidoscope_witchcraft:essentia_transducer", "count": 1},
+  "aspects": {
+    "permutatio": 32,
+    "potentia": 16
+  }
+}

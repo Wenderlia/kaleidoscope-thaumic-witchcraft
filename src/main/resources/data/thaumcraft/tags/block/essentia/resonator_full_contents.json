@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "kaleidoscope_witchcraft:essentia_conduit", "required": false },
+    "kaleidoscope_witchcraft:alchemy_backpack",
+    "kaleidoscope_witchcraft:silverwood_alchemy_backpack"
+  ]
+}

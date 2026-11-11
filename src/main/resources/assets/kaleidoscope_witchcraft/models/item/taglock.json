@@ -1,0 +1,24 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "particle": "kaleidoscope_witchcraft:item/taglock_icon"
+  },
+  "base": {
+    "parent": "kaleidoscope_witchcraft:item/taglock_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "kaleidoscope_witchcraft:item/taglock_icon"
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "kaleidoscope_witchcraft:taglock_bound": 1
+      },
+      "model": "kaleidoscope_witchcraft:item/taglock_bound"
+    }
+  ]
+}

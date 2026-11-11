@@ -1,0 +1,74 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "embedded": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_soil"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_joint"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_down"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_up"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_north"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_south"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_west"
+      }
+    },
+    {
+      "when": {
+        "embedded": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/root_arm_east"
+      }
+    }
+  ]
+}

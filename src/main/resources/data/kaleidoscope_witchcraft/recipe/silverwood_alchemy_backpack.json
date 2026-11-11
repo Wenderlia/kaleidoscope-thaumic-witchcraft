@@ -1,0 +1,21 @@
+{
+  "neoforge:conditions": [{"type":"neoforge:mod_loaded","modid":"thaumcraft"}],
+  "type":"thaumcraft:infusion",
+  "research":"kaleidoscope_witchcraft:SILVERWOOD_ALCHEMY_BACKPACK",
+  "central":{"item":"kaleidoscope_witchcraft:alchemy_backpack"},
+  "components":[
+    {"item":"thaumcraft:thaumic_charm"},
+    {"item":"thaumcraft:silverwood_log"},
+    {"item":"thaumcraft:essentia_reservoir"},
+    {"item":"thaumcraft:void_ingot"},
+    {"item":"thaumcraft:silverwood_log"},
+    {"item":"thaumcraft:thaumic_charm"},
+    {"item":"thaumcraft:silverwood_log"},
+    {"item":"thaumcraft:essentia_reservoir"},
+    {"item":"thaumcraft:void_ingot"},
+    {"item":"thaumcraft:silverwood_log"}
+  ],
+  "instability":4,
+  "aspects":{"vacuos":128,"praecantatio":64,"ordo":64,"metallum":32,"permutatio":32},
+  "result":{"id":"kaleidoscope_witchcraft:silverwood_alchemy_backpack","count":1}
+}

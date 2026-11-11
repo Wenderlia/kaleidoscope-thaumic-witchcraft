@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ritual_dagger": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "kaleidoscope_witchcraft:ritual_dagger"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "kaleidoscope_witchcraft:bone_spike"
+      }
+    }
+  },
+  "requirements": [
+    ["has_ritual_dagger", "has_the_recipe"]
+  ],
+  "rewards": {
+    "recipes": ["kaleidoscope_witchcraft:bone_spike"]
+  }
+}

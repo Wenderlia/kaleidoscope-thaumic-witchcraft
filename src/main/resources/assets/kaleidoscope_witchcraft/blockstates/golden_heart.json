@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "rotation=0": {
+      "model": "kaleidoscope_witchcraft:block/ritual/golden_heart",
+      "y": 0
+    },
+    "rotation=1": {
+      "model": "kaleidoscope_witchcraft:block/ritual/golden_heart",
+      "y": 90
+    },
+    "rotation=2": {
+      "model": "kaleidoscope_witchcraft:block/ritual/golden_heart",
+      "y": 180
+    },
+    "rotation=3": {
+      "model": "kaleidoscope_witchcraft:block/ritual/golden_heart",
+      "y": 270
+    }
+  }
+}

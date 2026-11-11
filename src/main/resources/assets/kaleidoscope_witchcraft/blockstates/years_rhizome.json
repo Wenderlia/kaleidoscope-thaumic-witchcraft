@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "age=0": {
+      "model": "kaleidoscope_witchcraft:block/years_rhizome_0"
+    },
+    "age=1": {
+      "model": "kaleidoscope_witchcraft:block/years_rhizome_1"
+    },
+    "age=2": {
+      "model": "kaleidoscope_witchcraft:block/years_rhizome_2"
+    },
+    "age=3": {
+      "model": "kaleidoscope_witchcraft:block/years_rhizome_3"
+    },
+    "age=4": {
+      "model": "kaleidoscope_witchcraft:block/years_rhizome_4"
+    }
+  }
+}

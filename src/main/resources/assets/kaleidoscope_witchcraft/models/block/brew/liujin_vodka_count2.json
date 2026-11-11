@@ -1,0 +1,977 @@
+{
+  "credit": "Original native16 art for Kaleidoscope: Thaumic Witchcraft",
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "bottle": "kaleidoscope_witchcraft:block/brew/liujin_vodka",
+    "particle": "kaleidoscope_witchcraft:item/liujin_vodka"
+  },
+  "elements": [
+    {
+      "name": "heavy_glass_heel",
+      "from": [
+        1.5,
+        0,
+        5
+      ],
+      "to": [
+        7.5,
+        1,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "bottle_body",
+      "from": [
+        1.5,
+        1,
+        5
+      ],
+      "to": [
+        7.5,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "lower_shoulder",
+      "from": [
+        2.0,
+        9,
+        5.5
+      ],
+      "to": [
+        7.0,
+        10,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "upper_shoulder",
+      "from": [
+        2.5,
+        10,
+        6
+      ],
+      "to": [
+        6.5,
+        11,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "bottle_neck",
+      "from": [
+        3.5,
+        11,
+        7
+      ],
+      "to": [
+        5.5,
+        14,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "neck_seal",
+      "from": [
+        3.0,
+        11,
+        6.5
+      ],
+      "to": [
+        6.0,
+        12,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            10,
+            3,
+            14,
+            7
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "gold_cork",
+      "from": [
+        3.0,
+        14,
+        6.5
+      ],
+      "to": [
+        6.0,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            10,
+            3,
+            14,
+            7
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "heavy_glass_heel",
+      "from": [
+        8.5,
+        0,
+        5
+      ],
+      "to": [
+        14.5,
+        1,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "bottle_body",
+      "from": [
+        8.5,
+        1,
+        5
+      ],
+      "to": [
+        14.5,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            16,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "lower_shoulder",
+      "from": [
+        9.0,
+        9,
+        5.5
+      ],
+      "to": [
+        14.0,
+        10,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "upper_shoulder",
+      "from": [
+        9.5,
+        10,
+        6
+      ],
+      "to": [
+        13.5,
+        11,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            6,
+            8
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "bottle_neck",
+      "from": [
+        10.5,
+        11,
+        7
+      ],
+      "to": [
+        12.5,
+        14,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "neck_seal",
+      "from": [
+        10.0,
+        11,
+        6.5
+      ],
+      "to": [
+        13.0,
+        12,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            10,
+            3,
+            14,
+            7
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#bottle"
+        }
+      }
+    },
+    {
+      "name": "gold_cork",
+      "from": [
+        10.0,
+        14,
+        6.5
+      ],
+      "to": [
+        13.0,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "south": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "east": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        },
+        "up": {
+          "uv": [
+            10,
+            3,
+            14,
+            7
+          ],
+          "texture": "#bottle"
+        },
+        "down": {
+          "uv": [
+            10,
+            0,
+            14,
+            3
+          ],
+          "texture": "#bottle"
+        }
+      }
+    }
+  ]
+}

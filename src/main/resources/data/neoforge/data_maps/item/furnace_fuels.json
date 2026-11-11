@@ -1,0 +1,40 @@
+{
+  "values": {
+    "kaleidoscope_witchcraft:years_wood": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_stairs": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_slab": {
+      "burn_time": 150
+    },
+    "kaleidoscope_witchcraft:years_fence": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_fence_gate": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_button": {
+      "burn_time": 100
+    },
+    "kaleidoscope_witchcraft:years_pressure_plate": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_door": {
+      "burn_time": 200
+    },
+    "kaleidoscope_witchcraft:years_trapdoor": {
+      "burn_time": 300
+    },
+    "kaleidoscope_witchcraft:years_sign": {
+      "burn_time": 200
+    },
+    "kaleidoscope_witchcraft:years_hanging_sign": {
+      "burn_time": 800
+    },
+    "kaleidoscope_witchcraft:stripped_years_wood": {
+      "burn_time": 300
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "kaleidoscope_tavern"
+    }
+  ],
+  "type": "kaleidoscope_tavern:pressing_tub",
+  "ingredient": {
+    "type": "kaleidoscope_witchcraft:fruit_grade",
+    "grade": 2
+  },
+  "fluid": "kaleidoscope_witchcraft:honeyed_pulp",
+  "fluid_amount": 125
+}

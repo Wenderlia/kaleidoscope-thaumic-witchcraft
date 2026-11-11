@@ -1,0 +1,29 @@
+{
+  "upgrades": [
+    {
+      "id": "kaleidoscope_witchcraft:black_flash",
+      "icon": "kaleidoscope_witchcraft:textures/foci/black_flash.png",
+      "name": "focus.kaleidoscope_witchcraft.black_flash.name",
+      "description": "focus.kaleidoscope_witchcraft.black_flash.text",
+      "aspects": {
+        "motus": 1,
+        "potentia": 1
+      },
+      "max_level": 1,
+      "rank_vis": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "rank_xp": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    }
+  ]
+}

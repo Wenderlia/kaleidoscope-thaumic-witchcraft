@@ -1,0 +1,14 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "thaumcraft"}],
+  "type": "thaumcraft:infusion",
+  "research": "kaleidoscope_witchcraft:BINDING_MODERATION",
+  "central": {"item": "kaleidoscope_witchcraft:taglock"},
+  "components": [
+    {"item": "thaumcraft:thaumic_charm"},
+    {"item": "thaumcraft:order_shard"},
+    {"item": "minecraft:obsidian"}
+  ],
+  "input_transformation": "kaleidoscope_witchcraft:restraint",
+  "instability": 0,
+  "aspects": {"ordo": 64, "perditio": 64, "permutatio": 64}
+}

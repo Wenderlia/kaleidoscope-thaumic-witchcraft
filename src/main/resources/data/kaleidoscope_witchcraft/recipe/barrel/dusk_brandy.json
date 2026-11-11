@@ -1,0 +1,26 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "kaleidoscope_tavern"
+    }
+  ],
+  "type": "kaleidoscope_tavern:barrel",
+  "carrier": {
+    "item": "kaleidoscope_tavern:empty_bottle"
+  },
+  "fluid": "kaleidoscope_witchcraft:aged_amber_pulp",
+  "ingredients": [
+    {
+      "item": "minecraft:sugar"
+    },
+    {
+      "item": "minecraft:sweet_berries"
+    }
+  ],
+  "result": {
+    "id": "kaleidoscope_witchcraft:dusk_brandy",
+    "count": 1
+  },
+  "unit_time": 6000
+}

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "kaleidoscope_witchcraft:vishroom_core",
+          "functions": [
+            {
+              "function": "minecraft:copy_custom_data",
+              "source": "block_entity",
+              "ops": [
+                {
+                  "source": "Organism",
+                  "target": "Organism",
+                  "op": "replace"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

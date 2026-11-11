@@ -1,0 +1,42 @@
+{
+  "loader": "neoforge:composite",
+  "ambientocclusion": false,
+  "textures": {
+    "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_3",
+    "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_3"
+  },
+  "children": {
+    "husk": {
+      "loader": "neoforge:obj",
+      "model": "kaleidoscope_witchcraft:models/block/years_fruit_3.obj",
+      "automatic_culling": false,
+      "shade_quads": true,
+      "flip_v": true,
+      "emissive_ambient": true,
+      "ambientocclusion": false,
+      "render_type": "minecraft:cutout",
+      "textures": {
+        "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_3",
+        "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_3"
+      }
+    },
+    "amber": {
+      "loader": "neoforge:obj",
+      "model": "kaleidoscope_witchcraft:models/block/years_fruit_3_amber.obj",
+      "automatic_culling": false,
+      "shade_quads": true,
+      "flip_v": true,
+      "emissive_ambient": true,
+      "ambientocclusion": false,
+      "render_type": "minecraft:translucent",
+      "textures": {
+        "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_3",
+        "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_3"
+      }
+    }
+  },
+  "item_render_order": [
+    "husk",
+    "amber"
+  ]
+}

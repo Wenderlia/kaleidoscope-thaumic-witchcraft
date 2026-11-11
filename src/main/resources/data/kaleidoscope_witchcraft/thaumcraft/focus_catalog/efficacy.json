@@ -1,0 +1,29 @@
+{
+  "upgrades": [
+    {
+      "id": "kaleidoscope_witchcraft:efficacy",
+      "icon": "kaleidoscope_witchcraft:textures/foci/efficacy.png",
+      "name": "focus.kaleidoscope_witchcraft.efficacy.name",
+      "description": "focus.kaleidoscope_witchcraft.efficacy.text",
+      "aspects": {
+        "praecantatio": 1,
+        "ordo": 1
+      },
+      "max_level": 5,
+      "rank_vis": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "rank_xp": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    }
+  ]
+}

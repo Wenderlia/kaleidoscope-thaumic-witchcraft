@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "kaleidoscope_witchcraft:ritual_dagger"
+    }
+  ],
+  "result": {
+    "id": "kaleidoscope_witchcraft:bone_spike",
+    "count": 1
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "item": "kaleidoscope_witchcraft:frostgold_icewine",
+  "effects": [
+    [
+      {
+        "effect": "minecraft:nausea",
+        "duration": 5,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 30,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:night_vision",
+        "duration": 180,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 20,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:night_vision",
+        "duration": 300,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:haste",
+        "duration": 60,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 15,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:night_vision",
+        "duration": 360,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:haste",
+        "duration": 180,
+        "amplifier": 0,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 10,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:night_vision",
+        "duration": 480,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:haste",
+        "duration": 240,
+        "amplifier": 1,
+        "probability": 1.0
+      }
+    ],
+    [
+      {
+        "effect": "kaleidoscope_tavern:slightly_tipsy",
+        "duration": 5,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:night_vision",
+        "duration": 600,
+        "amplifier": 0,
+        "probability": 1.0
+      },
+      {
+        "effect": "minecraft:haste",
+        "duration": 480,
+        "amplifier": 1,
+        "probability": 1.0
+      }
+    ]
+  ]
+}

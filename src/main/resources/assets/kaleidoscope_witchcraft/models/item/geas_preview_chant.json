@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "kaleidoscope_witchcraft:gui/geas/chant"
+  },
+  "parent": "minecraft:item/generated"
+}

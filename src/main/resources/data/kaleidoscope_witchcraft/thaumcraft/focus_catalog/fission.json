@@ -1,0 +1,29 @@
+{
+  "upgrades": [
+    {
+      "id": "kaleidoscope_witchcraft:fission",
+      "icon": "kaleidoscope_witchcraft:textures/foci/fission.png",
+      "name": "focus.kaleidoscope_witchcraft.fission.name",
+      "description": "focus.kaleidoscope_witchcraft.fission.text",
+      "aspects": {
+        "perditio": 1,
+        "permutatio": 1
+      },
+      "max_level": 1,
+      "rank_vis": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "rank_xp": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    }
+  ]
+}

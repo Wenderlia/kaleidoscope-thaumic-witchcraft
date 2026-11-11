@@ -1,0 +1,40 @@
+{
+  "textures": {
+    "root": "kaleidoscope_witchcraft:block/root_bark",
+    "particle": "kaleidoscope_witchcraft:block/root_bark"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        5,
+        5
+      ],
+      "to": [
+        11,
+        11,
+        11
+      ],
+      "faces": {
+        "down": {
+          "texture": "#root"
+        },
+        "up": {
+          "texture": "#root"
+        },
+        "north": {
+          "texture": "#root"
+        },
+        "south": {
+          "texture": "#root"
+        },
+        "west": {
+          "texture": "#root"
+        },
+        "east": {
+          "texture": "#root"
+        }
+      }
+    }
+  ]
+}

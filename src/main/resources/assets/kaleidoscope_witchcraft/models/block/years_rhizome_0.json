@@ -1,0 +1,97 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "plant": "kaleidoscope_witchcraft:block/years_rhizome_0",
+    "root": "kaleidoscope_witchcraft:block/years_rhizome_crown",
+    "particle": "kaleidoscope_witchcraft:block/years_rhizome_0"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        -1,
+        8
+      ],
+      "to": [
+        16,
+        15,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      },
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        -1,
+        0
+      ],
+      "to": [
+        8,
+        15,
+        16
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 45,
+        "rescale": false
+      },
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

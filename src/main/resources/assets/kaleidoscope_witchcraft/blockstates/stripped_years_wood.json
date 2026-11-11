@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "kaleidoscope_witchcraft:block/stripped_years_wood",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "kaleidoscope_witchcraft:block/stripped_years_wood"
+    },
+    "axis=z": {
+      "model": "kaleidoscope_witchcraft:block/stripped_years_wood",
+      "x": 90
+    }
+  }
+}

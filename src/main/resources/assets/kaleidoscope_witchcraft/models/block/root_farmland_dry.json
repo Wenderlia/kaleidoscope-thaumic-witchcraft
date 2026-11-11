@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_farmland",
+  "textures": {
+    "dirt": "kaleidoscope_witchcraft:block/root_soil",
+    "top": "kaleidoscope_witchcraft:block/rooted_farmland_dry"
+  }
+}

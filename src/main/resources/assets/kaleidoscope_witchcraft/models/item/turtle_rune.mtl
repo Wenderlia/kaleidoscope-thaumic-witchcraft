@@ -1,0 +1,24 @@
+newmtl front
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+map_Kd #front
+
+newmtl back
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+map_Kd #back
+
+newmtl side
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+map_Kd #side
+
+newmtl front_gold_wall
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+map_Kd #gold_wall
+
+newmtl back_gold_wall
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+map_Kd #gold_wall

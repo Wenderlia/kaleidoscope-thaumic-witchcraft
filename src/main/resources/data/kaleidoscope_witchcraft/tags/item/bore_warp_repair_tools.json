@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "thaumcraft:void_pickaxe", "required": false }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "textures": {
+    "soil": "kaleidoscope_witchcraft:block/root_soil",
+    "particle": "kaleidoscope_witchcraft:block/root_soil"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#soil",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#soil",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#soil",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#soil",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#soil",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#soil",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

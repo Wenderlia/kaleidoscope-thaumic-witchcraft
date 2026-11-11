@@ -1,0 +1,29 @@
+{
+  "upgrades": [
+    {
+      "id": "kaleidoscope_witchcraft:surge",
+      "icon": "kaleidoscope_witchcraft:textures/foci/surge.png",
+      "name": "focus.kaleidoscope_witchcraft.surge.name",
+      "description": "focus.kaleidoscope_witchcraft.surge.text",
+      "aspects": {
+        "potentia": 1,
+        "perditio": 1
+      },
+      "max_level": 5,
+      "rank_vis": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "rank_xp": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "loader": "neoforge:composite",
+  "ambientocclusion": false,
+  "textures": {
+    "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_1",
+    "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_1"
+  },
+  "children": {
+    "husk": {
+      "loader": "neoforge:obj",
+      "model": "kaleidoscope_witchcraft:models/block/years_fruit_1.obj",
+      "automatic_culling": false,
+      "shade_quads": true,
+      "flip_v": true,
+      "emissive_ambient": true,
+      "ambientocclusion": false,
+      "render_type": "minecraft:cutout",
+      "textures": {
+        "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_1",
+        "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_1"
+      }
+    },
+    "amber": {
+      "loader": "neoforge:obj",
+      "model": "kaleidoscope_witchcraft:models/block/years_fruit_1_amber.obj",
+      "automatic_culling": false,
+      "shade_quads": true,
+      "flip_v": true,
+      "emissive_ambient": true,
+      "ambientocclusion": false,
+      "render_type": "minecraft:translucent",
+      "textures": {
+        "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_1",
+        "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_1"
+      }
+    }
+  },
+  "item_render_order": [
+    "husk",
+    "amber"
+  ],
+  "gui_light": "side",
+  "display": {
+    "gui": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.026677,
+        -0.244481,
+        0.187074
+      ],
+      "scale": [
+        1.086096,
+        1.086096,
+        1.086096
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.022866,
+        -0.209555,
+        0.160349
+      ],
+      "scale": [
+        0.93094,
+        0.93094,
+        0.93094
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.013338,
+        1.87776,
+        0.093537
+      ],
+      "scale": [
+        0.543048,
+        0.543048,
+        0.543048
+      ]
+    },
+    "head": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.017149,
+        10.842834,
+        0.120262
+      ],
+      "scale": [
+        0.698205,
+        0.698205,
+        0.698205
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        -8,
+        -25,
+        -8
+      ],
+      "translation": [
+        0.744743,
+        1.658396,
+        0.927879
+      ],
+      "scale": [
+        0.698205,
+        0.698205,
+        0.698205
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        -8,
+        -25,
+        -8
+      ],
+      "translation": [
+        0.71396,
+        1.661125,
+        0.913
+      ],
+      "scale": [
+        0.698205,
+        0.698205,
+        0.698205
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -20,
+        -8
+      ],
+      "translation": [
+        -0.040647,
+        1.359535,
+        0.698966
+      ],
+      "scale": [
+        0.620626,
+        0.620626,
+        0.620626
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        -20,
+        -8
+      ],
+      "translation": [
+        -0.069017,
+        1.363778,
+        0.68864
+      ],
+      "scale": [
+        0.620626,
+        0.620626,
+        0.620626
+      ]
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "kaleidoscope_witchcraft:fruit_quality": 0.5
+      },
+      "model": "kaleidoscope_witchcraft:item/years_fruit_2"
+    },
+    {
+      "predicate": {
+        "kaleidoscope_witchcraft:fruit_quality": 0.75
+      },
+      "model": "kaleidoscope_witchcraft:item/years_fruit_3"
+    },
+    {
+      "predicate": {
+        "kaleidoscope_witchcraft:fruit_quality": 1.0
+      },
+      "model": "kaleidoscope_witchcraft:item/years_fruit_4"
+    },
+    {
+      "predicate": {
+        "kaleidoscope_witchcraft:fruit_quality": 1.25
+      },
+      "model": "kaleidoscope_witchcraft:item/years_fruit_5"
+    },
+    {
+      "predicate": {
+        "minecraft:custom_model_data": 1
+      },
+      "model": "kaleidoscope_witchcraft:item/years_fruit_research"
+    }
+  ]
+}

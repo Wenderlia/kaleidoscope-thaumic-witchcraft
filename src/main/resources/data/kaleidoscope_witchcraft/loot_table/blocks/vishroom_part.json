@@ -1,0 +1,81 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "kaleidoscope_witchcraft:vishroom_part",
+              "conditions": [
+                {
+                  "condition": "minecraft:match_tool",
+                  "predicate": {
+                    "predicates": {
+                      "minecraft:enchantments": [
+                        {
+                          "enchantments": "minecraft:silk_touch",
+                          "levels": {
+                            "min": 1
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:copy_state",
+                  "block": "kaleidoscope_witchcraft:vishroom_part",
+                  "properties": [
+                    "part"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "minecraft:tag",
+              "name": "kaleidoscope_witchcraft:vishroom_harvest",
+              "expand": true,
+              "conditions": [
+                {
+                  "condition": "minecraft:inverted",
+                  "term": {
+                    "condition": "minecraft:block_state_property",
+                    "block": "kaleidoscope_witchcraft:vishroom_part",
+                    "properties": {
+                      "part": "56"
+                    }
+                  }
+                }
+              ],
+              "functions": [
+                {
+                  "function": "minecraft:set_count",
+                  "count": {
+                    "type": "minecraft:uniform",
+                    "min": -6,
+                    "max": 2
+                  }
+                },
+                {
+                  "function": "minecraft:limit_count",
+                  "limit": {
+                    "min": 0
+                  }
+                },
+                {
+                  "function": "minecraft:explosion_decay"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

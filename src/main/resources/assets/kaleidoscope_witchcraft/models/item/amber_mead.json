@@ -1,0 +1,109 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "textures": {
+    "particle": "kaleidoscope_witchcraft:item/amber_mead"
+  },
+  "base": {
+    "parent": "minecraft:item/generated",
+    "textures": {
+      "layer0": "kaleidoscope_witchcraft:item/amber_mead"
+    },
+    "loader": "neoforge:item_layers",
+    "render_types": {
+      "minecraft:translucent": [
+        0
+      ]
+    }
+  },
+  "perspectives": {
+    "firstperson_righthand": {
+      "parent": "kaleidoscope_witchcraft:block/brew/amber_mead_count1",
+      "display": {
+        "firstperson_righthand": {
+          "rotation": [
+            0,
+            165,
+            -8
+          ],
+          "translation": [
+            1,
+            1,
+            0
+          ],
+          "scale": [
+            0.75,
+            0.75,
+            0.75
+          ]
+        }
+      }
+    },
+    "firstperson_lefthand": {
+      "parent": "kaleidoscope_witchcraft:block/brew/amber_mead_count1",
+      "display": {
+        "firstperson_lefthand": {
+          "rotation": [
+            0,
+            195,
+            8
+          ],
+          "translation": [
+            1,
+            1,
+            0
+          ],
+          "scale": [
+            0.75,
+            0.75,
+            0.75
+          ]
+        }
+      }
+    },
+    "thirdperson_righthand": {
+      "parent": "kaleidoscope_witchcraft:block/brew/amber_mead_count1",
+      "display": {
+        "thirdperson_righthand": {
+          "rotation": [
+            0,
+            180,
+            0
+          ],
+          "translation": [
+            0,
+            2,
+            1
+          ],
+          "scale": [
+            0.6,
+            0.6,
+            0.6
+          ]
+        }
+      }
+    },
+    "thirdperson_lefthand": {
+      "parent": "kaleidoscope_witchcraft:block/brew/amber_mead_count1",
+      "display": {
+        "thirdperson_lefthand": {
+          "rotation": [
+            0,
+            180,
+            0
+          ],
+          "translation": [
+            0,
+            2,
+            1
+          ],
+          "scale": [
+            0.6,
+            0.6,
+            0.6
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "kaleidoscope_witchcraft:block/years_planks",
+    "side": "kaleidoscope_witchcraft:block/years_planks",
+    "top": "kaleidoscope_witchcraft:block/years_planks"
+  }
+}

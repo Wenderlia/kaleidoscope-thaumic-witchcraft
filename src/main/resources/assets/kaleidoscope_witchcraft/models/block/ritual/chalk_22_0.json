@@ -1,0 +1,34 @@
+{
+  "render_type": "minecraft:translucent",
+  "ambientocclusion": false,
+  "textures": {
+    "all": "kaleidoscope_witchcraft:ritual/chalk_atlas",
+    "particle": "kaleidoscope_witchcraft:ritual/chalk_mark"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.032,
+        0
+      ],
+      "to": [
+        16,
+        0.032,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#all",
+          "uv": [
+            0.0,
+            2.0952380952380953,
+            2.0,
+            2.2857142857142856
+          ]
+        }
+      }
+    }
+  ]
+}

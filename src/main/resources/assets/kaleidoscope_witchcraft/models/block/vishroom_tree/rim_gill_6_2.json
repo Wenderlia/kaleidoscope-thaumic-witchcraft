@@ -1,0 +1,85 @@
+{
+  "textures": {
+    "top": "kaleidoscope_witchcraft:block/vishroom_tree/cap_edge_top",
+    "side": "kaleidoscope_witchcraft:block/vishroom_tree/cap_rim",
+    "bottom": "kaleidoscope_witchcraft:block/vishroom_tree/gills_radial",
+    "particle": "kaleidoscope_witchcraft:block/vishroom_tree/cap_rim"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#top",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#bottom",
+          "uv": [
+            12,
+            4,
+            14,
+            6
+          ],
+          "cullface": "down"
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
+        }
+      }
+    }
+  ],
+  "parent": "minecraft:block/block"
+}

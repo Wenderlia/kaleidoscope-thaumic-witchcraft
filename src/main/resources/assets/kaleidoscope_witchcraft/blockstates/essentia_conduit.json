@@ -1,0 +1,105 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_core"
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_down"
+      }
+    },
+    {
+      "when": {
+        "down": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_down_extended"
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_up"
+      }
+    },
+    {
+      "when": {
+        "up": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_up_extended"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_north"
+      }
+    },
+    {
+      "when": {
+        "north": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_north_extended"
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_south"
+      }
+    },
+    {
+      "when": {
+        "south": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_south_extended"
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_west"
+      }
+    },
+    {
+      "when": {
+        "west": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_west_extended"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_east"
+      }
+    },
+    {
+      "when": {
+        "east": "extended"
+      },
+      "apply": {
+        "model": "kaleidoscope_witchcraft:block/essentia_conduit_east_extended"
+      }
+    }
+  ]
+}

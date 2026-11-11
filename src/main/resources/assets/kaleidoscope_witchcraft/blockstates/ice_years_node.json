@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "kaleidoscope_witchcraft:block/ice_years_node"
+    },
+    "axis=x": {
+      "model": "kaleidoscope_witchcraft:block/ice_years_node",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "kaleidoscope_witchcraft:block/ice_years_node",
+      "x": 90
+    }
+  }
+}

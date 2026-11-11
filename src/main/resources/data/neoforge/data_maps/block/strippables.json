@@ -1,0 +1,10 @@
+{
+  "values": {
+    "kaleidoscope_witchcraft:years_log": {
+      "stripped_block": "kaleidoscope_witchcraft:stripped_years_log"
+    },
+    "kaleidoscope_witchcraft:years_wood": {
+      "stripped_block": "kaleidoscope_witchcraft:stripped_years_wood"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "thaumcraft"
+    }
+  ],
+  "type": "thaumcraft:crucible",
+  "catalyst": {
+    "item": "thaumcraft:essentia_tube"
+  },
+  "result": {
+    "id": "kaleidoscope_witchcraft:essentia_conduit",
+    "count": 1
+  },
+  "aspects": {
+    "iter": 4,
+    "vacuos": 4
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "neoforge:conditions": [
+    {"type": "neoforge:mod_loaded", "modid": "thaumcraft"}
+  ],
+  "type": "thaumcraft:infusion",
+  "research": "kaleidoscope_witchcraft:ALCHEMY_BACKPACK",
+  "central": {"item": "thaumcraft:greatwood_log"},
+  "components": [
+    {"item": "thaumcraft:warded_jar"},
+    {"item": "thaumcraft:essentia_tube"},
+    {"item": "thaumcraft:warded_jar"},
+    {"item": "thaumcraft:essentia_tube"},
+    {"item": "minecraft:leather"},
+    {"item": "thaumcraft:warded_jar"},
+    {"item": "thaumcraft:essentia_tube"},
+    {"item": "thaumcraft:thaumic_charm"},
+    {"item": "thaumcraft:essentia_tube"},
+    {"item": "minecraft:leather"}
+  ],
+  "instability": 2,
+  "aspects": {
+    "vacuos": 64,
+    "metallum": 32,
+    "permutatio": 32,
+    "praecantatio": 32
+  },
+  "result": {"id": "kaleidoscope_witchcraft:alchemy_backpack", "count": 1}
+}

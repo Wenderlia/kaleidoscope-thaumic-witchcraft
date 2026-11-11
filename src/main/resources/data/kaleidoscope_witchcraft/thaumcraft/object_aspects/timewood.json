@@ -1,0 +1,18 @@
+{
+  "direct": {
+    "kaleidoscope_witchcraft:temporal_tissue": {
+      "perfodio": 4,
+      "praecantatio": 4,
+      "motus": 2,
+      "vacuos": 6,
+      "herba": 2
+    },
+    "kaleidoscope_witchcraft:years_core": {
+      "herba": 2,
+      "vacuos": 12,
+      "motus": 4,
+      "praecantatio": 6
+    },
+    "kaleidoscope_witchcraft:years_fruit": {}
+  }
+}

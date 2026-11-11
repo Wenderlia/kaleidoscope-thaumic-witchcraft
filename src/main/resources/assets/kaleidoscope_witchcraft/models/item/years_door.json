@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "kaleidoscope_witchcraft:item/years_door"
+  },
+  "render_type": "minecraft:cutout"
+}

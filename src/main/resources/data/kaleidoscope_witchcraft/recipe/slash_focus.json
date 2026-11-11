@@ -1,0 +1,36 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "thaumcraft"
+    }
+  ],
+  "type": "thaumcraft:infusion",
+  "research": "kaleidoscope_witchcraft:FOCUS_SLASH",
+  "central": {
+    "item": "minecraft:nether_star"
+  },
+  "components": [
+    {
+      "item": "thaumcraft:order_crystal_cluster"
+    },
+    {
+      "item": "thaumcraft:entropy_crystal_cluster"
+    },
+    {
+      "item": "thaumcraft:thaumic_charm"
+    },
+    {
+      "item": "minecraft:glass"
+    }
+  ],
+  "instability": 4,
+  "aspects": {
+    "permutatio": 64,
+    "ordo": 32,
+    "perditio": 16
+  },
+  "result": {
+    "id": "kaleidoscope_witchcraft:slash_focus"
+  }
+}

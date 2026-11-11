@@ -1,0 +1,153 @@
+{
+  "loader": "neoforge:obj",
+  "model": "kaleidoscope_witchcraft:models/block/years_fruit_4.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": true,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "skin": "kaleidoscope_witchcraft:block/years_fruit_skin_4",
+    "particle": "kaleidoscope_witchcraft:block/years_fruit_crumb_4"
+  },
+  "gui_light": "side",
+  "display": {
+    "gui": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.086554,
+        -1.030746,
+        -0.388733
+      ],
+      "scale": [
+        1.230774,
+        1.230774,
+        1.230774
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.074189,
+        -0.883496,
+        -0.3332
+      ],
+      "scale": [
+        1.054949,
+        1.054949,
+        1.054949
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.043277,
+        1.484627,
+        -0.194367
+      ],
+      "scale": [
+        0.615387,
+        0.615387,
+        0.615387
+      ]
+    },
+    "head": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.055642,
+        10.337378,
+        -0.2499
+      ],
+      "scale": [
+        0.791212,
+        0.791212,
+        0.791212
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        -8,
+        -25,
+        -8
+      ],
+      "translation": [
+        0.871971,
+        1.10884,
+        0.652583
+      ],
+      "scale": [
+        0.791212,
+        0.791212,
+        0.791212
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        -8,
+        -25,
+        -8
+      ],
+      "translation": [
+        0.772096,
+        1.117695,
+        0.604308
+      ],
+      "scale": [
+        0.791212,
+        0.791212,
+        0.791212
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -20,
+        -8
+      ],
+      "translation": [
+        0.044969,
+        0.909851,
+        0.379978
+      ],
+      "scale": [
+        0.703299,
+        0.703299,
+        0.703299
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        -20,
+        -8
+      ],
+      "translation": [
+        -0.047079,
+        0.923618,
+        0.346475
+      ],
+      "scale": [
+        0.703299,
+        0.703299,
+        0.703299
+      ]
+    }
+  }
+}

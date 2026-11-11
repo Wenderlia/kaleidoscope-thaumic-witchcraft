@@ -1,0 +1,200 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.106'
+}
+
+group = 'dev.senluo.witchcraft'
+version = mod_version
+base { archivesName = 'kaleidoscope-thaumic-witchcraft' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+repositories {
+    maven {
+        name = 'Curios'
+        url = 'https://maven.theillusivec4.top/'
+        content { includeGroup 'top.theillusivec4.curios' }
+    }
+    maven {
+        name = 'TerraBlender'
+        url = 'https://maven.minecraftforge.net/'
+        content { includeGroup 'com.github.glitchfiend' }
+    }
+}
+
+def managementDir = file('../工程管理')
+layout.buildDirectory.set(new File(managementDir, 'build'))
+def instancePath = providers.gradleProperty('mcInstance').getOrElse(new File(managementDir, 'dependencies/runtime').absolutePath)
+def compatJars = files(
+    "${instancePath}/mods/kaleidoscopetavern-1.2.0-neoforge+mc1.21.1.jar",
+    "${instancePath}/mods/tiab-neoforge-6.5.4.jar"
+)
+def tcReferenceDir = new File(managementDir, "references/tc4r-${tc4r_version}/1.21.1-neoforge")
+def tcReference = new groovy.json.JsonSlurper().parse(new File(tcReferenceDir, 'manifest.json'))
+def helperManifest = new groovy.json.JsonSlurper().parse(new File(managementDir, 'dependencies/helper-mods.json'))
+def mixinHostContract = new groovy.json.JsonSlurper().parse(new File(managementDir, 'dependencies/mixin-host-contract.json'))
+def jadeHelper = helperManifest.mods.find { it.mod_id == 'jade' }
+def jeiHelper = helperManifest.mods.find { it.mod_id == 'jei' }
+if (jeiHelper == null || jeiHelper.file != new File(jeiHelper.file as String).name)
+    throw new GradleException('Missing or invalid pinned JEI compile dependency.')
+if (jadeHelper == null || jadeHelper.file != new File(jadeHelper.file as String).name)
+    throw new GradleException('Missing or invalid pinned Jade compile dependency.')
+if (tcReference.minecraft != '1.21.1' || tcReference.loader != 'neoforge' || tcReference.build != tc4r_version)
+    throw new GradleException('TC4R API/runtime reference does not match the pinned platform/build.')
+def tcApi = tcReference.developer_jars.find { it.jar.startsWith('dev/tc/') && it.jar.endsWith('-api.jar') }
+if (tcApi == null || !new File(tcReferenceDir, tcApi.jar).isFile())
+    throw new GradleException('Missing same-build TC4R API JAR; import the matching developer archive.')
+dependencies {
+    compileOnly files(new File(managementDir, 'references/botania-1.21.1-457-1/botania-neoforge-1.21.1-457-20260917.083205-1.jar'))
+    compileOnly files(new File(managementDir, 'references/tacz-1.1.8-hotfix-r7/tacz-neoforge-1.21.1-1.1.8-hotfix-r7.jar'))
+    compileOnly compatJars
+    compileOnly files(new File(tcReferenceDir, tcApi.jar))
+    compileOnly files(new File(managementDir, "dependencies/helpers/${jadeHelper.file}"))
+    compileOnly files(new File(managementDir, "dependencies/helpers/${jeiHelper.file}"))
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    if (providers.gradleProperty('withCompat').isPresent() || providers.gradleProperty('withCurios').isPresent())
+        runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    if (providers.gradleProperty('withCompat').isPresent()) {
+        def helpers = new groovy.json.JsonSlurper().parse(new File(managementDir, 'dependencies/helper-mods.json'))
+        if (helpers.minecraft != '1.21.1' || helpers.loader != 'neoforge')
+            throw new GradleException('Helper mods do not match the pinned platform.')
+        def helperJars = helpers.mods.findAll { it.side != 'client' }.collect { entry ->
+            if (entry.file != new File(entry.file as String).name)
+                throw new GradleException('Helper mod filename must not contain directories.')
+            def jar = new File(managementDir, "dependencies/helpers/${entry.file}")
+            if (!jar.isFile())
+                throw new GradleException("Missing helper mod ${entry.file}; run 工程管理/build.py first.")
+            jar
+        }
+        runtimeOnly compatJars
+        runtimeOnly files(tcReference.modules.values().collect { new File(tcReferenceDir, it.jar) })
+        runtimeOnly files(helperJars)
+        runtimeOnly "com.github.glitchfiend:TerraBlender-neoforge:${terrablender_version}"
+    }
+    else if (providers.gradleProperty('withTiab').isPresent()) runtimeOnly files("${instancePath}/mods/tiab-neoforge-6.5.4.jar")
+}
+
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+configurations {
+    gameTestImplementation.extendsFrom implementation
+    gameTestCompileOnly.extendsFrom compileOnly
+    gameTestRuntimeOnly.extendsFrom runtimeOnly
+}
+// GameTest fixtures construct native machines. Production sources compile against the public API only.
+dependencies.add('gameTestCompileOnly', files(new File(tcReferenceDir, tcReference.modules.tc.jar)))
+// Explicit test-only peer; never changes the client/server distribution or compile API.
+def gameTestLithium = providers.gradleProperty('gameTestLithium').isPresent()
+def gameTestRun = providers.gradleProperty('gameTestRun').getOrElse(gameTestLithium ? 'gametest-lithium' : 'gametest')
+if (!(gameTestRun ==~ /[A-Za-z0-9][A-Za-z0-9_-]*/))
+    throw new GradleException('gameTestRun must be a directory name under 工程管理/run.')
+if (gameTestLithium) {
+    def peer = mixinHostContract.hosts.lithium
+    def peerJar = new File(managementDir, peer.jar as String)
+    if (peer.minecraft != '1.21.1' || peer.loader != 'neoforge' || !peerJar.isFile())
+        throw new GradleException('Missing reviewed NeoForge 1.21.1 Lithium test peer.')
+    def digest = java.security.MessageDigest.getInstance('SHA-256').digest(peerJar.bytes).encodeHex().toString()
+    if (digest != peer.sha256)
+        throw new GradleException('Lithium test peer differs from the reviewed host contract.')
+    dependencies.add('gameTestRuntimeOnly', files(peerJar))
+    // FML's development classpath alone does not discover this executable mod jar.
+    def stageLithium = tasks.register('stageGameTestLithium', Copy) {
+        from(peerJar)
+        into(new File(managementDir, "run/${gameTestRun}/mods"))
+    }
+    tasks.matching { it.name == 'runGameTestServer' }.configureEach { dependsOn(stageLithium) }
+}
+
+neoForge {
+    version = neo_version
+    addModdingDependenciesTo sourceSets.gameTest
+    runs {
+        client {
+            client(); gameDirectory = new File(managementDir, 'run/client')
+            // Shader/render helpers belong to this client run, never the mod JAR or server classpath.
+            if (providers.gradleProperty('withCompat').isPresent()) {
+                def clientHelpers = helperManifest.mods.findAll { it.side == 'client' }.collect { entry ->
+                    if (entry.file != new File(entry.file as String).name)
+                        throw new GradleException('Helper mod filename must not contain directories.')
+                    def jar = new File(managementDir, "dependencies/helpers/${entry.file}")
+                    if (!jar.isFile()) throw new GradleException("Missing client helper ${entry.file}; run 工程管理/build.py first.")
+                    jar
+                }
+                // FML 4's development classpath does not reliably discover these
+                // executable jars as mods. Stage only the client run's mods folder;
+                // server runs and the published jar remain untouched.
+                def stageRenderMods = tasks.register('stageClientRenderMods', Copy) {
+                    from(clientHelpers)
+                    into(new File(managementDir, 'run/client/mods'))
+                }
+                tasks.matching { it.name == 'runClient' }.configureEach {
+                    dependsOn(stageRenderMods)
+                }
+            }
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = new File(managementDir, "run/${gameTestRun}")
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'kaleidoscope_witchcraft'
+            systemProperty 'witchcraft.gameTests', providers.gradleProperty('gameTests').getOrElse('')
+            systemProperty 'witchcraft.benchmark.reverse', providers.gradleProperty('benchmarkReverse').getOrElse('false')
+            if (providers.gradleProperty('gameTests').getOrElse('') == 'benchmark') jvmArguments.addAll('-Xms1G', '-Xmx3G')
+        }
+    }
+    mods {
+        kaleidoscope_witchcraft { sourceSet sourceSets.main; sourceSet sourceSets.gameTest }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+tasks.named('processResources') {
+    // Asset attribution and source notes belong to engineering files, not runtime resources.
+    exclude '**/*NOTICE*', '**/*CREDITS*'
+    inputs.property 'mod_version', project.version
+    inputs.property 'neo_version', neo_version
+    inputs.property 'tc_runtime_version', tcReference.modules.tc.version
+    inputs.property 'draconic_runtime_version', mixinHostContract.hosts.draconic.version
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand mod_version: project.version, neo_version: neo_version,
+                tc_runtime_version: tcReference.modules.tc.version,
+                draconic_runtime_version: mixinHostContract.hosts.draconic.version
+    }
+}
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.named('jar') {
+    exclude '**/*NOTICE*', '**/*CREDITS*'
+    manifest { attributes 'Implementation-Version': project.version }
+}
+tasks.register('releaseJar', Copy) {
+    dependsOn tasks.named('jar')
+    from tasks.named('jar')
+    into new File(managementDir, 'dist')
+    rename { "森罗物语：神秘巫术-${project.version}-neoforge+mc1.21.1.jar" }
+}
+
+tasks.register('exportCompileClasspath') {
+    doLast {
+        layout.buildDirectory.file('compile-classpath.txt').get().asFile.text = configurations.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+    }
+}
+
+tasks.register('exportRuntimeClasspath') {
+    doLast {
+        layout.buildDirectory.file('runtime-classpath.txt').get().asFile.text = configurations.runtimeClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+    }
+}
+
+tasks.register('exportGameTestRuntimeClasspath') {
+    doLast {
+        layout.buildDirectory.file('gametest-runtime-classpath.txt').get().asFile.text = configurations.gameTestRuntimeClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+    }
+}

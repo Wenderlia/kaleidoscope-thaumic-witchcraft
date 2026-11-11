@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/fence_post",
+  "textures": {
+    "texture": "kaleidoscope_witchcraft:block/years_planks"
+  }
+}

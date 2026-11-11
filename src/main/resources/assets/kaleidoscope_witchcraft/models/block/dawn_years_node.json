@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "kaleidoscope_witchcraft:block/dawn_years_node_side",
+    "end": "kaleidoscope_witchcraft:block/dawn_years_node_end"
+  }
+}

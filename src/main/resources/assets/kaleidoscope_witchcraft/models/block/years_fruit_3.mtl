@@ -1,0 +1,9 @@
+newmtl skin
+Ka 0 0 0
+Kd 1 1 1
+map_Kd #skin
+
+newmtl core
+Ka 1 1 1
+Kd 1 1 1
+map_Kd #skin

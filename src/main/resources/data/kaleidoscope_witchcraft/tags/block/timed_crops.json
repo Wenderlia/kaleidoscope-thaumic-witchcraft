@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "thaumictinkerer:infused_crop", "required": false }
+  ]
+}

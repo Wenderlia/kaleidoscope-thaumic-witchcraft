@@ -1,0 +1,7324 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "glass": "kaleidoscope_witchcraft:block/brew/dusk_brandy_glass",
+    "parts": "kaleidoscope_witchcraft:block/brew/dusk_brandy_parts",
+    "wood": "kaleidoscope_witchcraft:block/brew/dusk_brandy_wood",
+    "metal": "kaleidoscope_witchcraft:block/brew/dusk_brandy_metal",
+    "label": "kaleidoscope_witchcraft:block/brew/dusk_brandy_label",
+    "surface": "kaleidoscope_witchcraft:block/brew/dusk_brandy_surface",
+    "liquid": "kaleidoscope_witchcraft:block/brew/dusk_brandy_liquid",
+    "liquid_side": "kaleidoscope_witchcraft:block/brew/dusk_brandy_liquid_side",
+    "particle": "kaleidoscope_witchcraft:item/dusk_brandy",
+    "cap_00": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_00",
+    "cap_01": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_01",
+    "cap_02": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_02",
+    "cap_03": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_03",
+    "cap_04": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_04",
+    "cap_05": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_05",
+    "cap_06": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_06",
+    "cap_07": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_07",
+    "cap_08": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_08",
+    "cap_09": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_09",
+    "cap_10": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_10",
+    "cap_11": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_11",
+    "cap_12": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_12",
+    "cap_13": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_13",
+    "cap_14": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_14",
+    "cap_15": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_15",
+    "cap_16": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_16",
+    "cap_17": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_17",
+    "cap_18": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_18",
+    "cap_19": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_19",
+    "cap_20": "kaleidoscope_witchcraft:block/brew/dusk_brandy_cap_20"
+  },
+  "elements": [
+    {
+      "name": "glass / heel / front and back",
+      "from": [
+        2.175,
+        0,
+        5.675
+      ],
+      "to": [
+        6.824999999999999,
+        0.45,
+        10.325
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / side",
+      "from": [
+        1.1749999999999998,
+        0,
+        6.675
+      ],
+      "to": [
+        2.175,
+        0.45,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.300000000000001,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / side",
+      "from": [
+        6.824999999999999,
+        0,
+        6.675
+      ],
+      "to": [
+        7.824999999999999,
+        0.45,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.300000000000001,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        1.4678932188134528,
+        0,
+        5.967893218813453
+      ],
+      "to": [
+        2.882106781186547,
+        0.45,
+        7.382106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.175,
+          0.225,
+          6.675
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        1.4678932188134528,
+        0,
+        8.617893218813451
+      ],
+      "to": [
+        2.882106781186547,
+        0.45,
+        10.032106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.175,
+          0.225,
+          9.325
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        6.117893218813451,
+        0,
+        5.967893218813453
+      ],
+      "to": [
+        7.532106781186547,
+        0.45,
+        7.382106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.824999999999999,
+          0.225,
+          6.675
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        6.117893218813451,
+        0,
+        8.617893218813451
+      ],
+      "to": [
+        7.532106781186547,
+        0.45,
+        10.032106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.824999999999999,
+          0.225,
+          9.325
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / front and back",
+      "from": [
+        2.1500000000000004,
+        0.45,
+        5.6
+      ],
+      "to": [
+        6.85,
+        2.4,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / side",
+      "from": [
+        1.0499999999999998,
+        0.45,
+        6.699999999999999
+      ],
+      "to": [
+        2.1500000000000004,
+        2.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            5.199999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / side",
+      "from": [
+        6.85,
+        0.45,
+        6.699999999999999
+      ],
+      "to": [
+        7.949999999999999,
+        2.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            5.199999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        1.3721825406947978,
+        0.45,
+        5.922182540694797
+      ],
+      "to": [
+        2.927817459305203,
+        2.4,
+        7.477817459305202
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.1500000000000004,
+          1.425,
+          6.699999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        1.3721825406947978,
+        0.45,
+        8.522182540694798
+      ],
+      "to": [
+        2.927817459305203,
+        2.4,
+        10.077817459305203
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.1500000000000004,
+          1.425,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        6.072182540694797,
+        0.45,
+        5.922182540694797
+      ],
+      "to": [
+        7.627817459305202,
+        2.4,
+        7.477817459305202
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.85,
+          1.425,
+          6.699999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        6.072182540694797,
+        0.45,
+        8.522182540694798
+      ],
+      "to": [
+        7.627817459305202,
+        2.4,
+        10.077817459305203
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.85,
+          1.425,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / front and back",
+      "from": [
+        2.2300000000000004,
+        0.55,
+        5.78
+      ],
+      "to": [
+        6.77,
+        2.4,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / side",
+      "from": [
+        1.2300000000000004,
+        0.55,
+        6.78
+      ],
+      "to": [
+        2.2300000000000004,
+        2.4,
+        9.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            4.879999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / side",
+      "from": [
+        6.77,
+        0.55,
+        6.78
+      ],
+      "to": [
+        7.77,
+        2.4,
+        9.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            4.879999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        1.5228932188134525,
+        0.55,
+        6.072893218813453
+      ],
+      "to": [
+        2.9371067811865483,
+        2.4,
+        7.487106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.2300000000000004,
+          1.475,
+          6.78
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        1.5228932188134525,
+        0.55,
+        8.512893218813451
+      ],
+      "to": [
+        2.9371067811865483,
+        2.4,
+        9.927106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.2300000000000004,
+          1.475,
+          9.219999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        6.062893218813452,
+        0.55,
+        6.072893218813453
+      ],
+      "to": [
+        7.4771067811865475,
+        2.4,
+        7.487106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.77,
+          1.475,
+          6.78
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        6.062893218813452,
+        0.55,
+        8.512893218813451
+      ],
+      "to": [
+        7.4771067811865475,
+        2.4,
+        9.927106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.77,
+          1.475,
+          9.219999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / front and back",
+      "from": [
+        2.25,
+        2.4,
+        5.6
+      ],
+      "to": [
+        6.75,
+        3.8,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / side",
+      "from": [
+        1.25,
+        2.4,
+        6.6
+      ],
+      "to": [
+        2.25,
+        3.8,
+        9.4
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            5.6,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / side",
+      "from": [
+        6.75,
+        2.4,
+        6.6
+      ],
+      "to": [
+        7.75,
+        3.8,
+        9.4
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            5.6,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        1.542893218813452,
+        2.4,
+        5.892893218813452
+      ],
+      "to": [
+        2.957106781186548,
+        3.8,
+        7.3071067811865476
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.25,
+          3.0999999999999996,
+          6.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        1.542893218813452,
+        2.4,
+        8.692893218813452
+      ],
+      "to": [
+        2.957106781186548,
+        3.8,
+        10.107106781186548
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.25,
+          3.0999999999999996,
+          9.4
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        6.042893218813452,
+        2.4,
+        5.892893218813452
+      ],
+      "to": [
+        7.457106781186548,
+        3.8,
+        7.3071067811865476
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.75,
+          3.0999999999999996,
+          6.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        6.042893218813452,
+        2.4,
+        8.692893218813452
+      ],
+      "to": [
+        7.457106781186548,
+        3.8,
+        10.107106781186548
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.75,
+          3.0999999999999996,
+          9.4
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / front and back",
+      "from": [
+        2.33,
+        2.4,
+        5.78
+      ],
+      "to": [
+        6.67,
+        3.8,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / side",
+      "from": [
+        1.4299999999999997,
+        2.4,
+        6.680000000000001
+      ],
+      "to": [
+        2.33,
+        3.8,
+        9.319999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            5.279999999999999,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / side",
+      "from": [
+        6.67,
+        2.4,
+        6.680000000000001
+      ],
+      "to": [
+        7.57,
+        3.8,
+        9.319999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            5.279999999999999,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        1.6936038969321077,
+        2.4,
+        6.043603896932108
+      ],
+      "to": [
+        2.9663961030678925,
+        3.8,
+        7.316396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.33,
+          3.0999999999999996,
+          6.680000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        1.6936038969321077,
+        2.4,
+        8.683603896932105
+      ],
+      "to": [
+        2.9663961030678925,
+        3.8,
+        9.956396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.33,
+          3.0999999999999996,
+          9.319999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        6.033603896932107,
+        2.4,
+        6.043603896932108
+      ],
+      "to": [
+        7.306396103067893,
+        3.8,
+        7.316396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.67,
+          3.0999999999999996,
+          6.680000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        6.033603896932107,
+        2.4,
+        8.683603896932105
+      ],
+      "to": [
+        7.306396103067893,
+        3.8,
+        9.956396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.67,
+          3.0999999999999996,
+          9.319999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / front and back",
+      "from": [
+        2.425,
+        3.8,
+        5.6
+      ],
+      "to": [
+        6.574999999999999,
+        5.2,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / side",
+      "from": [
+        1.625,
+        3.8,
+        6.3999999999999995
+      ],
+      "to": [
+        2.425,
+        5.2,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            6.3999999999999995,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / side",
+      "from": [
+        6.574999999999999,
+        3.8,
+        6.3999999999999995
+      ],
+      "to": [
+        7.375,
+        5.2,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            6.3999999999999995,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        1.859314575050762,
+        3.8,
+        5.834314575050762
+      ],
+      "to": [
+        2.9906854249492376,
+        5.2,
+        6.965685424949237
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.425,
+          4.5,
+          6.3999999999999995
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        1.859314575050762,
+        3.8,
+        9.034314575050761
+      ],
+      "to": [
+        2.9906854249492376,
+        5.2,
+        10.165685424949238
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.425,
+          4.5,
+          9.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        6.009314575050761,
+        3.8,
+        5.834314575050762
+      ],
+      "to": [
+        7.140685424949238,
+        5.2,
+        6.965685424949237
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.574999999999999,
+          4.5,
+          6.3999999999999995
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        6.009314575050761,
+        3.8,
+        9.034314575050761
+      ],
+      "to": [
+        7.140685424949238,
+        5.2,
+        10.165685424949238
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.574999999999999,
+          4.5,
+          9.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / front and back",
+      "from": [
+        2.505,
+        3.8,
+        5.78
+      ],
+      "to": [
+        6.495000000000001,
+        5.2,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / side",
+      "from": [
+        1.8049999999999997,
+        3.8,
+        6.48
+      ],
+      "to": [
+        2.505,
+        5.2,
+        9.52
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            6.079999999999998,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / side",
+      "from": [
+        6.495000000000001,
+        3.8,
+        6.48
+      ],
+      "to": [
+        7.195,
+        5.2,
+        9.52
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            6.079999999999998,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        2.0100252531694167,
+        3.8,
+        5.985025253169417
+      ],
+      "to": [
+        2.999974746830583,
+        5.2,
+        6.974974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.505,
+          4.5,
+          6.48
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        2.0100252531694167,
+        3.8,
+        9.025025253169416
+      ],
+      "to": [
+        2.999974746830583,
+        5.2,
+        10.014974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.505,
+          4.5,
+          9.52
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        6.000025253169417,
+        3.8,
+        5.985025253169417
+      ],
+      "to": [
+        6.989974746830585,
+        5.2,
+        6.974974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.495000000000001,
+          4.5,
+          6.48
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        6.000025253169417,
+        3.8,
+        9.025025253169416
+      ],
+      "to": [
+        6.989974746830585,
+        5.2,
+        10.014974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.495000000000001,
+          4.5,
+          9.52
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / front and back",
+      "from": [
+        2.8500000000000005,
+        5.2,
+        6.0
+      ],
+      "to": [
+        6.15,
+        6.4,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / side",
+      "from": [
+        2.1500000000000004,
+        5.2,
+        6.7
+      ],
+      "to": [
+        2.8500000000000005,
+        6.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            5.2,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / side",
+      "from": [
+        6.15,
+        5.2,
+        6.7
+      ],
+      "to": [
+        6.85,
+        6.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            5.2,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        2.3550252531694174,
+        5.2,
+        6.205025253169417
+      ],
+      "to": [
+        3.3449747468305837,
+        6.4,
+        7.194974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.8500000000000005,
+          5.800000000000001,
+          6.7
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        2.3550252531694174,
+        5.2,
+        8.805025253169418
+      ],
+      "to": [
+        3.3449747468305837,
+        6.4,
+        9.794974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.8500000000000005,
+          5.800000000000001,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        5.655025253169416,
+        5.2,
+        6.205025253169417
+      ],
+      "to": [
+        6.644974746830584,
+        6.4,
+        7.194974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.15,
+          5.800000000000001,
+          6.7
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        5.655025253169416,
+        5.2,
+        8.805025253169418
+      ],
+      "to": [
+        6.644974746830584,
+        6.4,
+        9.794974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.15,
+          5.800000000000001,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / front and back",
+      "from": [
+        2.9299999999999997,
+        5.2,
+        6.18
+      ],
+      "to": [
+        6.07,
+        6.4,
+        9.82
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / side",
+      "from": [
+        2.33,
+        5.2,
+        6.779999999999999
+      ],
+      "to": [
+        2.9299999999999997,
+        6.4,
+        9.22
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            4.880000000000001,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / side",
+      "from": [
+        6.07,
+        5.2,
+        6.779999999999999
+      ],
+      "to": [
+        6.67,
+        6.4,
+        9.22
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            4.880000000000001,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        2.505735931288071,
+        5.2,
+        6.355735931288071
+      ],
+      "to": [
+        3.3542640687119283,
+        6.4,
+        7.204264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.9299999999999997,
+          5.800000000000001,
+          6.779999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        2.505735931288071,
+        5.2,
+        8.795735931288073
+      ],
+      "to": [
+        3.3542640687119283,
+        6.4,
+        9.644264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.9299999999999997,
+          5.800000000000001,
+          9.22
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        5.645735931288073,
+        5.2,
+        6.355735931288071
+      ],
+      "to": [
+        6.494264068711928,
+        6.4,
+        7.204264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.07,
+          5.800000000000001,
+          6.779999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        5.645735931288073,
+        5.2,
+        8.795735931288073
+      ],
+      "to": [
+        6.494264068711928,
+        6.4,
+        9.644264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.07,
+          5.800000000000001,
+          9.22
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / front and back",
+      "from": [
+        3.2,
+        6.4,
+        6.4
+      ],
+      "to": [
+        5.799999999999999,
+        7.35,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / side",
+      "from": [
+        2.6500000000000004,
+        6.4,
+        6.95
+      ],
+      "to": [
+        3.2,
+        7.35,
+        9.049999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            4.2,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / side",
+      "from": [
+        5.799999999999999,
+        6.4,
+        6.95
+      ],
+      "to": [
+        6.35,
+        7.35,
+        9.049999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            4.2,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        2.811091270347399,
+        6.4,
+        6.561091270347399
+      ],
+      "to": [
+        3.5889087296526014,
+        7.35,
+        7.338908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.2,
+          6.875,
+          6.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        2.811091270347399,
+        6.4,
+        8.661091270347399
+      ],
+      "to": [
+        3.5889087296526014,
+        7.35,
+        9.4389087296526
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.2,
+          6.875,
+          9.049999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        5.411091270347399,
+        6.4,
+        6.561091270347399
+      ],
+      "to": [
+        6.188908729652599,
+        7.35,
+        7.338908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.799999999999999,
+          6.875,
+          6.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        5.411091270347399,
+        6.4,
+        8.661091270347399
+      ],
+      "to": [
+        6.188908729652599,
+        7.35,
+        9.4389087296526
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.799999999999999,
+          6.875,
+          9.049999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / front and back",
+      "from": [
+        3.2800000000000002,
+        6.4,
+        6.58
+      ],
+      "to": [
+        5.720000000000001,
+        7.15,
+        9.42
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / side",
+      "from": [
+        2.83,
+        6.4,
+        7.03
+      ],
+      "to": [
+        3.2800000000000002,
+        7.15,
+        8.97
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            3.8800000000000003,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / side",
+      "from": [
+        5.720000000000001,
+        6.4,
+        7.03
+      ],
+      "to": [
+        6.17,
+        7.15,
+        8.97
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            3.8800000000000003,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        2.9618019484660536,
+        6.4,
+        6.711801948466054
+      ],
+      "to": [
+        3.598198051533947,
+        7.15,
+        7.348198051533947
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.2800000000000002,
+          6.775,
+          7.03
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        2.9618019484660536,
+        6.4,
+        8.651801948466055
+      ],
+      "to": [
+        3.598198051533947,
+        7.15,
+        9.288198051533946
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.2800000000000002,
+          6.775,
+          8.97
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        5.401801948466055,
+        6.4,
+        6.711801948466054
+      ],
+      "to": [
+        6.038198051533946,
+        7.15,
+        7.348198051533947
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.720000000000001,
+          6.775,
+          7.03
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        5.401801948466055,
+        6.4,
+        8.651801948466055
+      ],
+      "to": [
+        6.038198051533946,
+        7.15,
+        9.288198051533946
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.720000000000001,
+          6.775,
+          8.97
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / front and back",
+      "from": [
+        3.4750000000000005,
+        7.35,
+        6.675
+      ],
+      "to": [
+        5.525,
+        8.1,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            12,
+            3.505000000000001
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            12,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / side",
+      "from": [
+        3.075,
+        7.35,
+        7.075
+      ],
+      "to": [
+        3.4750000000000005,
+        8.1,
+        8.924999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            3.6999999999999997,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / side",
+      "from": [
+        5.525,
+        7.35,
+        7.075
+      ],
+      "to": [
+        5.925000000000001,
+        8.1,
+        8.924999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            3.6999999999999997,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        3.192157287525381,
+        7.35,
+        6.792157287525381
+      ],
+      "to": [
+        3.75784271247462,
+        8.1,
+        7.3578427124746195
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.4750000000000005,
+          7.725,
+          7.075
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        3.192157287525381,
+        7.35,
+        8.64215728752538
+      ],
+      "to": [
+        3.75784271247462,
+        8.1,
+        9.207842712474617
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.4750000000000005,
+          7.725,
+          8.924999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        5.242157287525382,
+        7.35,
+        6.792157287525381
+      ],
+      "to": [
+        5.807842712474619,
+        8.1,
+        7.3578427124746195
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.525,
+          7.725,
+          7.075
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        5.242157287525382,
+        7.35,
+        8.64215728752538
+      ],
+      "to": [
+        5.807842712474619,
+        8.1,
+        9.207842712474617
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.525,
+          7.725,
+          8.924999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / neck",
+      "from": [
+        3.58,
+        8.05,
+        7.08
+      ],
+      "to": [
+        5.42,
+        10.45,
+        8.92
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "name": "gold / collar",
+      "from": [
+        3.37,
+        10.1,
+        6.87
+      ],
+      "to": [
+        5.630000000000001,
+        10.5,
+        9.13
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper stem",
+      "from": [
+        3.6399999999999997,
+        10.3,
+        7.14
+      ],
+      "to": [
+        5.359999999999999,
+        10.55,
+        8.86
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / front and back",
+      "from": [
+        3.4000000000000004,
+        10.5,
+        6.55
+      ],
+      "to": [
+        5.6,
+        11.8,
+        9.45
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / side",
+      "from": [
+        2.9000000000000004,
+        10.5,
+        7.05
+      ],
+      "to": [
+        3.4000000000000004,
+        11.8,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            3.8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / side",
+      "from": [
+        5.6,
+        10.5,
+        7.05
+      ],
+      "to": [
+        6.1,
+        11.8,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            3.8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        3.0464466094067264,
+        10.5,
+        6.696446609406726
+      ],
+      "to": [
+        3.7535533905932743,
+        11.8,
+        7.403553390593274
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.4000000000000004,
+          11.15,
+          7.05
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        3.0464466094067264,
+        10.5,
+        8.596446609406726
+      ],
+      "to": [
+        3.7535533905932743,
+        11.8,
+        9.303553390593272
+      ],
+      "shade": true,
+      "faces": {
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.4000000000000004,
+          11.15,
+          8.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        5.246446609406727,
+        10.5,
+        6.696446609406726
+      ],
+      "to": [
+        5.953553390593273,
+        11.8,
+        7.403553390593274
+      ],
+      "shade": true,
+      "faces": {
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.6,
+          11.15,
+          7.05
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        5.246446609406727,
+        10.5,
+        8.596446609406726
+      ],
+      "to": [
+        5.953553390593273,
+        11.8,
+        9.303553390593272
+      ],
+      "shade": true,
+      "faces": {
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.6,
+          11.15,
+          8.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / engraved crown",
+      "from": [
+        3.55,
+        11.8,
+        7.05
+      ],
+      "to": [
+        5.449999999999999,
+        12.0,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / dusk medallion",
+      "from": [
+        3.0999999999999996,
+        2.8,
+        5.585
+      ],
+      "to": [
+        5.9,
+        5.15,
+        5.585
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#label",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / rear seal",
+      "from": [
+        3.9000000000000004,
+        1,
+        10.415
+      ],
+      "to": [
+        5.1,
+        1.8,
+        10.415
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#label",
+          "uv": [
+            0,
+            12,
+            8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0",
+      "from": [
+        1.125,
+        0,
+        5.625
+      ],
+      "to": [
+        7.875,
+        0,
+        10.375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_00",
+          "uv": [
+            0,
+            9.5,
+            13.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0.45",
+      "from": [
+        1.0,
+        0.45,
+        5.5625
+      ],
+      "to": [
+        8.0,
+        0.45,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_01",
+          "uv": [
+            0,
+            9.75,
+            14.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 2.4",
+      "from": [
+        1.1875,
+        2.4,
+        5.75
+      ],
+      "to": [
+        7.8125,
+        2.4,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_02",
+          "uv": [
+            0,
+            0,
+            13.25,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 2.4",
+      "from": [
+        2.125,
+        2.4,
+        5.5625
+      ],
+      "to": [
+        6.875,
+        2.4,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_03",
+          "uv": [
+            0,
+            9.75,
+            9.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 2.4",
+      "from": [
+        1.0,
+        2.4,
+        5.5625
+      ],
+      "to": [
+        8.0,
+        2.4,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_04",
+          "uv": [
+            0,
+            0,
+            14.0,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 3.8",
+      "from": [
+        1.375,
+        3.8,
+        5.75
+      ],
+      "to": [
+        7.625,
+        3.8,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_05",
+          "uv": [
+            0,
+            0,
+            12.5,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 3.8",
+      "from": [
+        2.375,
+        3.8,
+        5.5625
+      ],
+      "to": [
+        6.625,
+        3.8,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_06",
+          "uv": [
+            0,
+            9.75,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 3.8",
+      "from": [
+        1.25,
+        3.8,
+        5.5625
+      ],
+      "to": [
+        7.75,
+        3.8,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_07",
+          "uv": [
+            0,
+            0,
+            13.0,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 5.2",
+      "from": [
+        1.75,
+        5.2,
+        5.75
+      ],
+      "to": [
+        7.25,
+        5.2,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_08",
+          "uv": [
+            0,
+            0,
+            11.0,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 5.2",
+      "from": [
+        2.375,
+        5.2,
+        7.125
+      ],
+      "to": [
+        6.625,
+        5.2,
+        8.875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_09",
+          "uv": [
+            0,
+            3.5,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 5.2",
+      "from": [
+        1.625,
+        5.2,
+        5.5625
+      ],
+      "to": [
+        7.375,
+        5.2,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_10",
+          "uv": [
+            0,
+            0,
+            11.5,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 6.4",
+      "from": [
+        2.3125,
+        6.4,
+        6.125
+      ],
+      "to": [
+        6.6875,
+        6.4,
+        9.875
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_11",
+          "uv": [
+            0,
+            0,
+            8.75,
+            7.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 6.4",
+      "from": [
+        2.125,
+        6.4,
+        6.0
+      ],
+      "to": [
+        6.875,
+        6.4,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_12",
+          "uv": [
+            0,
+            0,
+            9.5,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 7.15",
+      "from": [
+        2.8125,
+        7.15,
+        6.5625
+      ],
+      "to": [
+        6.1875,
+        7.15,
+        9.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_13",
+          "uv": [
+            0,
+            0,
+            13.5,
+            11.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 7.35",
+      "from": [
+        3.1875,
+        7.35,
+        7.4375
+      ],
+      "to": [
+        5.8125,
+        7.35,
+        8.5625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_14",
+          "uv": [
+            0,
+            4.5,
+            10.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 7.35",
+      "from": [
+        2.625,
+        7.35,
+        6.375
+      ],
+      "to": [
+        6.375,
+        7.35,
+        9.625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_15",
+          "uv": [
+            0,
+            0,
+            15.0,
+            13.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 8.1",
+      "from": [
+        3.0625,
+        8.1,
+        6.625
+      ],
+      "to": [
+        5.9375,
+        8.1,
+        9.375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_16",
+          "uv": [
+            0,
+            0,
+            11.5,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible down at 10.3",
+      "from": [
+        3.625,
+        10.3,
+        7.125
+      ],
+      "to": [
+        5.375,
+        10.3,
+        8.875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_17",
+          "uv": [
+            0,
+            14.0,
+            14.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible down at 10.5",
+      "from": [
+        2.875,
+        10.5,
+        6.5
+      ],
+      "to": [
+        6.125,
+        10.5,
+        9.5
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_18",
+          "uv": [
+            0,
+            12.0,
+            13.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible up at 11.8",
+      "from": [
+        2.875,
+        11.8,
+        6.5
+      ],
+      "to": [
+        6.125,
+        11.8,
+        9.5
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_19",
+          "uv": [
+            0,
+            0,
+            13.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible up at 12.0",
+      "from": [
+        3.5,
+        12.0,
+        7.0
+      ],
+      "to": [
+        5.5,
+        12.0,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_20",
+          "uv": [
+            0,
+            0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / front and back",
+      "from": [
+        9.175,
+        0,
+        5.675
+      ],
+      "to": [
+        13.825,
+        0.45,
+        10.325
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            12,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / side",
+      "from": [
+        8.175,
+        0,
+        6.675
+      ],
+      "to": [
+        9.175,
+        0.45,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.300000000000001,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / side",
+      "from": [
+        13.825,
+        0,
+        6.675
+      ],
+      "to": [
+        14.825,
+        0.45,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            5.300000000000001,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        8.467893218813453,
+        0,
+        5.967893218813453
+      ],
+      "to": [
+        9.882106781186547,
+        0.45,
+        7.382106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.175,
+          0.225,
+          6.675
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        8.467893218813453,
+        0,
+        8.617893218813451
+      ],
+      "to": [
+        9.882106781186547,
+        0.45,
+        10.032106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.175,
+          0.225,
+          9.325
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        13.117893218813451,
+        0,
+        5.967893218813453
+      ],
+      "to": [
+        14.532106781186547,
+        0.45,
+        7.382106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.825,
+          0.225,
+          6.675
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / heel / bevel",
+      "from": [
+        13.117893218813451,
+        0,
+        8.617893218813451
+      ],
+      "to": [
+        14.532106781186547,
+        0.45,
+        10.032106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            0,
+            2.8284271247461903,
+            2
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.825,
+          0.225,
+          9.325
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / front and back",
+      "from": [
+        9.15,
+        0.45,
+        5.6
+      ],
+      "to": [
+        13.85,
+        2.4,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / side",
+      "from": [
+        8.05,
+        0.45,
+        6.699999999999999
+      ],
+      "to": [
+        9.15,
+        2.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            5.199999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / side",
+      "from": [
+        13.85,
+        0.45,
+        6.699999999999999
+      ],
+      "to": [
+        14.95,
+        2.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            5.199999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        8.372182540694798,
+        0.45,
+        5.922182540694797
+      ],
+      "to": [
+        9.927817459305203,
+        2.4,
+        7.477817459305202
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.15,
+          1.425,
+          6.699999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        8.372182540694798,
+        0.45,
+        8.522182540694798
+      ],
+      "to": [
+        9.927817459305203,
+        2.4,
+        10.077817459305203
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.15,
+          1.425,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        13.072182540694797,
+        0.45,
+        5.922182540694797
+      ],
+      "to": [
+        14.627817459305202,
+        2.4,
+        7.477817459305202
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.85,
+          1.425,
+          6.699999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 0 / bevel",
+      "from": [
+        13.072182540694797,
+        0.45,
+        8.522182540694798
+      ],
+      "to": [
+        14.627817459305202,
+        2.4,
+        10.077817459305203
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            11.92,
+            3.1112698372208096,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.85,
+          1.425,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / front and back",
+      "from": [
+        9.23,
+        0.55,
+        5.78
+      ],
+      "to": [
+        13.77,
+        2.4,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            12,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / side",
+      "from": [
+        8.23,
+        0.55,
+        6.78
+      ],
+      "to": [
+        9.23,
+        2.4,
+        9.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            4.879999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / side",
+      "from": [
+        13.77,
+        0.55,
+        6.78
+      ],
+      "to": [
+        14.77,
+        2.4,
+        9.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            4.879999999999999,
+            15.235
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        8.522893218813453,
+        0.55,
+        6.072893218813453
+      ],
+      "to": [
+        9.937106781186548,
+        2.4,
+        7.487106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.23,
+          1.475,
+          6.78
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        8.522893218813453,
+        0.55,
+        8.512893218813451
+      ],
+      "to": [
+        9.937106781186548,
+        2.4,
+        9.927106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.23,
+          1.475,
+          9.219999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        13.062893218813452,
+        0.55,
+        6.072893218813453
+      ],
+      "to": [
+        14.477106781186547,
+        2.4,
+        7.487106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.77,
+          1.475,
+          6.78
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 0 / bevel",
+      "from": [
+        13.062893218813452,
+        0.55,
+        8.512893218813451
+      ],
+      "to": [
+        14.477106781186547,
+        2.4,
+        9.927106781186547
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            11.92,
+            2.8284271247461903,
+            15.235
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.77,
+          1.475,
+          9.219999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / front and back",
+      "from": [
+        9.25,
+        2.4,
+        5.6
+      ],
+      "to": [
+        13.75,
+        3.8,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / side",
+      "from": [
+        8.25,
+        2.4,
+        6.6
+      ],
+      "to": [
+        9.25,
+        3.8,
+        9.4
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            5.6,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / side",
+      "from": [
+        13.75,
+        2.4,
+        6.6
+      ],
+      "to": [
+        14.75,
+        3.8,
+        9.4
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            5.6,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        8.542893218813452,
+        2.4,
+        5.892893218813452
+      ],
+      "to": [
+        9.957106781186548,
+        3.8,
+        7.3071067811865476
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.25,
+          3.0999999999999996,
+          6.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        8.542893218813452,
+        2.4,
+        8.692893218813452
+      ],
+      "to": [
+        9.957106781186548,
+        3.8,
+        10.107106781186548
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.25,
+          3.0999999999999996,
+          9.4
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        13.042893218813452,
+        2.4,
+        5.892893218813452
+      ],
+      "to": [
+        14.457106781186548,
+        3.8,
+        7.3071067811865476
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.75,
+          3.0999999999999996,
+          6.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 1 / bevel",
+      "from": [
+        13.042893218813452,
+        2.4,
+        8.692893218813452
+      ],
+      "to": [
+        14.457106781186548,
+        3.8,
+        10.107106781186548
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            9.54,
+            2.8284271247461903,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.75,
+          3.0999999999999996,
+          9.4
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / front and back",
+      "from": [
+        9.33,
+        2.4,
+        5.78
+      ],
+      "to": [
+        13.67,
+        3.8,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            12,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / side",
+      "from": [
+        8.43,
+        2.4,
+        6.680000000000001
+      ],
+      "to": [
+        9.33,
+        3.8,
+        9.319999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            5.279999999999999,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / side",
+      "from": [
+        13.67,
+        2.4,
+        6.680000000000001
+      ],
+      "to": [
+        14.57,
+        3.8,
+        9.319999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            5.279999999999999,
+            11.92
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        8.693603896932107,
+        2.4,
+        6.043603896932108
+      ],
+      "to": [
+        9.966396103067893,
+        3.8,
+        7.316396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.33,
+          3.0999999999999996,
+          6.680000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        8.693603896932107,
+        2.4,
+        8.683603896932105
+      ],
+      "to": [
+        9.966396103067893,
+        3.8,
+        9.956396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.33,
+          3.0999999999999996,
+          9.319999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        13.033603896932107,
+        2.4,
+        6.043603896932108
+      ],
+      "to": [
+        14.306396103067893,
+        3.8,
+        7.316396103067893
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.67,
+          3.0999999999999996,
+          6.680000000000001
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 1 / bevel",
+      "from": [
+        13.033603896932107,
+        2.4,
+        8.683603896932105
+      ],
+      "to": [
+        14.306396103067893,
+        3.8,
+        9.956396103067892
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            9.54,
+            2.5455844122715714,
+            11.92
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.67,
+          3.0999999999999996,
+          9.319999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / front and back",
+      "from": [
+        9.425,
+        3.8,
+        5.6
+      ],
+      "to": [
+        13.575,
+        5.2,
+        10.4
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / side",
+      "from": [
+        8.625,
+        3.8,
+        6.3999999999999995
+      ],
+      "to": [
+        9.425,
+        5.2,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            6.3999999999999995,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / side",
+      "from": [
+        13.575,
+        3.8,
+        6.3999999999999995
+      ],
+      "to": [
+        14.375,
+        5.2,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            6.3999999999999995,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        8.859314575050762,
+        3.8,
+        5.834314575050762
+      ],
+      "to": [
+        9.990685424949238,
+        5.2,
+        6.965685424949237
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.425,
+          4.5,
+          6.3999999999999995
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        8.859314575050762,
+        3.8,
+        9.034314575050761
+      ],
+      "to": [
+        9.990685424949238,
+        5.2,
+        10.165685424949238
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.425,
+          4.5,
+          9.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        13.00931457505076,
+        3.8,
+        5.834314575050762
+      ],
+      "to": [
+        14.140685424949238,
+        5.2,
+        6.965685424949237
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.575,
+          4.5,
+          6.3999999999999995
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 2 / bevel",
+      "from": [
+        13.00931457505076,
+        3.8,
+        9.034314575050761
+      ],
+      "to": [
+        14.140685424949238,
+        5.2,
+        10.165685424949238
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            7.16,
+            2.2627416997969525,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.575,
+          4.5,
+          9.6
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / front and back",
+      "from": [
+        9.504999999999999,
+        3.8,
+        5.78
+      ],
+      "to": [
+        13.495000000000001,
+        5.2,
+        10.219999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            12,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / side",
+      "from": [
+        8.805,
+        3.8,
+        6.48
+      ],
+      "to": [
+        9.504999999999999,
+        5.2,
+        9.52
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            6.079999999999998,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / side",
+      "from": [
+        13.495000000000001,
+        3.8,
+        6.48
+      ],
+      "to": [
+        14.195,
+        5.2,
+        9.52
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            6.079999999999998,
+            9.54
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        9.010025253169417,
+        3.8,
+        5.985025253169417
+      ],
+      "to": [
+        9.999974746830583,
+        5.2,
+        6.974974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.504999999999999,
+          4.5,
+          6.48
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        9.010025253169417,
+        3.8,
+        9.025025253169416
+      ],
+      "to": [
+        9.999974746830583,
+        5.2,
+        10.014974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.504999999999999,
+          4.5,
+          9.52
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        13.000025253169417,
+        3.8,
+        5.985025253169417
+      ],
+      "to": [
+        13.989974746830585,
+        5.2,
+        6.974974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.495000000000001,
+          4.5,
+          6.48
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 2 / bevel",
+      "from": [
+        13.000025253169417,
+        3.8,
+        9.025025253169416
+      ],
+      "to": [
+        13.989974746830585,
+        5.2,
+        10.014974746830584
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            7.16,
+            1.9798989873223334,
+            9.54
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.495000000000001,
+          4.5,
+          9.52
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / front and back",
+      "from": [
+        9.850000000000001,
+        5.2,
+        6.0
+      ],
+      "to": [
+        13.15,
+        6.4,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / side",
+      "from": [
+        9.15,
+        5.2,
+        6.7
+      ],
+      "to": [
+        9.850000000000001,
+        6.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            5.2,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / side",
+      "from": [
+        13.15,
+        5.2,
+        6.7
+      ],
+      "to": [
+        13.85,
+        6.4,
+        9.3
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            5.2,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        9.355025253169417,
+        5.2,
+        6.205025253169417
+      ],
+      "to": [
+        10.344974746830584,
+        6.4,
+        7.194974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.850000000000001,
+          5.800000000000001,
+          6.7
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        9.355025253169417,
+        5.2,
+        8.805025253169418
+      ],
+      "to": [
+        10.344974746830584,
+        6.4,
+        9.794974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.850000000000001,
+          5.800000000000001,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        12.655025253169416,
+        5.2,
+        6.205025253169417
+      ],
+      "to": [
+        13.644974746830584,
+        6.4,
+        7.194974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.15,
+          5.800000000000001,
+          6.7
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 3 / bevel",
+      "from": [
+        12.655025253169416,
+        5.2,
+        8.805025253169418
+      ],
+      "to": [
+        13.644974746830584,
+        6.4,
+        9.794974746830583
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.9798989873223332,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.15,
+          5.800000000000001,
+          9.3
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / front and back",
+      "from": [
+        9.93,
+        5.2,
+        6.18
+      ],
+      "to": [
+        13.07,
+        6.4,
+        9.82
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            12,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / side",
+      "from": [
+        9.33,
+        5.2,
+        6.779999999999999
+      ],
+      "to": [
+        9.93,
+        6.4,
+        9.22
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            4.880000000000001,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / side",
+      "from": [
+        13.07,
+        5.2,
+        6.779999999999999
+      ],
+      "to": [
+        13.67,
+        6.4,
+        9.22
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            4.880000000000001,
+            7.16
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        9.505735931288072,
+        5.2,
+        6.355735931288071
+      ],
+      "to": [
+        10.354264068711927,
+        6.4,
+        7.204264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.93,
+          5.800000000000001,
+          6.779999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        9.505735931288072,
+        5.2,
+        8.795735931288073
+      ],
+      "to": [
+        10.354264068711927,
+        6.4,
+        9.644264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.93,
+          5.800000000000001,
+          9.22
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        12.645735931288073,
+        5.2,
+        6.355735931288071
+      ],
+      "to": [
+        13.494264068711928,
+        6.4,
+        7.204264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.07,
+          5.800000000000001,
+          6.779999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 3 / bevel",
+      "from": [
+        12.645735931288073,
+        5.2,
+        8.795735931288073
+      ],
+      "to": [
+        13.494264068711928,
+        6.4,
+        9.644264068711928
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            5.119999999999999,
+            1.697056274847714,
+            7.16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.07,
+          5.800000000000001,
+          9.22
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / front and back",
+      "from": [
+        10.2,
+        6.4,
+        6.4
+      ],
+      "to": [
+        12.799999999999999,
+        7.35,
+        9.6
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / side",
+      "from": [
+        9.65,
+        6.4,
+        6.95
+      ],
+      "to": [
+        10.2,
+        7.35,
+        9.049999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            4.2,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / side",
+      "from": [
+        12.799999999999999,
+        6.4,
+        6.95
+      ],
+      "to": [
+        13.35,
+        7.35,
+        9.049999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            4.2,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        9.811091270347399,
+        6.4,
+        6.561091270347399
+      ],
+      "to": [
+        10.588908729652601,
+        7.35,
+        7.338908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.2,
+          6.875,
+          6.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        9.811091270347399,
+        6.4,
+        8.661091270347399
+      ],
+      "to": [
+        10.588908729652601,
+        7.35,
+        9.4389087296526
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.2,
+          6.875,
+          9.049999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        12.411091270347399,
+        6.4,
+        6.561091270347399
+      ],
+      "to": [
+        13.1889087296526,
+        7.35,
+        7.338908729652601
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.799999999999999,
+          6.875,
+          6.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 4 / bevel",
+      "from": [
+        12.411091270347399,
+        6.4,
+        8.661091270347399
+      ],
+      "to": [
+        13.1889087296526,
+        7.35,
+        9.4389087296526
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.5556349186104048,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.799999999999999,
+          6.875,
+          9.049999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / front and back",
+      "from": [
+        10.280000000000001,
+        6.4,
+        6.58
+      ],
+      "to": [
+        12.72,
+        7.15,
+        9.42
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        },
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            12,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / side",
+      "from": [
+        9.83,
+        6.4,
+        7.03
+      ],
+      "to": [
+        10.280000000000001,
+        7.15,
+        8.97
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            3.8800000000000003,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / side",
+      "from": [
+        12.72,
+        6.4,
+        7.03
+      ],
+      "to": [
+        13.17,
+        7.15,
+        8.97
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            3.8800000000000003,
+            5.119999999999999
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        9.961801948466054,
+        6.4,
+        6.711801948466054
+      ],
+      "to": [
+        10.598198051533947,
+        7.15,
+        7.348198051533947
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.280000000000001,
+          6.775,
+          7.03
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        9.961801948466054,
+        6.4,
+        8.651801948466055
+      ],
+      "to": [
+        10.598198051533947,
+        7.15,
+        9.288198051533946
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.280000000000001,
+          6.775,
+          8.97
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        12.401801948466055,
+        6.4,
+        6.711801948466054
+      ],
+      "to": [
+        13.038198051533946,
+        7.15,
+        7.348198051533947
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#liquid_side",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.72,
+          6.775,
+          7.03
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wine / accumulated gold 4 / bevel",
+      "from": [
+        12.401801948466055,
+        6.4,
+        8.651801948466055
+      ],
+      "to": [
+        13.038198051533946,
+        7.15,
+        9.288198051533946
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            3.505000000000001,
+            1.272792206135786,
+            5.119999999999999
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.72,
+          6.775,
+          8.97
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / front and back",
+      "from": [
+        10.475000000000001,
+        7.35,
+        6.675
+      ],
+      "to": [
+        12.525,
+        8.1,
+        9.325
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            12,
+            3.505000000000001
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            12,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / side",
+      "from": [
+        10.075,
+        7.35,
+        7.075
+      ],
+      "to": [
+        10.475000000000001,
+        8.1,
+        8.924999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            3.6999999999999997,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / side",
+      "from": [
+        12.525,
+        7.35,
+        7.075
+      ],
+      "to": [
+        12.925,
+        8.1,
+        8.924999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            3.6999999999999997,
+            3.505000000000001
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        10.192157287525381,
+        7.35,
+        6.792157287525381
+      ],
+      "to": [
+        10.75784271247462,
+        8.1,
+        7.3578427124746195
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.475000000000001,
+          7.725,
+          7.075
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        10.192157287525381,
+        7.35,
+        8.64215728752538
+      ],
+      "to": [
+        10.75784271247462,
+        8.1,
+        9.207842712474617
+      ],
+      "shade": false,
+      "faces": {
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.475000000000001,
+          7.725,
+          8.924999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        12.242157287525382,
+        7.35,
+        6.792157287525381
+      ],
+      "to": [
+        12.807842712474619,
+        8.1,
+        7.3578427124746195
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.525,
+          7.725,
+          7.075
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / body 5 / bevel",
+      "from": [
+        12.242157287525382,
+        7.35,
+        8.64215728752538
+      ],
+      "to": [
+        12.807842712474619,
+        8.1,
+        9.207842712474617
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0,
+            2.2300000000000004,
+            1.1313708498984762,
+            3.505000000000001
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.525,
+          7.725,
+          8.924999999999999
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "glass / neck",
+      "from": [
+        10.58,
+        8.05,
+        7.08
+      ],
+      "to": [
+        12.42,
+        10.45,
+        8.92
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#parts",
+          "uv": [
+            0,
+            8,
+            4,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "name": "gold / collar",
+      "from": [
+        10.370000000000001,
+        10.1,
+        6.87
+      ],
+      "to": [
+        12.63,
+        10.5,
+        9.13
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#metal",
+          "uv": [
+            0,
+            0,
+            6,
+            2
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper stem",
+      "from": [
+        10.64,
+        10.3,
+        7.14
+      ],
+      "to": [
+        12.36,
+        10.55,
+        8.86
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            5,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / front and back",
+      "from": [
+        10.4,
+        10.5,
+        6.55
+      ],
+      "to": [
+        12.6,
+        11.8,
+        9.45
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / side",
+      "from": [
+        9.9,
+        10.5,
+        7.05
+      ],
+      "to": [
+        10.4,
+        11.8,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            3.8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / side",
+      "from": [
+        12.6,
+        10.5,
+        7.05
+      ],
+      "to": [
+        13.1,
+        11.8,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            3.8,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        10.046446609406726,
+        10.5,
+        6.696446609406726
+      ],
+      "to": [
+        10.753553390593275,
+        11.8,
+        7.403553390593274
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.4,
+          11.15,
+          7.05
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        10.046446609406726,
+        10.5,
+        8.596446609406726
+      ],
+      "to": [
+        10.753553390593275,
+        11.8,
+        9.303553390593272
+      ],
+      "shade": true,
+      "faces": {
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.4,
+          11.15,
+          8.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        12.246446609406727,
+        10.5,
+        6.696446609406726
+      ],
+      "to": [
+        12.953553390593273,
+        11.8,
+        7.403553390593274
+      ],
+      "shade": true,
+      "faces": {
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.6,
+          11.15,
+          7.05
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / stopper head / bevel",
+      "from": [
+        12.246446609406727,
+        10.5,
+        8.596446609406726
+      ],
+      "to": [
+        12.953553390593273,
+        11.8,
+        9.303553390593272
+      ],
+      "shade": true,
+      "faces": {
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            0,
+            1.4142135623730951,
+            4
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.6,
+          11.15,
+          8.95
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "wood / engraved crown",
+      "from": [
+        10.55,
+        11.8,
+        7.05
+      ],
+      "to": [
+        12.45,
+        12.0,
+        8.95
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / dusk medallion",
+      "from": [
+        10.1,
+        2.8,
+        5.585
+      ],
+      "to": [
+        12.9,
+        5.15,
+        5.585
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#label",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "paper / rear seal",
+      "from": [
+        10.9,
+        1,
+        10.415
+      ],
+      "to": [
+        12.1,
+        1.8,
+        10.415
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "texture": "#label",
+          "uv": [
+            0,
+            12,
+            8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0",
+      "from": [
+        8.125,
+        0,
+        5.625
+      ],
+      "to": [
+        14.875,
+        0,
+        10.375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_00",
+          "uv": [
+            0,
+            9.5,
+            13.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 0.45",
+      "from": [
+        8.0,
+        0.45,
+        5.5625
+      ],
+      "to": [
+        15.0,
+        0.45,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_01",
+          "uv": [
+            0,
+            9.75,
+            14.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 2.4",
+      "from": [
+        8.1875,
+        2.4,
+        5.75
+      ],
+      "to": [
+        14.8125,
+        2.4,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_02",
+          "uv": [
+            0,
+            0,
+            13.25,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 2.4",
+      "from": [
+        9.125,
+        2.4,
+        5.5625
+      ],
+      "to": [
+        13.875,
+        2.4,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_03",
+          "uv": [
+            0,
+            9.75,
+            9.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 2.4",
+      "from": [
+        8.0,
+        2.4,
+        5.5625
+      ],
+      "to": [
+        15.0,
+        2.4,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_04",
+          "uv": [
+            0,
+            0,
+            14.0,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 3.8",
+      "from": [
+        8.375,
+        3.8,
+        5.75
+      ],
+      "to": [
+        14.625,
+        3.8,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_05",
+          "uv": [
+            0,
+            0,
+            12.5,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 3.8",
+      "from": [
+        9.375,
+        3.8,
+        5.5625
+      ],
+      "to": [
+        13.625,
+        3.8,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_06",
+          "uv": [
+            0,
+            9.75,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 3.8",
+      "from": [
+        8.25,
+        3.8,
+        5.5625
+      ],
+      "to": [
+        14.75,
+        3.8,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_07",
+          "uv": [
+            0,
+            0,
+            13.0,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 5.2",
+      "from": [
+        8.75,
+        5.2,
+        5.75
+      ],
+      "to": [
+        14.25,
+        5.2,
+        10.25
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_08",
+          "uv": [
+            0,
+            0,
+            11.0,
+            9.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 5.2",
+      "from": [
+        9.375,
+        5.2,
+        7.125
+      ],
+      "to": [
+        13.625,
+        5.2,
+        8.875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_09",
+          "uv": [
+            0,
+            3.5,
+            8.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 5.2",
+      "from": [
+        8.625,
+        5.2,
+        5.5625
+      ],
+      "to": [
+        14.375,
+        5.2,
+        10.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_10",
+          "uv": [
+            0,
+            0,
+            11.5,
+            9.75
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 6.4",
+      "from": [
+        9.3125,
+        6.4,
+        6.125
+      ],
+      "to": [
+        13.6875,
+        6.4,
+        9.875
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_11",
+          "uv": [
+            0,
+            0,
+            8.75,
+            7.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 6.4",
+      "from": [
+        9.125,
+        6.4,
+        6.0
+      ],
+      "to": [
+        13.875,
+        6.4,
+        10.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_12",
+          "uv": [
+            0,
+            0,
+            9.5,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wine / visible up at 7.15",
+      "from": [
+        9.8125,
+        7.15,
+        6.5625
+      ],
+      "to": [
+        13.1875,
+        7.15,
+        9.4375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_13",
+          "uv": [
+            0,
+            0,
+            13.5,
+            11.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible down at 7.35",
+      "from": [
+        10.1875,
+        7.35,
+        7.4375
+      ],
+      "to": [
+        12.8125,
+        7.35,
+        8.5625
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_14",
+          "uv": [
+            0,
+            4.5,
+            10.5,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 7.35",
+      "from": [
+        9.625,
+        7.35,
+        6.375
+      ],
+      "to": [
+        13.375,
+        7.35,
+        9.625
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_15",
+          "uv": [
+            0,
+            0,
+            15.0,
+            13.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "glass / visible up at 8.1",
+      "from": [
+        10.0625,
+        8.1,
+        6.625
+      ],
+      "to": [
+        12.9375,
+        8.1,
+        9.375
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_16",
+          "uv": [
+            0,
+            0,
+            11.5,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible down at 10.3",
+      "from": [
+        10.625,
+        10.3,
+        7.125
+      ],
+      "to": [
+        12.375,
+        10.3,
+        8.875
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_17",
+          "uv": [
+            0,
+            14.0,
+            14.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible down at 10.5",
+      "from": [
+        9.875,
+        10.5,
+        6.5
+      ],
+      "to": [
+        13.125,
+        10.5,
+        9.5
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#cap_18",
+          "uv": [
+            0,
+            12.0,
+            13.0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible up at 11.8",
+      "from": [
+        9.875,
+        11.8,
+        6.5
+      ],
+      "to": [
+        13.125,
+        11.8,
+        9.5
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_19",
+          "uv": [
+            0,
+            0,
+            13.0,
+            12.0
+          ]
+        }
+      }
+    },
+    {
+      "name": "wood / visible up at 12.0",
+      "from": [
+        10.5,
+        12.0,
+        7.0
+      ],
+      "to": [
+        12.5,
+        12.0,
+        9.0
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#cap_20",
+          "uv": [
+            0,
+            0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    }
+  ]
+}

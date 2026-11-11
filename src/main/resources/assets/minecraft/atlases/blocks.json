@@ -1,0 +1,20 @@
+{
+  "sources": [
+    {"type": "minecraft:single", "resource": "kaleidoscope_witchcraft:gui/geas/restraint"},
+    {"type": "minecraft:single", "resource": "kaleidoscope_witchcraft:gui/geas/restraint_inverse"},
+    {"type": "minecraft:single", "resource": "kaleidoscope_witchcraft:gui/geas/chant"},
+    {"type": "minecraft:single", "resource": "kaleidoscope_witchcraft:gui/geas/chant_inverse"},
+    {
+      "type": "minecraft:single",
+      "resource": "kaleidoscope_witchcraft:ritual/chalk_atlas"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "kaleidoscope_witchcraft:ritual/chalk_mark"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "kaleidoscope_witchcraft:ritual/golden_heart"
+    }
+  ]
+}

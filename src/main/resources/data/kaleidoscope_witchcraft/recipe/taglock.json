@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {"item": "minecraft:glass_bottle"},
+    {"item": "kaleidoscope_witchcraft:bone_spike"}
+  ],
+  "result": {"id": "kaleidoscope_witchcraft:taglock", "count": 1}
+}

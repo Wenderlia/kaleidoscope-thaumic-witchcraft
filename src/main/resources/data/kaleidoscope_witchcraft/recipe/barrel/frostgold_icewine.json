@@ -1,0 +1,26 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "kaleidoscope_tavern"
+    }
+  ],
+  "type": "kaleidoscope_tavern:barrel",
+  "carrier": {
+    "item": "kaleidoscope_tavern:empty_bottle"
+  },
+  "fluid": "kaleidoscope_witchcraft:frost_pulp",
+  "ingredients": [
+    {
+      "item": "minecraft:snowball"
+    },
+    {
+      "item": "minecraft:glowstone_dust"
+    }
+  ],
+  "result": {
+    "id": "kaleidoscope_witchcraft:frostgold_icewine",
+    "count": 1
+  },
+  "unit_time": 4800
+}

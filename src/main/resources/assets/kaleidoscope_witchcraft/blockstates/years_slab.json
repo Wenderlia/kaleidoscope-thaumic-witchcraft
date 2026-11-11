@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "kaleidoscope_witchcraft:block/years_slab"
+    },
+    "type=double": {
+      "model": "kaleidoscope_witchcraft:block/years_planks"
+    },
+    "type=top": {
+      "model": "kaleidoscope_witchcraft:block/years_slab_top"
+    }
+  }
+}

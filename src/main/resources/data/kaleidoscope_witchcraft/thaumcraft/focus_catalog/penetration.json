@@ -1,0 +1,29 @@
+{
+  "upgrades": [
+    {
+      "id": "kaleidoscope_witchcraft:penetration",
+      "icon": "kaleidoscope_witchcraft:textures/foci/penetration.png",
+      "name": "focus.kaleidoscope_witchcraft.penetration.name",
+      "description": "focus.kaleidoscope_witchcraft.penetration.text",
+      "aspects": {
+        "alienis": 1,
+        "telum": 1
+      },
+      "max_level": 1,
+      "rank_vis": [
+        200,
+        400,
+        800,
+        1600,
+        3200
+      ],
+      "rank_xp": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    }
+  ]
+}
