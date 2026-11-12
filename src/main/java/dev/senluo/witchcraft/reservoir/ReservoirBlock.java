@@ -32,9 +32,9 @@ public final class ReservoirBlock extends BaseEntityBlock {
     protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return Block.box(2,0,2,14,15,14);}
     protected ItemInteractionResult useItemOn(ItemStack stack,BlockState state,Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit){
         if(level.getBlockEntity(pos) instanceof ReservoirBlockEntity be && !stack.isEmpty()){
-            if(level.isClientSide)return ReservoirContent.acceptsInput(stack) && ReservoirData.supported(be.bag())
+            if(level.isClientSide)return ReservoirActions.acceptsInput(stack) && ReservoirData.supported(be.bag())
                     ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-            if(ReservoirContent.interact((ServerPlayer)player,be.bag(),hand,be::changed))return ItemInteractionResult.SUCCESS;
+            if(ReservoirRuntime.useHeld((ServerPlayer)player,be.bag(),hand,be::changed))return ItemInteractionResult.SUCCESS;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
@@ -44,7 +44,7 @@ public final class ReservoirBlock extends BaseEntityBlock {
         if(!level.isClientSide){
             if(player.isShiftKeyDown() && player.getMainHandItem().isEmpty()){
                 if(!be.pickup((ServerPlayer)player))return InteractionResult.FAIL;
-            }else be.open((ServerPlayer)player);
+            }else ReservoirSession.openPlaced((ServerPlayer)player,be);
         }
         return InteractionResult.SUCCESS;
     }

@@ -722,7 +722,10 @@ public final class TreeLogic {
         core.initialGiantBuild=true;
         invalidateExterior(core.getBlockPos());
         reconcilePlan(core);
-        core.changed();return "giant_growing";
+        core.changed();
+        WorkTicks.invalidate(core); // The center axis moves when giant growth starts.
+        dev.senluo.witchcraft.ritual.RitualCenters.changed(level, core.getBlockPos());
+        return "giant_growing";
     }
 
     private boolean giantReady(LivingEntity core) {

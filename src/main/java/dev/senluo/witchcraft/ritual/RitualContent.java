@@ -40,7 +40,7 @@ public final class RitualContent {
     /** Distinguished units of real Herba, one per session. */
     public static final DeferredHolder<net.neoforged.neoforge.attachment.AttachmentType<?>, net.neoforged.neoforge.attachment.AttachmentType<Integer>> RITUAL_HERBA =
             ATTACHMENTS.register("ritual_herba", () -> net.neoforged.neoforge.attachment.AttachmentType
-                    .builder(() -> 0).serialize(com.mojang.serialization.Codec.intRange(0, 3)).build());
+                    .builder(() -> 0).serialize(com.mojang.serialization.Codec.intRange(0, Integer.MAX_VALUE)).build());
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(KaleidoscopeWitchcraft.MOD_ID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(KaleidoscopeWitchcraft.MOD_ID);
     private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> ENTITIES =

@@ -74,6 +74,7 @@ public final class TemporalWorld {
         else if (previous instanceof LivingEntity oldLiving && oldLiving.tree()) trees.unregister(entity.getBlockPos());
         if (entity instanceof LivingEntity || previous instanceof LivingEntity) invalidate();
         else invalidateConnections();
+        WorkTicks.invalidate(entity);
     }
     public void remove(BlockPos pos) {
         Colony existing = colonies.get(pos.asLong());
@@ -84,7 +85,7 @@ public final class TemporalWorld {
         if (removed instanceof LivingEntity) invalidate();
         else invalidateConnections();
     }
-    public void invalidate() { dirty = true; invalidateConnections(); }
+    public void invalidate() { dirty = true; invalidateConnections(); index(); }
     public void invalidateConnections() {
         missingParents.clear();
         connectedWood.invalidate();
@@ -251,6 +252,7 @@ public final class TemporalWorld {
 
     private void index() {
         if (!dirty) return;
+        Set<Long> previous = new HashSet<>(domains.keySet());
         domains.clear();
         for (BlockEntity value : network.values()) if (value instanceof LivingEntity e && !e.isRemoved() && e.tissue.supported() && !e.amber()) {
             BlockPos pos = e.getBlockPos();
@@ -261,6 +263,12 @@ public final class TemporalWorld {
                 domains.computeIfAbsent(ChunkPos.asLong(x, z), k -> new ArrayList<>()).add(e);
         }
         dirty = false;
+        // Routes cache bucket presence, not the live receiver/radius/price. Overlapping changes
+        // need no machine scan while the bucket stays present.
+        Set<Long> changed = new HashSet<>(previous);
+        changed.removeAll(domains.keySet());
+        for (long chunk : domains.keySet()) if (!previous.contains(chunk)) changed.add(chunk);
+        for (long chunk : changed) WorkTicks.invalidateChunk(level, chunk);
     }
     public boolean covers(LivingEntity e, BlockPos source) {
         BlockPos p = e.getBlockPos();

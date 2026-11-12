@@ -55,7 +55,7 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
         float alpha = slash.fade(partial) * (.6F + .4F * (float) Math.sqrt(slash.strength()));
         if (alpha <= 0) return;
         SlashRenderView state = views.computeIfAbsent(slash, SlashRenderView::new);
-        int segments = slash.fragments() != null ? slash.fragments().size() : slash.radial() != null ? slash.radial().outline().edges().size()
+        int segments = slash.fragments() != null ? slash.fragments().size() : slash.radial() != null ? slash.radial().size()
                 : 1;
         state.segments(segments + 1); // One independent basis for contact flashes.
         Vec3 blade = slash.renderBlade(partial);
@@ -81,11 +81,11 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
                         SlashFragments.HALF_LENGTH * 2, opacity);
             }
         } else if (slash.radial() != null) {
-            var radial = slash.radial(); var edges = radial.outline().edges();
-            for (int i = 0; i < edges.size(); i++) {
+            var radial = slash.radial();
+            for (int i = 0; i < radial.size(); i++) {
                 float opacity = radial.opacity(i, partial) * alpha;
                 if (opacity <= 0) continue;
-                var edge = edges.get(i); double radius = radial.renderRadius(i, partial);
+                var edge = radial.edge(i); double radius = radial.renderRadius(i, partial);
                 Vec3 center = edge.middle().scale(radius);
                 Vec3 towardCamera = entityRenderDispatcher.camera.getPosition().subtract(slash.getPosition(partial).add(center)).normalize();
                 Vec3 normal = state.across(i, edge.axis(), towardCamera, edge.middle());

@@ -94,9 +94,7 @@ public final class GeasEffects {
         }
         void refreshFootprint(){
             footprint=RitualOfferingArea.visualFootprint(state.plane(),state.ring());
-            List<V> anchors=state.offerings().stream().map(pos->vector(Vec3.atBottomCenterOf(pos)
-                    .add(0,1.35,0).subtract(origin))).toList();
-            layout=new Layout(state.plane().getY()+1.025-origin.y,2*state.ring()+1,anchors);
+            layout=new Layout(state.plane().getY()+1.025-origin.y,2*state.ring()+1);
         }
         double age(double now){return state.phaseTicks()+Math.max(0,now-received);}
     }

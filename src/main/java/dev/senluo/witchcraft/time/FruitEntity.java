@@ -105,11 +105,14 @@ public final class FruitEntity extends BlockEntity implements DevelopmentClock.P
         return level != null && harvestToolTick == level.getGameTime() ? harvestFortune : 0;
     }
 
-    public static void tick(FruitEntity fruit) {
+    public static void tick(FruitEntity fruit) { tick(fruit, 1); }
+
+    /** Support settles once; development itself is deferred until the world's flush. */
+    static void tick(FruitEntity fruit, int steps) {
         if (!(fruit.level instanceof ServerLevel level) || fruit.isRemoved() || !level.tickRateManager().runsNormally()) return;
         fruit.checkSupport();
         if (fruit.isRemoved() || fruit.orphaned) return;
-        TemporalWorld.get(level).development.pulse(fruit);
+        TemporalWorld.get(level).development.pulse(fruit, steps);
     }
 
     @Override public BlockEntity developmentParent() { return core(); }

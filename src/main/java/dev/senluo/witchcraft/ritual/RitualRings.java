@@ -1,13 +1,9 @@
 package dev.senluo.witchcraft.ritual;
 
-import java.util.LinkedHashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
-/** Pure allocation policy. Requests arrive oldest first; one ritual claims one complete eligible ring. */
+/** Physical ring geometry. Ritual occupancy belongs to the shared point ledger. */
 public final class RitualRings {
     public static final int SMALL = 1, MEDIUM = 2, LARGE = 3;
 
@@ -46,6 +42,17 @@ public final class RitualRings {
             for (Ring ring : DEFINITIONS) if (complete(ring)) mask |= 1 << (ring.id - 1);
             return mask;
         }
+        public int points() {
+            int total = 0;
+            for (Ring ring : DEFINITIONS) if (complete(ring)) total += ring.id;
+            return total;
+        }
+        /** Observation upper bound, never permission to spend an unobserved ring. */
+        public int possiblePoints() {
+            int total = 0;
+            for (Ring ring : DEFINITIONS) if (state(ring) != RitualShape.Match.INVALID) total += ring.id;
+            return total;
+        }
         public int count() {
             int result = 0;
             for (Ring ring : DEFINITIONS) if (complete(ring)) result++;
@@ -58,45 +65,7 @@ public final class RitualRings {
             return result;
         }
     }
-    public record Request(UUID id, int minimum) {
-        public Request {
-            java.util.Objects.requireNonNull(id);
-            if (minimum < SMALL || minimum > LARGE) throw new IllegalArgumentException("Invalid ring requirement");
-        }
-    }
     private RitualRings() {}
-
-    /** Only known complete rings can be claimed. An unloaded ring cannot provide a free slot. */
-    public static Map<UUID, Integer> allocate(Layout layout, List<Request> requests) {
-        return allocate(layout, requests, Map.of());
-    }
-
-    /** Regional rites bind their actual bearing ring. They cannot silently move to another ring. */
-    public static Map<UUID, Integer> allocate(Layout layout, List<Request> requests, Map<UUID, Integer> pinned) {
-        Objects.requireNonNull(layout);
-        Map<UUID, Integer> result = new LinkedHashMap<>();
-        var seen = new HashSet<UUID>();
-        int claimed = 0;
-        for (Request request : requests) {
-            Integer id = pinned.get(request.id);
-            if (id == null || id < request.minimum || id > LARGE) continue;
-            int bit = 1 << (id - 1);
-            if ((claimed & bit) != 0) continue;
-            claimed |= bit;
-            if (layout.complete(DEFINITIONS.get(id - 1))) result.put(request.id, id);
-        }
-        for (Request request : requests) {
-            if (!seen.add(request.id)) throw new IllegalArgumentException("Duplicate ring request");
-            if (pinned.containsKey(request.id)) continue;
-            for (Ring ring : DEFINITIONS) {
-                int bit = 1 << (ring.id - 1);
-                if (ring.id >= request.minimum && layout.complete(ring) && (claimed & bit) == 0) {
-                    result.put(request.id, ring.id); claimed |= bit; break;
-                }
-            }
-        }
-        return Map.copyOf(result);
-    }
 
     public static RitualShape shape(int ring) {
         if (ring < SMALL || ring > LARGE) throw new IllegalArgumentException("Invalid ring size");

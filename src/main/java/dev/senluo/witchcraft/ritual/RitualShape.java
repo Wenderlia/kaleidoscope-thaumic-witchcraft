@@ -48,6 +48,8 @@ public record RitualShape(List<BlockPos> marks) {
     public Match match(ServerLevel level, BlockPos anchor) {
         return RitualShapeCache.match(this, level, anchor);
     }
+    /** Relative template lookup, shared by cached shapes and registered source spaces. */
+    boolean containsOffset(int x, int z) { return marks.contains(new BlockPos(x, 0, z)); }
     Match inspect(ServerLevel level, BlockPos anchor) {
         return inspect(level, anchor, true);
     }

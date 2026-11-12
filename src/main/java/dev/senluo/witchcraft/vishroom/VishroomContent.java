@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.*;
 
-/** One organism at the base; ordinary parts neither tick nor store an owner. */
+/** One organism at the base; ordinary parts only schedule survival checks and store no owner. */
 public final class VishroomContent {
     private static final String ID = KaleidoscopeWitchcraft.MOD_ID;
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(ID);

@@ -2,9 +2,7 @@ package dev.senluo.witchcraft.slash;
 
 import java.math.BigDecimal;
 import java.util.function.BooleanSupplier;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /** Partition a committed contact into traveling fragments, without allocating an entity per blade. */
@@ -32,7 +30,7 @@ public final class SlashFission {
 
     /** First committed contact only. The initial hit has already paid its own debit.
      * Remaining blades stay live, including those a dead target can no longer absorb. */
-    static void impact(SlashEntity slash, ServerPlayer player, Entity target, Vec3 center, double debit) {
+    static void scatter(SlashEntity slash, Vec3 center, double debit) {
         if (!slash.fission() || slash.fragments() != null || debit <= 0 || slash.potential().remaining() <= 0) return;
         Partition pieces = partition(slash.potential().remaining(), debit);
         slash.split(new SlashFragments(center, slash.forward(), slash.blade(), pieces,

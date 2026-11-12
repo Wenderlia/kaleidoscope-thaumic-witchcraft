@@ -29,7 +29,7 @@ public final class ReservoirItem extends BlockItem {
         return openHeld(player,context.getItemInHand());
     }
     static InteractionResult openHeld(Player player,ItemStack bag){
-        if(player instanceof ServerPlayer server)ReservoirContent.open(server,bag);
+        if(player instanceof ServerPlayer server)ReservoirSession.openHeld(server,bag);
         // Opening a carried container is not a placement / arm-swing action.
         return InteractionResult.CONSUME;
     }

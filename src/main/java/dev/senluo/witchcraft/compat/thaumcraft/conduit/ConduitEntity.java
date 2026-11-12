@@ -49,19 +49,28 @@ public final class ConduitEntity extends BlockEntity implements EssentiaTranspor
     }
     public static void tick(Level level, BlockPos pos, BlockState state, ConduitEntity pipe) {
         if (!(level instanceof ServerLevel server) || pipe.preserved != null) return;
-        // Retain at most one pulse between ticks: differently phased pipes must still cooperate.
-        if (pipe.creditTick != level.getGameTime()) { pipe.creditTick = level.getGameTime(); pipe.credit = Math.min(THROUGHPUT, pipe.credit); }
-        int interval = Math.max(1, (int) HostParameters.value("machines/essentia_tubes/work_interval"));
-        if (++pipe.count >= interval) {
-            pipe.count = 0;
-            pipe.credit = pipe.pulseTick == level.getGameTime()
-                    ? (int)Math.min(Integer.MAX_VALUE, (long)pipe.credit + THROUGHPUT) : THROUGHPUT;
-            pipe.pulseTick = level.getGameTime();
-            if (pipe.network != null) pipe.network.ready = true;
-        }
+        pipe.advance(level.getGameTime(), 1);
         if (level.getGameTime() % 20 == 0 && pipe.refreshed != level.getGameTime()) {
             pipe.refreshed = level.getGameTime(); ConduitBlock.refresh(server, pos);
         }
+    }
+    /** Maintenance may call other blocks; perform that native boundary before batching further pulses. */
+    Runnable batch(ServerLevel server, int steps) {
+        long now = server.getGameTime();
+        return preserved != null || now % 20 == 0 && refreshed != now ? null : () -> advance(now, steps);
+    }
+    private void advance(long now, int steps) {
+        // Across world ticks retain one pulse. The first new pulse replaces that carried credit.
+        if (creditTick != now) { creditTick = now; credit = Math.min(THROUGHPUT, credit); }
+        int interval = Math.max(1, (int) HostParameters.value("machines/essentia_tubes/work_interval"));
+        int first = Math.max(1, interval - count); // A live parameter change may shorten the old interval.
+        if (steps < first) { count += steps; return; }
+        int remaining = steps - first;
+        long pulses = 1L + remaining / interval;
+        count = remaining % interval;
+        credit = (int) Math.min(Integer.MAX_VALUE, (pulseTick == now ? credit : 0L) + pulses * THROUGHPUT);
+        pulseTick = now;
+        if (network != null) network.ready = true;
     }
     int credit(long tick) { return preserved != null ? 0 : creditTick == tick ? credit : Math.min(THROUGHPUT, credit); }
     void spend(int amount) {

@@ -3,6 +3,8 @@ package dev.senluo.witchcraft.compat.thaumcraft;
 import dev.senluo.witchcraft.KaleidoscopeWitchcraft;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -11,7 +13,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -69,51 +70,30 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
         ServerLevel existing=host.getServer().getLevel(key);
         return existing != null ? existing : ((MineLevelFactory)host.getServer()).witchcraft$mineLevel(host,key);
     }
-    private static final int LEASE = 60;
-    private static final TicketType<UUID> READ = TicketType.create("witchcraft_ritual_mine_read", UUID::compareTo, LEASE);
-    private final UUID owner;
     private final Runnable changed;
-    private final Map<Long, Long> pending = new HashMap<>(), renewed = new HashMap<>();
-    private long lastPruned = Long.MIN_VALUE;
-    private ServerLevel readLevel;
+    private final MinePrefetch prefetch;
 
     MixedMine(UUID owner, Runnable changed) {
-        this.owner = owner; this.changed = changed;
+        this.changed = changed;
         this.seed = owner.getMostSignificantBits() ^ owner.getLeastSignificantBits();
+        prefetch = new MinePrefetch(this, owner);
     }
 
     /** Releases only this ritual's tickets, even when another ritual reads the same chunk. */
-    void release() {
-        if (readLevel != null) for (long key : renewed.keySet())
-            readLevel.getChunkSource().removeRegionTicket(READ, new ChunkPos(key), 0, owner);
-        pending.clear(); renewed.clear(); lastPruned = Long.MIN_VALUE;
-        readLevel = null;
-    }
+    void release() { prefetch.release(); }
+    /** Real work heartbeat; merely calling this never creates a mine level or advances sampling. */
+    public void maintain(BlockEntity bore, int radius) { prefetch.maintain(bore, radius); }
+    public record Preparation(int targetBands, int readyBands, int pendingChunks, int heldChunks,
+                              double bandsPerSecond, double readySeconds) {}
+    public Preparation preparation() { return prefetch.snapshot(); }
     public static void unload(ServerLevel level) {
         MINES.remove(level.dimension());
+        MineReadQueue.unload(level);
     }
-    // Each ritual admits its own misses; vanilla still coalesces generation of a shared chunk.
     private LevelChunk ready(ServerLevel level, ChunkPos pos) {
-        if (readLevel != level) { release(); readLevel = level; }
-        var chunks = level.getChunkSource();
-        LevelChunk loaded = chunks.getChunkNow(pos.x, pos.z);
-        long now = level.getGameTime(), key = pos.toLong();
-        if (lastPruned == Long.MIN_VALUE || now - lastPruned >= 10) {
-            lastPruned = now;
-            renewed.values().removeIf(tick -> now - tick >= LEASE);
-            pending.entrySet().removeIf(e -> now - e.getValue() >= LEASE
-                    || chunks.getChunkNow(ChunkPos.getX(e.getKey()), ChunkPos.getZ(e.getKey())) != null);
-        }
-        if (loaded != null) pending.remove(key);
-        else {
-            if (!pending.containsKey(key) && pending.size() >= 2) return null;
-            pending.put(key, now);
-        }
-        Long lastRenewal = renewed.get(key);
-        if (lastRenewal == null || now - lastRenewal >= 20) {
-            chunks.addRegionTicket(READ, pos, 0, owner);
-            renewed.put(key, now);
-        }
+        prefetch.bind(level);
+        LevelChunk loaded = prefetch.reads.chunk(pos);
+        if (loaded == null) prefetch.waiting();
         return loaded;
     }
 
@@ -133,11 +113,26 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
     }
 
     private static long key(int x, int z) { return ChunkPos.asLong(x, z); }
+    /** Pure addressing, shared with prefetch; requesting a future band never consumes RNG state. */
+    BlockPos origin(int band) {
+        RandomSource random = RandomSource.create(seed + 0x9e3779b97f4a7c15L * band);
+        return new BlockPos((random.nextInt(125000) - 62500) * 16 + 8, 0,
+                (random.nextInt(125000) - 62500) * 16 + 8);
+    }
+    Set<Integer> frontiers(int radius) {
+        Set<Integer> bands = new TreeSet<>();
+        long squared = (long) radius * radius;
+        for (var entry : columns.entrySet()) {
+            long x = ChunkPos.getX(entry.getKey()), z = ChunkPos.getZ(entry.getKey());
+            if (x * x + z * z <= squared) bands.add(entry.getValue().band);
+        }
+        // Rays may converge on one portal column. Unvisited aim offsets are not sampling columns.
+        return bands;
+    }
     private BlockPos sample(int dx, int dz, Column col) {
         if (originBand != col.band) {
-            RandomSource random = RandomSource.create(seed + 0x9e3779b97f4a7c15L * col.band);
-            originX = (random.nextInt(125000) - 62500) * 16 + 8;
-            originZ = (random.nextInt(125000) - 62500) * 16 + 8;
+            BlockPos origin = origin(col.band);
+            originX = origin.getX(); originZ = origin.getZ();
             originBand = col.band;
         }
         return new BlockPos(originX + dx, col.y, originZ + dz);
@@ -152,16 +147,19 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
         if (top < floor) return Probe.EMPTY;
         if (!mine.dimension().location().equals(samplingRealm)) {
             columns.clear(); originBand = -1; savedColumns = null;
+            prefetch.changed();
             samplingRealm = mine.dimension().location(); changed.run();
         }
         int dx = rock.getX() - bore.getBlockPos().getX(), dz = rock.getZ() - bore.getBlockPos().getZ();
         Column col = columns.computeIfAbsent(key(dx, dz), ignored -> {
-            savedColumns = null; changed.run(); return new Column(top, floor);
+            savedColumns = null; prefetch.changed(); changed.run(); return new Column(top, floor);
         });
+        prefetch.bind(mine);
+        prefetch.demand(bore, col.band);
         BlockPos pos = sample(dx, dz, col);
         ChunkPos chunkPos = new ChunkPos(pos);
         LevelChunk chunk = ready(mine, chunkPos);
-        if (chunk == null || !mine.areEntitiesLoaded(chunkPos.toLong())) return Probe.WAIT;
+        if (chunk == null) return Probe.WAIT;
         int bottom = Math.max(col.bottom, mine.getMinBuildHeight());
         BlockPos.MutableBlockPos scan=pos.mutable();
         for (int y = Math.min(col.y, top); y >= bottom; y--) {
@@ -184,7 +182,7 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
         col.band++;
         col.y = top;
         col.bottom = floor;
-        savedColumns = null; changed.run();
+        savedColumns = null; prefetch.changed(); changed.run();
         return Probe.EMPTY;
     }
 
@@ -194,9 +192,9 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
         for (var entry : chunk.getAllReferences().entrySet()) {
             for (long startPos : entry.getValue()) {
                 ChunkPos origin = new ChunkPos(startPos);
-                ChunkAccess source = level.getChunkSource().getChunkForLighting(origin.x, origin.z) instanceof ChunkAccess access
-                        ? access : ready(level, origin);
-                if (source == null) return null;
+                prefetch.bind(level);
+                ChunkAccess source = prefetch.reads.structure(origin);
+                if (source == null) { prefetch.waiting(); return null; }
                 var start = source.getStartForStructure(entry.getKey());
                 if (start == null || !start.isValid()) continue;
                 for (var piece : start.getPieces()) {
@@ -211,11 +209,11 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
     public boolean accessible(ServerLevel mine, Target target) {
         ChunkPos pos = new ChunkPos(target.virtual());
         // Prepare the surrounding chunks for ordinary area tools, loot and neighbor updates.
-        // Visit every neighbor even after a miss: ready() bounds pending requests for this ritual.
+        // Visit every neighbor after a miss; shared admission prioritizes these actual dependencies.
         boolean loaded = true;
         for (int x = pos.x - 1; x <= pos.x + 1; x++) for (int z = pos.z - 1; z <= pos.z + 1; z++) {
             ChunkPos next = new ChunkPos(x, z);
-            if (ready(mine, next) == null || !mine.areEntitiesLoaded(next.toLong())) loaded = false;
+            if (ready(mine, next) == null) loaded = false;
         }
         return loaded;
     }
@@ -244,6 +242,7 @@ public final class MixedMine implements INBTSerializable<CompoundTag> {
         return data;
     }
     @Override public void deserializeNBT(HolderLookup.Provider lookup, CompoundTag data) {
+        release();
         savedColumns = null;
         originBand = -1;
         seed = data.getLong("Seed");

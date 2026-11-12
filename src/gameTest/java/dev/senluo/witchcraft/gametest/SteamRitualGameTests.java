@@ -261,7 +261,7 @@ public final class SteamRitualGameTests {
         BlockPos broken=pot.getBlockPos().below().offset(RitualShape.SMALL.marks().getFirst()).above();
         level.removeBlock(broken,false);SteamRituals.refreshHerba(pot);
         h.assertTrue(RitualHerba.marked(pot),"An incomplete circle pauses rather than clears the ritual leaf");
-        StructuralRitualStore.get(level).end(level,id);StructuralRitualStore.get(level).finish(id);SteamRituals.refreshHerba(pot);
+        RitualCenters.end(level,id);SteamRituals.refreshHerba(pot);
         h.assertTrue(!RitualHerba.marked(pot)&&pot.aspectAmount(herba)==4,
                 "True termination returns to ordinary Herba without deleting or duplicating it");
         level.setBlock(broken,RitualContent.CHALK_SURFACE.get().defaultBlockState(),3);prepare(h,pot);
@@ -434,7 +434,7 @@ public final class SteamRitualGameTests {
         var restored=(StructuralRitualStore)load.invoke(null,saved,level.registryAccess());
         h.assertTrue(restored.progress(id).orElseThrow().elapsed()==0&&!restored.progress(id).orElseThrow().available(),"Reload never grants offline work or trusts cached structure");
         var ref=RitualCenters.observe(pot).orElseThrow().reference();
-        var paused=restored.advance(level,id,StructuralRitualStore.STEAM,StructuralRitualStore.Presence.UNLOADED,null,RitualShape.Match.UNLOADED,(t,d)->{throw new AssertionError("Unloaded payment");});
+        var paused=restored.advance(level,id,StructuralRitualStore.STEAM,StructuralRitualStore.Presence.UNLOADED,RitualShape.Match.UNLOADED,(t,d)->{throw new AssertionError("Unloaded payment");});
         h.assertTrue(!paused.mayRun()&&restored.progress(id).orElseThrow().elapsed()==0,"Unloaded ritual stays paused");
         h.assertTrue(RitualShape.SMALL.marks().size()==16&&RitualShape.MEDIUM.marks().size()==28&&RitualShape.LARGE.marks().size()==40,"Witchery circle sizes");
         h.assertTrue(RitualStability.steamRadius(3,99)==0&&RitualStability.steamRadius(8,20)==2&&RitualStability.steamRadius(999,999)==32,"No base radius; scarce aspect and design radius limit");
@@ -474,18 +474,15 @@ public final class SteamRitualGameTests {
         level.setBlock(pos,Blocks.FURNACE.defaultBlockState(),3);
         var expected=level.getBlockEntity(pos); var changing=new LifecycleTicker(pos);
         try {
-            h.assertTrue(WorkTicks.scheduledTarget(level,changing)==expected,"Capture the original live target");
+            h.assertTrue(WorkTicks.isScheduledTarget(level,changing,expected),"Capture the original live target");
             changing.pos=null; // Lithium's sleeping delegate is not removed, but has no position.
-            h.assertTrue(WorkTicks.scheduledTarget(level,changing)==null
-                    && !WorkTicks.isScheduledTarget(level,changing,expected),"Sleeping tickers are opaque, not work targets");
+            h.assertTrue(!WorkTicks.isScheduledTarget(level,changing,expected),"Sleeping tickers are opaque, not work targets");
             changing.pos=pos.above();
             h.assertTrue(!WorkTicks.isScheduledTarget(level,changing,expected),"A moved ticker cannot reuse its old receipt");
             changing.pos=pos; changing.removed=true;
-            h.assertTrue(WorkTicks.scheduledTarget(level,changing)==null
-                    && !WorkTicks.isScheduledTarget(level,changing,expected),"A removed ticker cannot run extra work");
+            h.assertTrue(!WorkTicks.isScheduledTarget(level,changing,expected),"A removed ticker cannot run extra work");
             changing.removed=false; level.removeBlock(pos,false);
-            h.assertTrue(WorkTicks.scheduledTarget(level,changing)==null
-                    && !WorkTicks.isScheduledTarget(level,changing,expected),"Destruction invalidates the target");
+            h.assertTrue(!WorkTicks.isScheduledTarget(level,changing,expected),"Destruction invalidates the target");
         } finally { level.removeBlock(pos,false); }
         h.succeed();
     }
@@ -497,7 +494,7 @@ public final class SteamRitualGameTests {
         var changing=new LifecycleTicker(pos);
         SteamWork.fields(level).put(new RitualFields.Field(field,pos,4,2));
         try {
-            var before=WorkTicks.scheduledTarget(level,changing);
+            var before=expected;
             changing.action=()->changing.pos=null;
             changing.tick(); // Sleep during the original opportunity.
             SteamWork.afterNative(level,changing,before,changing::tick);
@@ -506,7 +503,7 @@ public final class SteamRitualGameTests {
             SteamWork.afterNative(level,changing,before,changing::tick);
             h.assertTrue(changing.calls==2,"Sleeping during extra work stops the remaining batch");
             changing.pos=pos; changing.action=()->{};
-            SteamWork.afterNative(level,changing,WorkTicks.scheduledTarget(level,changing),changing::tick);
+            SteamWork.afterNative(level,changing,expected,changing::tick);
             h.assertTrue(changing.calls==5,"Wake restores three extra calls at 4x without a stale sleep cache");
         } finally { SteamWork.fields(level).remove(field); level.removeBlock(pos,false); }
         h.succeed();
@@ -527,7 +524,7 @@ public final class SteamRitualGameTests {
             changing.tick(); // Same position and type, different instance after the original call.
             SteamWork.afterNative(level,changing,expected,changing::tick);
             h.assertTrue(changing.calls==1,"Native replacement must not inherit the previous target's work");
-            var replacement=WorkTicks.scheduledTarget(level,changing);
+            var replacement=level.getBlockEntity(pos);
             h.assertTrue(replacement!=null && replacement!=expected,"Next opportunity can resolve the new target");
             SteamWork.afterNative(level,changing,replacement,changing::tick);
             h.assertTrue(changing.calls==2,"Replacement during extra work ends the batch too");

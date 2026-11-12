@@ -6,7 +6,6 @@ import dev.senluo.witchcraft.ritual.visual.GeasGlyph;
 import java.util.Objects;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.function.Supplier;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -29,18 +28,11 @@ public final class GeasRitualVisuals {
     private static final UUID NO_RECIPIENT=new UUID(0,0);
 
     public record State(UUID session,ResourceLocation dimension,BlockPos matrix,BlockPos plane,int ring,
-            UUID recipient,GeasGlyph glyph,Phase phase,int phaseTicks,long stamp,List<BlockPos> offerings) implements CustomPacketPayload {
+            UUID recipient,GeasGlyph glyph,Phase phase,int phaseTicks,long stamp) implements CustomPacketPayload {
         public State {
             Objects.requireNonNull(session); Objects.requireNonNull(dimension); Objects.requireNonNull(recipient);
             Objects.requireNonNull(phase); Objects.requireNonNull(glyph);
             matrix=Objects.requireNonNull(matrix).immutable(); plane=Objects.requireNonNull(plane).immutable();
-            Objects.requireNonNull(offerings);
-            offerings=offerings.stream().map(BlockPos::immutable).distinct().toList();
-            if(offerings.size()>8)throw new IllegalArgumentException("Too many offering anchors");
-            for(BlockPos pos:offerings)if(Math.abs((long)pos.getX()-matrix.getX())>8
-                    || Math.abs((long)pos.getZ()-matrix.getZ())>8
-                    || pos.getY()>=matrix.getY() || (long)matrix.getY()-pos.getY()>10)
-                throw new IllegalArgumentException("Invalid offering anchor");
             if(ring<1 || ring>3 || phaseTicks<0 || phaseTicks>1_000_000 || stamp<0
                     || matrix.getX()!=plane.getX() || matrix.getZ()!=plane.getZ()
                     || Math.abs((long)matrix.getY()-plane.getY())>RitualPlane.HEIGHT_RADIUS)
@@ -52,14 +44,8 @@ public final class GeasRitualVisuals {
             buf.writeUUID(s.session); buf.writeResourceLocation(s.dimension); buf.writeBlockPos(s.matrix);
             buf.writeBlockPos(s.plane); buf.writeByte(s.ring); buf.writeUUID(s.recipient);
             buf.writeEnum(s.glyph); buf.writeEnum(s.phase); buf.writeVarInt(s.phaseTicks); buf.writeVarLong(s.stamp);
-            buf.writeVarInt(s.offerings.size());for(BlockPos pos:s.offerings)buf.writeBlockPos(pos);
         },buf->new State(buf.readUUID(),buf.readResourceLocation(),buf.readBlockPos(),buf.readBlockPos(),
-                buf.readUnsignedByte(),buf.readUUID(),buf.readEnum(GeasGlyph.class),buf.readEnum(Phase.class),buf.readVarInt(),buf.readVarLong(),readOfferings(buf)));
-        private static List<BlockPos> readOfferings(RegistryFriendlyByteBuf buf) {
-            int count=buf.readVarInt();if(count<0 || count>8)throw new IllegalArgumentException("Too many offering anchors");
-            var result=new ArrayList<BlockPos>(count);for(int i=0;i<count;i++)result.add(buf.readBlockPos());
-            return result;
-        }
+                buf.readUnsignedByte(),buf.readUUID(),buf.readEnum(GeasGlyph.class),buf.readEnum(Phase.class),buf.readVarInt(),buf.readVarLong()));
         @Override public Type<State> type(){return TYPE;}
     }
 
@@ -104,17 +90,13 @@ public final class GeasRitualVisuals {
          * COMPLETE/CANCELLED are terminal, sent once. Never use COMPLETE to grant gameplay state. */
         public void publish(ServerLevel level,BlockPos matrix,RitualPlane plane,UUID designated,
                 Phase phase,int phaseTicks) {
-            publish(level,matrix,plane,designated,phase,phaseTicks,List::of);
-        }
-        public void publish(ServerLevel level,BlockPos matrix,RitualPlane plane,UUID designated,
-                Phase phase,int phaseTicks,Supplier<List<BlockPos>> offerings) {
             if(ended || !level.hasChunkAt(matrix) || plane.outermostRing()==0)return;
             long now=level.getGameTime();
             if(previous==phase && now>=sent && now-sent<RENEW_TICKS)return;
             // Only optional network presentation is isolated from already-committed ritual work.
             try {
                 State state=new State(attempt,level.dimension().location(),matrix,plane.anchor(),plane.outermostRing(),
-                        designated==null?NO_RECIPIENT:designated,glyph,phase,phaseTicks,now,offerings.get());
+                        designated==null?NO_RECIPIENT:designated,glyph,phase,phaseTicks,now);
                 sent=now; previous=phase; ended=terminal(phase);
                 PacketDistributor.sendToPlayersNear(level,null,matrix.getX()+.5,matrix.getY()+.5,matrix.getZ()+.5,48,state);
             } catch(RuntimeException failure) {
@@ -138,7 +120,12 @@ public final class GeasRitualVisuals {
             b.writeUUID(s.session);b.writeResourceLocation(s.dimension);b.writeBlockPos(s.matrix);
             b.writeVarLong(s.sequence);b.writeVarLong(s.stamp);b.writeVarInt(s.sources.size());
             for(BlockPos p:s.sources)b.writeBlockPos(p);
-        },b->new Burst(b.readUUID(),b.readResourceLocation(),b.readBlockPos(),b.readVarLong(),b.readVarLong(),State.readOfferings(b)));
+        },b->new Burst(b.readUUID(),b.readResourceLocation(),b.readBlockPos(),b.readVarLong(),b.readVarLong(),readSources(b)));
+        private static List<BlockPos> readSources(RegistryFriendlyByteBuf buf) {
+            int count=buf.readVarInt();if(count<1 || count>8)throw new IllegalArgumentException("Invalid absorption batch size");
+            var result=new ArrayList<BlockPos>(count);for(int i=0;i<count;i++)result.add(buf.readBlockPos());
+            return result;
+        }
         @Override public Type<Burst> type(){return TYPE;}
     }
     public static boolean terminal(Phase phase){return phase==Phase.COMPLETE || phase==Phase.CANCELLED;}

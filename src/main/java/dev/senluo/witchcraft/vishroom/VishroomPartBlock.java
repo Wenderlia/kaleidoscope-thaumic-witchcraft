@@ -1,9 +1,15 @@
 package dev.senluo.witchcraft.vishroom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlockItemStateProperties;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -25,6 +31,37 @@ public final class VishroomPartBlock extends Block {
     }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(PART); }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPES[state.getValue(PART)]; }
+    @Override public BlockState getStateForPlacement(BlockPlaceContext context) {
+        // BlockItem validates survival before its later component-copy step.
+        return context.getItemInHand().getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY)
+                .apply(defaultBlockState());
+    }
+    private static Direction supportDirection(BlockState state) {
+        return switch (state.getValue(PART)) {
+            case VishroomShape.TUFT -> Direction.UP;
+            case VishroomShape.YOUNG -> Direction.DOWN;
+            default -> null;
+        };
+    }
+    @Override protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction direction = supportDirection(state);
+        if (direction == null) return true;
+        BlockPos support = pos.relative(direction);
+        return level.getBlockState(support).isFaceSturdy(level, support, direction.getOpposite());
+    }
+    @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState previous, boolean moved) {
+        super.onPlace(state, level, pos, previous, moved);
+        if (!level.isClientSide && !state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
+    }
+    @Override protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor,
+            LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        if (direction == supportDirection(state) && !state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+    @Override protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        // A restored support or a replacement full part cancels the pending loss.
+        if (!state.canSurvive(level, pos)) level.destroyBlock(pos, true);
+    }
     @Override public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         var item = new ItemStack(VishroomContent.PART_ITEM.get());
         item.set(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY.with(PART, state));

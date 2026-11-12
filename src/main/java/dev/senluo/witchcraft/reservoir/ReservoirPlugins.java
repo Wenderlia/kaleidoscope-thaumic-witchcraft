@@ -24,7 +24,7 @@ public final class ReservoirPlugins {
         if(!ReservoirData.supported(bag) || !EXECUTING.add(player.getUUID()))return;
         try{
             for(int slot=ReservoirData.FIRST_PLUGIN_SLOT;slot<ReservoirData.storageSlots(bag);slot++){
-                if(ReservoirContent.worn(player)!=bag || !player.isAlive() || player.isSpectator()
+                if(ReservoirEquipment.worn(player)!=bag || !player.isAlive() || player.isSpectator()
                         || dev.senluo.witchcraft.ritual.OwnershipRitual.frozen(player))break;
                 ItemStack plugin=ReservoirData.slot(bag,slot,player.registryAccess());
                 if(plugin.getCount()==1 && ReservoirData.supported(plugin)

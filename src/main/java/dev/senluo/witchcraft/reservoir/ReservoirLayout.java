@@ -12,6 +12,7 @@ public final class ReservoirLayout {
     public static final int PLUGIN_TAB_X=PLUGIN_PANEL_X+4,PLUGIN_TAB_Y=PLUGIN_PANEL_Y+4;
     public static final int PLUGIN_TAB_WIDTH=24,PLUGIN_TAB_HEIGHT=16;
     public static final int PLUGIN_GLYPH_X=PLUGIN_TAB_X+5,PLUGIN_GLYPH_Y=PLUGIN_TAB_Y+1;
+    public static final int PLUGIN_FOLD_X=PLUGIN_TAB_X+19,PLUGIN_FOLD_Y=PLUGIN_TAB_Y+6,PLUGIN_FOLD_WIDTH=5,PLUGIN_FOLD_HEIGHT=3;
     public static final int EXTRA_LEFT=-PLUGIN_PANEL_X;
     public static final int INVENTORY_X=41,INVENTORY_Y=137,HOTBAR_Y=195;
     public static final int CHAMBER_Y=24,CHAMBER_WIDTH=32,CHAMBER_HEIGHT=90;

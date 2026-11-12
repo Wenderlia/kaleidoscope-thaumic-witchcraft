@@ -11,6 +11,7 @@ public final class EndoflameWork {
 
     public static void register() {
         WorkSources.registerProcess(EndoflameBlockEntity.class, new WorkSources.Process<>() {
+            public boolean supportsSteam() { return true; }
             public double price(ServerLevel level, EndoflameBlockEntity flower) { return WorkSources.UPDATE_PRICE; }
             public boolean steamWork(ServerLevel level, EndoflameBlockEntity flower) {
                 var state = flower.getBlockState();

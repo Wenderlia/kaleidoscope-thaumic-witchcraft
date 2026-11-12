@@ -36,6 +36,11 @@ public final class RitualOfferingArea {
         return new RitualOfferingArea(plane.anchor(), plane.outermostRing());
     }
 
+    /** Uses the fixed spatial snapshot; it makes no claim about current ring completeness. */
+    public static RitualOfferingArea outermost(RitualSite.Footprint footprint) {
+        return new RitualOfferingArea(footprint.anchor(), footprint.outermostRing());
+    }
+
     /** Read-only footprint for a server-authorized presentation snapshot; no world scan. */
     public static RitualOfferingArea visualFootprint(BlockPos anchor, int ring) {
         if (ring < 1 || ring > 3) throw new IllegalArgumentException("Invalid ritual footprint");

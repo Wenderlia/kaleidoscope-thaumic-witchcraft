@@ -1,7 +1,6 @@
 package dev.senluo.witchcraft.compat.thaumcraft;
 
 import dev.senluo.witchcraft.ritual.*;
-import dev.senluo.witchcraft.ritual.visual.RestraintGeometry;
 import dev.senluo.witchcraft.ritual.visual.RestraintGeometry.Phase;
 import dev.tc4port.thaumcraft.api.ThaumcraftApi;
 import dev.tc4port.thaumcraft.api.event.InfusionEvent;
@@ -21,11 +20,13 @@ import net.neoforged.neoforge.common.NeoForge;
  * the post-commit UUID effect. No fake player, offline entity loading, or global TC parameter changes. */
 public final class InfusionGeas {
     private static final String KEY = "kaleidoscope_witchcraft:geas_attempt";
+    private static final int ASSEMBLY_TICKS = 80;
+    // Historical NBT name; this is the authoritative assembly age, not a render clock.
+    private static final String ASSEMBLY_AGE = "VisualTicks";
     private static final Map<BlockEntity, Runtime> LIVE = new WeakHashMap<>();
     private static final class Runtime {
         final UUID id;
         final GeasRitualVisuals.Emitter emitter;
-        final InfusionOfferingVisuals offeringVisuals = new InfusionOfferingVisuals();
         final List<Absorbed> pending = new ArrayList<>();
         long tick = Long.MIN_VALUE;
         Runtime(UUID id, GeasRites.Rite rite) { this.id = id; emitter = new GeasRitualVisuals.Emitter(id, rite.glyph()); }
@@ -147,7 +148,7 @@ public final class InfusionGeas {
         CompoundTag tag = new CompoundTag();
         tag.putInt("Version", 2); tag.putUUID("Attempt", UUID.randomUUID()); tag.putUUID("Target", target);
         tag.putString("Recipe", rite.id().toString()); tag.putString("Expected", expected.name());
-        tag.putLong("Plane", plane.get().anchor().asLong()); tag.putInt("VisualTicks", 0);
+        tag.putLong("Plane", plane.get().anchor().asLong()); tag.putInt(ASSEMBLY_AGE, 0);
         tag.putBoolean("AcceptancePending", true);
         matrix.getPersistentData().put(KEY, tag); matrix.setChanged(); LIVE.remove(matrix);
         RitualCenterTicks.track(event.level(), matrix.getBlockPos());
@@ -159,9 +160,9 @@ public final class InfusionGeas {
         if (plane(level, matrix, tag).isEmpty() || !GeasBindings.writable(level.getServer())
                 || GeasBindings.state(level.getServer(), tag.getUUID("Target"), rite(tag).pair()) != expected(tag)) return false;
         // Finish the short assembly before starting native auxiliary-item absorption.
-        return !state.remainingEssentia().amounts().isEmpty() || tag.getInt("VisualTicks") >= RestraintGeometry.FORM_TICKS;
+        return !state.remainingEssentia().amounts().isEmpty() || tag.getInt(ASSEMBLY_AGE) >= ASSEMBLY_TICKS;
     }
-    /** One presentation clock per real matrix game tick; accelerated work never multiplies network traffic. */
+    /** One assembly step per real matrix tick; accelerated work never multiplies this stage or its feedback. */
     public static void tick(BlockEntity matrix) {
         CompoundTag tag = attempt(matrix);
         if (tag.isEmpty() || !(matrix.getLevel() instanceof ServerLevel level)) return;
@@ -183,12 +184,11 @@ public final class InfusionGeas {
             live.emitter.publish(level,matrix.getBlockPos(),plane.get(),tag.getUUID("Target"),Phase.WAITING,waiting);
             tag.putInt("WaitingVisualTicks",waiting+1);matrix.setChanged();return;
         }
-        int age = Math.max(0, Math.min(999_999, tag.getInt("VisualTicks")));
+        int age = Math.max(0, Math.min(999_999, tag.getInt(ASSEMBLY_AGE)));
         live.emitter.publish(level, matrix.getBlockPos(), plane.get(), tag.getUUID("Target"),
-                age < RestraintGeometry.FORM_TICKS ? Phase.FORMING : Phase.BINDING,
-                age < RestraintGeometry.FORM_TICKS ? age : age - RestraintGeometry.FORM_TICKS,
-                () -> live.offeringVisuals.snapshot(level, matrix));
-        tag.putInt("VisualTicks", age + 1); matrix.setChanged();
+                age < ASSEMBLY_TICKS ? Phase.FORMING : Phase.BINDING,
+                age < ASSEMBLY_TICKS ? age : age - ASSEMBLY_TICKS);
+        tag.putInt(ASSEMBLY_AGE, age + 1); matrix.setChanged();
     }
     private static void acceptTarget(ServerLevel level,BlockEntity matrix,CompoundTag tag,Runtime live,RitualPlane plane) {
         var player=level.getServer().getPlayerList().getPlayer(tag.getUUID("Target"));

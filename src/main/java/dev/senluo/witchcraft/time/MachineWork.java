@@ -18,19 +18,28 @@ public final class MachineWork {
     public static long price(LivingEntity source) { return (source.tree() ? source.tissue.giant ? 2 : 3 : 4) * Tissue.TU; }
 
     public static Runnable operation(ServerLevel level, BlockPos pos) {
+        BlockEntity entity = target(level, pos);
+        var ticker = entity == null ? null : ticker(level, entity);
+        return ticker == null ? null : () -> ExtraTicks.run(() -> ticker.tick(level, pos, entity.getBlockState(), entity));
+    }
+    /** Candidate filtering must not construct and immediately discard an executable operation. */
+    public static boolean eligible(ServerLevel level, BlockPos pos) {
+        BlockEntity entity = target(level, pos);
+        return entity != null && ticker(level, entity) != null;
+    }
+    private static BlockEntity target(ServerLevel level, BlockPos pos) {
         if (!level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)) return null;
         BlockEntity entity = level.getBlockEntity(pos);
         if (entity == null || entity.isRemoved() || entity instanceof LivingEntity
                 || entity instanceof RootEntity || entity instanceof FruitEntity) return null;
         var state = level.getBlockState(pos);
         if (state.is(EXCLUDED) || CropGrowth.accepts(state) || !WorkSources.outputWork(level, entity)) return null;
-        return ticker(level, pos, entity);
+        return entity;
     }
-    private static <T extends BlockEntity> Runnable ticker(ServerLevel level, BlockPos pos, T entity) {
-        var state = level.getBlockState(pos);
+    private static <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> ticker(ServerLevel level, T entity) {
+        var state = entity.getBlockState();
         @SuppressWarnings("unchecked")
         var type = (net.minecraft.world.level.block.entity.BlockEntityType<T>) entity.getType();
-        var ticker = state.getTicker(level, type);
-        return ticker == null ? null : () -> ExtraTicks.run(() -> ticker.tick(level, pos, state, entity));
+        return state.getTicker(level, type);
     }
 }

@@ -6,7 +6,7 @@ import dev.senluo.witchcraft.time.ExtraTicks;
 import dev.senluo.witchcraft.time.AccelerationSources;
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.IdentityHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -15,9 +15,18 @@ import net.minecraft.world.phys.Vec3;
 
 /** Spatial lookup and provenance only; native tickers remain responsible for recipes and fuel. */
 public final class SteamWork {
-    private static final Map<ServerLevel, RitualFields> FIELDS = new WeakHashMap<>();
+    private static final Map<ServerLevel, RitualFields> FIELDS = new IdentityHashMap<>();
     private SteamWork() {}
-    public static RitualFields fields(ServerLevel level) { return FIELDS.computeIfAbsent(level, unused -> new RitualFields()); }
+    public static RitualFields fields(ServerLevel level) {
+        return FIELDS.computeIfAbsent(level, unused -> new RitualFields(chunk -> WorkTicks.invalidateChunk(level, chunk),
+                id -> StructuralRitualStore.get(level).running(level, id)));
+    }
+    /** Cache fixed support and geometry; idle supported machines remain eligible to resume work. */
+    public static boolean affected(ServerLevel level, BlockEntity entity) {
+        var fields = FIELDS.get(level);
+        return fields != null && WorkSources.supportsSteam(entity) && fields.near(entity.getBlockPos())
+                && fields.covers(Vec3.atCenterOf(entity.getBlockPos()));
+    }
     public static void unload(ServerLevel level) { FIELDS.remove(level); SteamFire.unload(level); RitualWorkBudget.unload(level); }
     public static boolean extra() { return ExtraTicks.active(); }
     public static java.util.Set<java.util.UUID> owners(ServerLevel level, BlockPos pos) {
@@ -47,12 +56,12 @@ public final class SteamWork {
         long n = fields.at(Vec3.atCenterOf(pos)).doublings();
         if (n == 0) return;
         if (!WorkSources.steamWork(level, identity)) return;
-        AccelerationSources.run(owners(level, pos), () -> ExtraTicks.run(() -> {
-            int remaining = RitualWorkBudget.claim(level, RitualWorkBudget.Kind.MACHINE, pos, requestSteps(n));
-            while (remaining-- > 0 && WorkTicks.isScheduledTarget(level, ticker, identity)
-                    && level.shouldTickBlocksAt(pos) && WorkSources.steamWork(level, identity)) {
-                nativeTick.run();
-            }
+        var owners = owners(level, pos);
+        AccelerationSources.run(owners, () -> ExtraTicks.run(() -> {
+            int work = RitualWorkBudget.claim(level, RitualWorkBudget.Kind.MACHINE, pos, requestSteps(n));
+            // A native callback may revoke one of several overlapping sources between extra steps.
+            WorkTicks.advance(level, ticker, identity, work, () -> WorkSources.steamWork(level, identity)
+                    && doublings(level, Vec3.atCenterOf(pos)) >= n && owners(level, pos).containsAll(owners), nativeTick);
         }));
     }
 }

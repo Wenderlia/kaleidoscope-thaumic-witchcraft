@@ -36,6 +36,7 @@ public final class RegionRuleStore extends SavedData {
     private static final class Cached {
         final Entry entry;
         long revision;
+        long dependencyVersion = Long.MIN_VALUE;
         boolean dirty = true, active, checking;
         Cached(Entry entry) { this.entry = entry; }
     }
@@ -71,24 +72,31 @@ public final class RegionRuleStore extends SavedData {
         setDirty();
     }
     public boolean applies(ResourceLocation rule, BlockPos pos, Predicate<Condition> validate) {
+        return applies(rule, pos, validate, condition -> 0L);
+    }
+    public boolean applies(ResourceLocation rule, BlockPos pos, Predicate<Condition> validate,
+                           java.util.function.ToLongFunction<Condition> version) {
         queries++;
         if (!supported()) return false;
         Set<UUID> bucket = regions.get(ChunkPos.asLong(pos));
         if (bucket == null) return false;
-        for (UUID id : bucket) {
+        for (UUID id : List.copyOf(bucket)) {
             Cached cached = entries.get(id); candidates++;
+            if (cached == null) continue;
             if (!cached.entry.rules.contains(rule)) continue;
             if (cached.entry.condition.isEmpty()) return true;
             if (cached.checking) continue;
-            if (cached.dirty) {
+            Condition condition = cached.entry.condition.get();
+            long dependencyVersion = version.applyAsLong(condition);
+            if (cached.dirty || cached.dependencyVersion != dependencyVersion) {
                 long revision = cached.revision;
                 cached.checking = true;
                 boolean result;
-                try { validations++; result = validate.test(cached.entry.condition.get()); }
+                try { validations++; result = validate.test(condition); }
                 finally { cached.checking = false; }
                 // A callback may invalidate dependencies. Never publish a stale authorization.
-                if (cached.revision != revision) continue;
-                cached.active = result; cached.dirty = false;
+                if (entries.get(id) != cached || cached.revision != revision || version.applyAsLong(condition) != dependencyVersion) continue;
+                cached.active = result; cached.dirty = false; cached.dependencyVersion = dependencyVersion;
             }
             if (cached.active) return true;
         }
@@ -96,12 +104,13 @@ public final class RegionRuleStore extends SavedData {
     }
     public void blockChanged(BlockPos pos) { invalidate(blocks.get(pos.asLong())); }
     public void chunkChanged(long chunk) { invalidate(chunks.get(chunk)); }
+    public void invalidate(UUID id) { invalidate(Set.of(id)); }
     public void rulesChanged() { invalidate(entries.keySet()); }
     private void invalidate(Set<UUID> ids) {
         if (ids == null) return;
         for (UUID id : ids) {
             Cached c = entries.get(id);
-            if (c.entry.condition.isPresent()) { c.revision++; c.dirty = true; invalidations++; }
+            if (c != null && c.entry.condition.isPresent()) { c.revision++; c.dirty = true; invalidations++; }
         }
     }
     private void index(Entry entry) {

@@ -14,12 +14,18 @@ public final class WorkSources {
     public static final double UPDATE_PRICE = SourceIncomeRates.WORK;
     @FunctionalInterface public interface Rule<T extends BlockEntity> { double price(ServerLevel level, T entity); }
     public interface Process<T extends BlockEntity> extends Rule<T> {
+        /** Only adapters that surround native calls need an always-present local route. */
+        default boolean nativeContext() { return false; }
         /** A host's native callback context; effects and payment remain outside the common ticker. */
         default void tick(ServerLevel level, T entity, Runnable nativeTick) { nativeTick.run(); }
+        /** Read-only offer for consecutive, already-budgeted steps. Null keeps the native path. */
+        default Runnable batch(ServerLevel level, T entity, int steps) { return null; }
         /** Return true only after preparing the native ticker to preserve its paid progress. */
         default boolean prepareSuppressed(T entity) { return false; }
-        /** Explicitly opts into one additional native process update, including transport clocks. */
-        default boolean steamWork(ServerLevel level, T entity) { return false; }
+        /** Fixed registration capability. Never infer it from fuel, inventory or other live state. */
+        default boolean supportsSteam() { return false; }
+        /** Current work admission; evaluated again after native callbacks, never cached as type support. */
+        default boolean steamWork(ServerLevel level, T entity) { return supportsSteam(); }
         /** Paid native work, independent of this process's income quote or steam eligibility. */
         default boolean outputWork(ServerLevel level, T entity) { return price(level, entity) > 0; }
     }
@@ -30,7 +36,20 @@ public final class WorkSources {
     private static final Map<Class<?>, Process<BlockEntity>> RULES = new LinkedHashMap<>();
     private static final Map<Class<?>, Process<BlockEntity>> CLASS_RULES = new java.util.HashMap<>();
     static {
+        registerProcess(LivingEntity.class, new Process<>() {
+            public double price(ServerLevel level, LivingEntity entity) { return 0; }
+            public Runnable batch(ServerLevel level, LivingEntity entity, int steps) {
+                return () -> TemporalWorld.get(level).development.pulse(entity, steps);
+            }
+        });
+        registerProcess(FruitEntity.class, new Process<>() {
+            public double price(ServerLevel level, FruitEntity entity) { return 0; }
+            public Runnable batch(ServerLevel level, FruitEntity entity, int steps) {
+                return () -> FruitEntity.tick(entity, steps);
+            }
+        });
         registerProcess(AbstractFurnaceBlockEntity.class, new Process<>() {
+            public boolean supportsSteam() { return true; }
             public double price(ServerLevel level, AbstractFurnaceBlockEntity entity) { return furnace(level, entity); }
             public boolean prepareSuppressed(AbstractFurnaceBlockEntity entity) {
                 FurnaceAccess a = (FurnaceAccess) entity;
@@ -43,6 +62,7 @@ public final class WorkSources {
             }
         });
         registerProcess(BrewingStandBlockEntity.class, new Process<>() {
+            public boolean supportsSteam() { return true; }
             public double price(ServerLevel level, BrewingStandBlockEntity entity) { return brewing(level, entity); }
             public boolean steamWork(ServerLevel level, BrewingStandBlockEntity entity) {
                 return ((BrewingAccess) entity).senluo$brewTime() > 0;
@@ -54,6 +74,7 @@ public final class WorkSources {
             }
         });
         registerProcess(CampfireBlockEntity.class, new Process<>() {
+            public boolean supportsSteam() { return true; }
             public double price(ServerLevel level, CampfireBlockEntity entity) { return campfire(level, entity); }
             public boolean prepareSuppressed(CampfireBlockEntity entity) {
                 int[] progress = ((dev.senluo.witchcraft.mixin.time.CampfireAccess) entity).senluo$progress();
@@ -74,9 +95,12 @@ public final class WorkSources {
         java.util.Objects.requireNonNull(process);
         CLASS_RULES.clear();
         RULES.put(type, new Process<>() {
+            public boolean nativeContext() { return process.nativeContext(); }
             public void tick(ServerLevel level, BlockEntity entity, Runnable nativeTick) { process.tick(level, type.cast(entity), nativeTick); }
+            public Runnable batch(ServerLevel level, BlockEntity entity, int steps) { return process.batch(level, type.cast(entity), steps); }
             public double price(ServerLevel level, BlockEntity entity) { return process.price(level, type.cast(entity)); }
             public boolean prepareSuppressed(BlockEntity entity) { return process.prepareSuppressed(type.cast(entity)); }
+            public boolean supportsSteam() { return process.supportsSteam(); }
             public boolean steamWork(ServerLevel level, BlockEntity entity) { return process.steamWork(level, type.cast(entity)); }
             public boolean outputWork(ServerLevel level, BlockEntity entity) { return process.outputWork(level, type.cast(entity)); }
         });
@@ -105,6 +129,14 @@ public final class WorkSources {
         return Double.isFinite(price) && price > 0 ? price : 0;
     }
     public static boolean known(BlockEntity entity) { return process(entity) != null; }
+    public static boolean nativeContext(BlockEntity entity) {
+        var process = process(entity);
+        return process != null && process.nativeContext();
+    }
+    public static Runnable batch(ServerLevel level, BlockEntity entity, int steps) {
+        var process = process(entity);
+        return process == null ? null : process.batch(level, entity, steps);
+    }
     public static void tick(ServerLevel level, BlockEntity entity, Runnable nativeTick) {
         var process = process(entity);
         if (process == null) nativeTick.run(); else process.tick(level, entity, nativeTick);
@@ -119,9 +151,13 @@ public final class WorkSources {
         var process = process(entity);
         return process != null && process.prepareSuppressed(entity);
     }
+    public static boolean supportsSteam(BlockEntity entity) {
+        var process = process(entity);
+        return process != null && process.supportsSteam();
+    }
     public static boolean steamWork(ServerLevel level, BlockEntity entity) {
         var process = process(entity);
-        return process != null && process.steamWork(level, entity);
+        return process != null && process.supportsSteam() && process.steamWork(level, entity);
     }
     private static double furnace(ServerLevel level, AbstractFurnaceBlockEntity entity) {
         FurnaceAccess access = (FurnaceAccess) entity;

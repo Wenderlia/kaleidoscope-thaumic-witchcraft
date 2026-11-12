@@ -45,11 +45,12 @@ public final class RitualMaterials {
         protected abstract ItemStack current();
         protected abstract ItemStack removeOne();
         public boolean returnOne(ItemStack stack) { return false; }
-        public final boolean available() {
+        public final int count() {
             ItemStack stack = current();
             return stack != null && !stack.isEmpty() && !RitualVial.reserved(stack)
-                    && ItemStack.isSameItemSameComponents(expected, stack);
+                    && ItemStack.isSameItemSameComponents(expected, stack) ? stack.getCount() : 0;
         }
+        public final boolean available() { return count() > 0; }
         public final ItemStack takeOne() { return available() ? removeOne() : ItemStack.EMPTY; }
     }
 

@@ -24,6 +24,34 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class SlashProtectionGameTests {
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=20,batch="slash-protection")
+    public static void sectionalHitKeepsSurplusAndHonorsNativeVeto(GameTestHelper h) {
+        var player = new FakePlayer(h.getLevel(), new GameProfile(UUID.randomUUID(), "section-damage"));
+        var at = h.absolutePos(new BlockPos(8, 3, 8)); player.setPos(at.getCenter().add(4, 0, 0));
+        var cow = EntityType.COW.create(h.getLevel()); cow.setNoAi(true); cow.setPos(at.getCenter());
+        cow.setHealth(5); h.getLevel().addFreshEntity(cow);
+        var blocked = slash(h, player);
+        var sweep = new SlashGeometry.Sweep(cow.getBoundingBox().getCenter().add(0, 0, -1.5),
+                cow.getBoundingBox().getCenter().add(0, 0, 1.5), new Vec3(1, 0, 0), .25, .25);
+        Consumer<LivingIncomingDamageEvent> veto = event -> { if (event.getEntity() == cow) event.setCanceled(true); };
+        NeoForge.EVENT_BUS.addListener(veto);
+        try {
+            var rejected = SlashCollision.resolveParts(blocked, player, List.of(sweep),
+                    new SlashCollision.Budget(ProjectileBarrier.space(blocked)), List.of(t -> t));
+            h.assertTrue(rejected.cut() == null && blocked.potential().remaining() == 4 && cow.getHealth() == 5,
+                    "Rejected native damage cannot consume potential or cut geometry");
+        } finally { NeoForge.EVENT_BUS.unregister(veto); }
+        var allowed = slash(h, player);
+        var result = SlashCollision.resolveParts(allowed, player, List.of(sweep),
+                new SlashCollision.Budget(ProjectileBarrier.space(allowed)), List.of(t -> t));
+        h.assertTrue(!cow.isAlive() && result.cut() != null && Math.abs(result.cut().proportion() - .25) < 1.0E-6,
+                "Native 20 damage against 5 health commits a quarter-length section");
+        h.assertTrue(Math.abs(allowed.potential().remaining() - 3) < 1.0E-6 && allowed.fragments() == null
+                        && !result.stopped()[0] && result.fractions()[0] < 1,
+                "The remaining budget survives a recollection boundary, without scattering or treating it as a wall");
+        cow.discard(); blocked.discard(); allowed.discard(); h.succeed();
+    }
+
     private static SlashEntity slash(GameTestHelper h, FakePlayer player) {
         var direction = new Vec3(0,0,1);
         var result = new SlashEntity(SlashContent.SLASH.get(), h.getLevel());

@@ -214,7 +214,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     }
     public void radial(RadialOutline value) {
         radial = new RadialSlash(value); rotation = null;
-        entityData.set(RADIAL, value.save());
+        entityData.set(RADIAL, radial.geometry());
         entityData.set(RADIAL_PROGRESS, radial.snapshot()); entityData.set(HAND_RELEASE, false);
         setDeltaMovement(Vec3.ZERO);
     }
@@ -284,6 +284,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         if (radial != null) {
             if (position().distanceToSqr(routeOrigin) > 1.0E-4) { finish(position()); return; }
             boolean alive = radial.tick(this, player, shape);
+            entityData.set(RADIAL, radial.geometry());
             entityData.set(RADIAL_PROGRESS, radial.snapshot());
             if (isRemoved()) return;
             setDeltaMovement(Vec3.ZERO);
@@ -407,7 +408,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         if (!hasRadialGeometry()) { radial = null; return; }
         try {
             RadialSlash candidate = geometryChanged || radial == null
-                    ? new RadialSlash(RadialOutline.load(entityData.get(RADIAL))) : radial;
+                    ? RadialSlash.fromGeometry(entityData.get(RADIAL), radial) : radial;
             candidate.acceptSnapshot(entityData.get(RADIAL_PROGRESS), entityData.get(SIZE).x);
             radial = candidate;
         } catch (IllegalArgumentException invalid) {
@@ -458,7 +459,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     @Override protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.put("LaunchOrigin", entityData.get(LAUNCH_ORIGIN).copy());
-        tag.putInt("SlashVersion", 14); tag.putBoolean("Paid", armed);
+        tag.putInt("SlashVersion", 15); tag.putBoolean("Paid", armed);
         tag.putBoolean("Destructive", destructive); tag.putBoolean("Penetrating", penetrating);
         tag.putBoolean("Fission", fission);
         tag.putDouble("CriticalBase", criticalBase);
@@ -505,7 +506,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         ListTag hits = tag.getList("HitEntities", Tag.TAG_COMPOUND); long[] blocks = tag.getLongArray("HitBlocks");
         int version = tag.getInt("SlashVersion");
         double savedCriticalBase = tag.getDouble("CriticalBase");
-        if (version != 14 || tag.contains("Outline") || !readShape(tag)) { armed = false; return; }
+        if (version != 14 && version != 15 || tag.contains("Outline") || !readShape(tag)) { armed = false; return; }
         armed = tag.getBoolean("Paid") && tag.hasUUID("Caster")
                 && tag.contains("Fission", Tag.TAG_BYTE)
                 && tag.contains("Destructive", Tag.TAG_BYTE) && tag.contains("Penetrating", Tag.TAG_BYTE)
@@ -552,7 +553,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
                 if (!radialData.contains("GeometryVersion", Tag.TAG_INT))
                     throw new IllegalArgumentException("Missing radial geometry version");
                 radial = RadialSlash.load(radialData, shape.range());
-                entityData.set(RADIAL, radial.outline().save()); entityData.set(RADIAL_PROGRESS, radial.snapshot());
+                entityData.set(RADIAL, radial.geometry()); entityData.set(RADIAL_PROGRESS, radial.snapshot());
             } catch (IllegalArgumentException invalid) { armed = false; return; }
         }
         if (tag.contains("Fragments")) {

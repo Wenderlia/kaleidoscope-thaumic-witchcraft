@@ -48,7 +48,7 @@ public final class FrostModuleItem extends ReservoirPluginItem {
             this.player=p;this.bag=bag;this.slot=slot;expected=module.copy();observed=bag.get(DataComponents.CUSTOM_DATA);
         }
         public boolean getAsBoolean(){
-            if(!valid || ReservoirContent.worn(player)!=bag)return false;
+            if(!valid || ReservoirEquipment.worn(player)!=bag)return false;
             CustomData current=bag.get(DataComponents.CUSTOM_DATA);
             if(current!=observed){
                 observed=current;

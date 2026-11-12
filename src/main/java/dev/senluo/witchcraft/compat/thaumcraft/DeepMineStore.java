@@ -55,11 +55,13 @@ final class DeepMineStore extends SavedData {
     }
 
     final class Mine {
+        final UUID id;
         final MixedMine samples;
         private final Map<BlockPos, BoreExcavation> work = new HashMap<>();
         private final Map<BlockEntity, BoreExcavation> bindings = new WeakHashMap<>();
         private boolean legacy;
         Mine(UUID id, boolean legacy) {
+            this.id = id;
             this.legacy = legacy;
             samples = new MixedMine(id, DeepMineStore.this::setDirty);
         }

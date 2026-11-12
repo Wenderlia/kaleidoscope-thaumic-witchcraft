@@ -20,9 +20,11 @@ public final class DevelopmentClock {
     private final Map<BlockEntity, Integer> pulses = new IdentityHashMap<>();
     public DevelopmentClock(ServerLevel level) { this.level = level; }
 
-    public void pulse(BlockEntity body) {
-        if (body instanceof Participant && valid(body))
-            pulses.merge(body, 1, (a, b) -> a == Integer.MAX_VALUE ? a : a + b);
+    public void pulse(BlockEntity body) { pulse(body, 1); }
+
+    public void pulse(BlockEntity body, int steps) {
+        if (steps > 0 && body instanceof Participant && valid(body))
+            pulses.merge(body, steps, (a, b) -> (int) Math.min(Integer.MAX_VALUE, (long) a + b));
     }
 
     private boolean valid(BlockEntity body) {

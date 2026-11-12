@@ -28,10 +28,12 @@ public final class CrucibleRitualAdapter {
                 || dev.senluo.witchcraft.ritual.WaterReceivers.candidate(after);
         if (before.hasBlockEntity() || after.hasBlockEntity() || receiverChanged)
             RitualWaterIndex.changed(level, pos, before.hasBlockEntity() || after.hasBlockEntity(), receiverChanged);
-        if (CrucibleStabilizers.matches(before) != CrucibleStabilizers.matches(after))
+        if (CrucibleStabilizers.matches(before) != CrucibleStabilizers.matches(after)
+                || before.is(dev.senluo.witchcraft.time.TreeWood.LOGS) != after.is(dev.senluo.witchcraft.time.TreeWood.LOGS))
             CrucibleStabilizers.changed(level, net.minecraft.world.level.ChunkPos.asLong(pos));
     }
     public static void register() {
+        CrucibleRitualHost.register();
         OfferingSounds.register("thaumcraft:silverwood_log",
                 new OfferingSounds.Voice(SoundEvents.WOOD_BREAK, .3F, .9F),
                 new OfferingSounds.Voice(SoundEvents.AMETHYST_BLOCK_CHIME, .2F, .8F));
@@ -57,6 +59,7 @@ public final class CrucibleRitualAdapter {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.LevelEvent.Unload event) -> SuctionEndpointIndex.unload(event));
         var filled = (BooleanProperty) ThaumcraftContent.block("alchemical_furnace").getStateDefinition().getProperty("filled");
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("alchemy_furnace"), new WorkSources.Process<>() {
+            public boolean supportsSteam() { return true; }
             public double price(ServerLevel level, BlockEntity furnace) {
                 return furnace.getBlockState().getValue(BlockStateProperties.LIT)
                         && dev.tc4port.thaumcraft.api.machine.AlchemyFurnaceApi.canSmelt(level, furnace.getBlockPos()) ? WorkSources.UPDATE_PRICE : 0;
@@ -77,7 +80,7 @@ public final class CrucibleRitualAdapter {
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("infernal_furnace"), new WorkSources.Process<>() {
             // Retain the previous default work quote. The native core owns its queue and vis reserve.
             public double price(ServerLevel level, BlockEntity furnace) { return WorkSources.UPDATE_PRICE; }
-            public boolean steamWork(ServerLevel level, BlockEntity furnace) { return true; }
+            public boolean supportsSteam() { return true; }
         });
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("crucible"), new WorkSources.Process<>() {
             public double price(ServerLevel level, BlockEntity entity) { return 0; }

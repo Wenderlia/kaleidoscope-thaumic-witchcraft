@@ -22,6 +22,10 @@ import org.lwjgl.glfw.GLFW;
 
 @EventBusSubscriber(modid=KaleidoscopeWitchcraft.MOD_ID,bus=EventBusSubscriber.Bus.MOD,value=Dist.CLIENT)
 public final class ReservoirClient {
+    @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event){
+        if(net.neoforged.fml.ModList.get().isLoaded("ftblibrary"))
+            event.enqueueWork(dev.senluo.witchcraft.compat.ftb.ReservoirSidebar::register);
+    }
     private static final KeyMapping OPEN=new KeyMapping("key.kaleidoscope_witchcraft.open_reservoir",GLFW.GLFW_KEY_B,"key.categories.kaleidoscope_witchcraft");
     @SubscribeEvent public static void keys(RegisterKeyMappingsEvent e){e.register(OPEN);}
     @SubscribeEvent public static void screens(RegisterMenuScreensEvent e){e.register(ReservoirContent.MENU.get(),ReservoirScreen::new);e.register(ReservoirContent.SILVER_MENU.get(),ReservoirScreen::new);}
@@ -46,7 +50,7 @@ public final class ReservoirClient {
     private static final class BackLayer extends RenderLayer<AbstractClientPlayer,PlayerModel<AbstractClientPlayer>> {
         BackLayer(RenderLayerParent<AbstractClientPlayer,PlayerModel<AbstractClientPlayer>> parent){super(parent);}
         public void render(PoseStack poses,MultiBufferSource buffers,int light,AbstractClientPlayer player,float swing,float amount,float partial,float age,float yaw,float pitch){
-            var bag=ReservoirContent.worn(player);if(bag.isEmpty() || player.isInvisible())return;
+            var bag=ReservoirEquipment.worn(player);if(bag.isEmpty() || player.isInvisible())return;
             poses.pushPose();
             try{
                 getParentModel().body.translateAndRotate(poses);
@@ -59,7 +63,7 @@ public final class ReservoirClient {
     public static final class Input {
         @SubscribeEvent public static void tick(ClientTickEvent.Post e){
             var mc=Minecraft.getInstance();
-            while(OPEN.consumeClick())if(mc.player!=null && mc.screen==null && !ReservoirContent.accessible(mc.player).isEmpty())PacketDistributor.sendToServer(new ReservoirContent.Open());
+            while(OPEN.consumeClick())if(mc.player!=null && mc.screen==null && !ReservoirEquipment.accessible(mc.player).isEmpty())PacketDistributor.sendToServer(new ReservoirRuntime.Open());
         }
     }
     private ReservoirClient(){}

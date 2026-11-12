@@ -24,16 +24,24 @@ public final class ReservoirDisplay {
         if(width<=0 || height<=0)return;
         var sprite=Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(LIQUID);
         int color=color(aspect);
-        // The atlas owns animation and resource reload; do not cache a frame or tint.
-        g.blit(x,y,0,width,height,sprite,(color>>16&255)/255F,(color>>8&255)/255F,(color&255)/255F,1);
-    }
-    public static void glass(GuiGraphics g,int x,int y,int width,int height){
-        // Same cleaned jar pane as the model (no cork or bottom interior marks).
-        // 1.21.1's plain texture blit does not enable blending, while the colored
-        // sprite blit above disables it on return. Explicitly own this one draw.
+        // Keep the atlas-owned animated pixels at native size. Crop/tile instead
+        // of stretching a whole frame whenever the amount changes. At default
+        // 16px, each chamber uses at most eight small quads; no scissor or cache.
+        int tw=sprite.contents().width(),th=sprite.contents().height();
+        int aw=Math.round(tw/(sprite.getU1()-sprite.getU0()));
+        int ah=Math.round(th/(sprite.getV1()-sprite.getV0()));
+        float u=sprite.getU0()*aw,v=sprite.getV0()*ah;
         g.flush();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
-        try{g.blit(JAR,x+2,y+9,width,height,3,4,10,12,16,16);}
-        finally{RenderSystem.disableBlend();}
+        RenderSystem.setShaderColor((color>>16&255)/255F,(color>>8&255)/255F,(color&255)/255F,1);
+        try{
+            int sourceY=Math.floorMod(-height,th);
+            for(int yy=0;yy<height;){
+                int h=Math.min(th-sourceY,height-yy);
+                for(int xx=0;xx<width;xx+=tw)
+                    g.blit(sprite.atlasLocation(),x+xx,y+yy,u,v+sourceY,Math.min(tw,width-xx),h,aw,ah);
+                yy+=h;sourceY=0;
+            }
+        }finally{RenderSystem.setShaderColor(1,1,1,1);RenderSystem.disableBlend();}
     }
     private static AspectId id(String value){
         if(value==null || value.isEmpty())return null;
@@ -41,7 +49,17 @@ public final class ReservoirDisplay {
     }
     public static void icon(GuiGraphics g,String value,int x,int y){
         var aspect=id(value);
-        if(aspect!=null)dev.tc4port.thaumcraft.api.client.ThaumcraftClientRenderApi.drawAspect(g,aspect,x,y,1);
+        if(aspect==null)return;
+        // One offset silhouette separates pale aspect ink from the paper label.
+        // The actual foreground remains the core API's current texture and tint.
+        var definition=AspectApi.registry().get(aspect).orElse(null);
+        if(definition!=null){
+            g.flush();RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
+            g.setColor(.12F,.11F,.09F,.72F);
+            try{g.blit(definition.texture(),x+1,y+1,16,16,0,0,32,32,32,32);}
+            finally{g.setColor(1,1,1,1);RenderSystem.disableBlend();}
+        }
+        dev.tc4port.thaumcraft.api.client.ThaumcraftClientRenderApi.drawAspect(g,aspect,x,y,1);
     }
     public static void contents(ItemStack bag,PoseStack poses,MultiBufferSource buffers,int light){
         int count=ReservoirData.cells(bag),capacity=ReservoirData.capacity(bag);

@@ -40,14 +40,18 @@ final class BoreExcavation implements INBTSerializable<CompoundTag> {
                 || !request.level().getBlockState(target.virtual()).equals(target.state())) {
             ArcaneBoreApi.cancelDig(level, bore.getBlockPos());
             clear();
-        }
+        } else samples.maintain(bore, rings.displayedRadius(view));
     }
 
     void harvest(ArcaneBoreEvent.Harvest event, BlockEntity bore, BoreRings.State rings) {
         if (!matches(event)) return;
-        if (!(bore instanceof ArcaneBoreView view) || !DeepDrilling.active(event.level(), bore)
-                || !withinRange(bore, rings, view, target.rock())
-                || !target.rock().equals(tracePortal(event.level(), bore, target.rock()))) {
+        var expected = request;
+        var sampled = target;
+        // Refresh can revoke this receipt while a different ritual still serves the same bore.
+        if (!(bore instanceof ArcaneBoreView view) || !rings.permits(event.level(), bore, this)
+                || request != expected || target != sampled
+                || !withinRange(bore, rings, view, sampled.rock())
+                || !sampled.rock().equals(tracePortal(event.level(), bore, sampled.rock()))) {
             event.setCanceled(true);
             return;
         }
@@ -81,11 +85,14 @@ final class BoreExcavation implements INBTSerializable<CompoundTag> {
             } else clear();
         }
         if (current != null || !idle || !(bore instanceof ArcaneBoreView view) || !eligible(level, bore, view)) return;
-        int[] offset = column(cursor, rings.displayedRadius(view));
-        if (offset == null) { advance(); return; }
+        int radius = rings.displayedRadius(view);
+        long next = nextColumn(cursor, radius);
+        if (next != cursor) { cursor = next; changed.run(); }
+        int[] offset = column(cursor, radius);
         BlockPos rock = target == null
                 ? portal(level, bore, bore.getBlockPos().offset(offset[0], 0, offset[1]), rings.depth()) : target.rock();
         if (rock == null) { advance(); return; }
+        samples.maintain(bore, radius);
         ServerLevel mine = MixedMine.forHost(level);
         if (mine == null) return;
         if (target == null) {
@@ -116,6 +123,25 @@ final class BoreExcavation implements INBTSerializable<CompoundTag> {
         int x = (int) (Math.floorMod(cursor, diameter) - radius);
         int z = (int) (Math.floorMod(Math.floorDiv(cursor, diameter), diameter) - radius);
         return (long) x * x + (long) z * z <= (long) radius * radius ? new int[]{x, z} : null;
+    }
+
+    /** Skip only impossible lattice cells. Keep the existing persisted cursor and valid-column order. */
+    static long nextColumn(long cursor, int radius) {
+        long diameter = radius * 2L + 1;
+        // Every row intersects the disk: at most the current row and the next are considered.
+        for (int row = 0; row < 2; row++) {
+            long x = Math.floorMod(cursor, diameter) - radius;
+            long z = Math.floorMod(Math.floorDiv(cursor, diameter), diameter) - radius;
+            long square = (long) radius * radius - z * z;
+            long extent = (long) Math.sqrt(square);
+            // Preserve the integer circle boundary despite floating-point sqrt rounding.
+            while (extent * extent > square) extent--;
+            while ((extent + 1) * (extent + 1) <= square) extent++;
+            if (x < -extent) return cursor + (-extent - x);
+            if (x <= extent) return cursor;
+            cursor += radius - x + 1;
+        }
+        throw new IllegalStateException("A circular scan row must contain a valid column");
     }
 
     private static boolean withinRange(BlockEntity bore, BoreRings.State rings, ArcaneBoreView view, BlockPos rock) {

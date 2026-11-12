@@ -21,6 +21,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 
 /** Anchor, node parameter source and derived field have separate roles; activation does not choose the executor. */
 public final class NodePromotion implements RitualCenters.Behavior {
+    @Override public int activationPriority() { return 30; }
     @Override public StructuralRitualStore.Definition definition() { return DEFINITION; }
     public static final StructuralRitualStore.Definition DEFINITION = new StructuralRitualStore.Definition(
             ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "node_promotion"),
@@ -47,70 +48,68 @@ public final class NodePromotion implements RitualCenters.Behavior {
             default -> false;
         };
     }
-    private static Optional<RitualMaterials.Source> offering(ServerLevel level, RitualPlane plane, int step) {
-        var area = RitualOfferingArea.outermost(plane);
+    private static Optional<RitualMaterials.Source> offering(ServerLevel level, RitualSite.Footprint footprint, int step) {
+        var area = RitualOfferingArea.outermost(footprint);
         return RitualMaterials.find(level, area, stack -> matches(stack, step)).stream()
                 .min(Comparator.comparingDouble(source -> source.position().distanceToSqr(area.bounds().getCenter())));
     }
     @Override public InteractionResult activate(ServerLevel level, RitualSite site, net.minecraft.server.level.ServerPlayer player) {
-        var plane = site.plane();
-        if (plane == null) return InteractionResult.PASS;
-        for (int step = 0; step < 3; step++) if (offering(level, plane, step).isEmpty()) return InteractionResult.PASS;
+        var footprint = site.footprint();
+        if (footprint == null) return InteractionResult.PASS;
+        for (int step = 0; step < 3; step++) if (offering(level, footprint, step).isEmpty()) return InteractionResult.PASS;
         if (!site.center().mayPrepare()
                 || RitualResearch.check(level, player.getUUID(), DEFINITION.research()) != RitualResearch.Result.ALLOWED
                 || NodeRituals.findNode(level, site) == null) return InteractionResult.FAIL;
         var store = StructuralRitualStore.get(level);
-        var handles = GoldenRitualSlots.sessions(level, plane);
+        var handles = store.atPlane(level.dimension().location(), footprint.anchor());
         if (handles.stream().anyMatch(h -> h.definition().kind().equals(DEFINITION.kind()) && store.progress(h.id())
                 .filter(p -> p.phase() == StructuralRitualStore.Phase.PREPARING).isPresent())) return InteractionResult.CONSUME;
-        UUID proposed = UUID.randomUUID();
-        if (!GoldenRitualSlots.allocate(level, plane, proposed, RitualRings.MEDIUM).containsKey(proposed)) return InteractionResult.FAIL;
         var terms = new CompoundTag();
-        terms.putLong("Plane", plane.anchor().asLong());
+        terms.putLong("Plane", footprint.anchor().asLong());
         return RitualCenters.begin(player, site, DEFINITION, terms).isPresent()
                 ? InteractionResult.CONSUME : InteractionResult.FAIL;
     }
-    @Override public RitualCenters.Companion companion() {
-        return (level, plane) -> RitualCenters.find(level, plane, entity -> entity.getBlockState().is(ThaumcraftContent.block("aura_node")));
+    @Override public java.util.function.Predicate<net.minecraft.world.level.block.entity.BlockEntity> target() {
+        return entity -> entity.getBlockState().is(ThaumcraftContent.block("aura_node"));
     }
-    @Override public boolean legacyPair() { return true; }
     @Override public void unavailable(ServerLevel level, StructuralRitualStore.Handle handle) {
         var fields = FIELDS.get(level);
         if (fields != null) fields.remove(handle.id());
     }
-    private static net.minecraft.world.level.block.entity.BlockEntity source(ServerLevel level, CompoundTag terms) {
-        return NodeRituals.findNodeAtAxis(level, BlockPos.of(terms.getLong("Plane")));
+    private static net.minecraft.world.level.block.entity.BlockEntity source(ServerLevel level, UUID session) {
+        var target = RitualCenters.target(level, session);
+        return target == null ? null : NodeRituals.node(level, target.getBlockPos());
     }
     @Override public void tick(ServerLevel level, RitualSite site, StructuralRitualStore.Handle handle) {
         var store = StructuralRitualStore.get(level);
-        var fields = FIELDS.computeIfAbsent(level, unused -> new NodePromotionFields());
+        var fields = FIELDS.computeIfAbsent(level, unused -> new NodePromotionFields(session -> store.running(level, session)));
         var id = handle.id();
-        var node = source(level, store.progress(id).orElseThrow().terms());
-        var plane = site.plane();
-        boolean assigned = plane != null && GoldenRitualSlots.allocate(level, plane, null, RitualRings.MEDIUM).containsKey(id);
-        var result = store.advance(level, id, DEFINITION, StructuralRitualStore.Presence.PRESENT, site.reference(),
-                assigned ? RitualShape.Match.VALID : RitualShape.Match.INVALID, node != null,
-                (token, terms) -> prepare(level, site, token.index(), terms));
-        if (!result.mayRun() || node == null) { fields.remove(id); return; }
+        var node = source(level, id);
+        var result = store.advance(level, id, DEFINITION, StructuralRitualStore.Presence.PRESENT,
+                RitualShape.Match.VALID, node != null,
+                (token, terms) -> prepare(level, site, token.session(), token.index(), terms));
+        if (!result.mayRun() || node == null) {
+            if (!store.pending(id)) fields.remove(id);
+            return;
+        }
         // Unchanged triangular thresholds do not rebuild the field index.
         var capacity = dev.tc4port.thaumcraft.api.node.NodeApi.view(level, node.getBlockPos()).nodeState().baseVis();
         fields.put(new NodePromotionFields.Field(id, node.getBlockPos(),
                 1 + NodePromotionFields.steps(capacity.amount(AURA)),
                 2 + NodePromotionFields.steps(capacity.amount(ENERGY)), store.initiator(id).orElse(null)));
     }
-    private static Optional<StructuralRitualStore.PreparedStep> prepare(ServerLevel level, RitualSite site, int step, CompoundTag terms) {
+    private static Optional<StructuralRitualStore.PreparedStep> prepare(ServerLevel level, RitualSite site, UUID session, int step, CompoundTag terms) {
         if (site == null || level.getGameTime() % 20 != 0) return Optional.empty();
-        var plane = site.plane();
-        if (plane == null) return Optional.empty();
-        var source = step < 3 ? offering(level, plane, step).orElse(null) : null;
+        var footprint = site.footprint();
+        if (footprint == null) return Optional.empty();
+        var source = step < 3 ? offering(level, footprint, step).orElse(null) : null;
         if (step < 3 && source == null) return Optional.empty();
         return Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> {
-            if (!RitualCenters.current(level, site) || source(level, terms) == null) return false;
+            if (!RitualCenters.current(level, site) || source(level, session) == null) return false;
             if (step == 3) {
                 level.playSound(null, site.position(), SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, .5F, 1.2F); return true;
             }
-            var fresh = site.plane();
-            if (fresh == null || !RitualMaterials.inArea(source, RitualOfferingArea.outermost(fresh)) || !matches(source.item(),step)) return false;
+            if (!RitualMaterials.inArea(source, RitualOfferingArea.outermost(footprint)) || !matches(source.item(),step)) return false;
             var taken = source.takeOne();
             if (taken.isEmpty()) return false;
             OfferingSounds.absorb(level, source.position(), taken);

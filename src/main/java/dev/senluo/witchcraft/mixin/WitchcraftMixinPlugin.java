@@ -15,6 +15,8 @@ public final class WitchcraftMixinPlugin implements IMixinConfigPlugin {
             return LoadingModList.get().getModFileById("botania") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.draconic."))
             return LoadingModList.get().getModFileById("draconicevolution") != null;
+        if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.mowzie."))
+            return LoadingModList.get().getModFileById("mowziesmobs") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.tacz."))
             return LoadingModList.get().getModFileById("tacz") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.accessory.")) return true;

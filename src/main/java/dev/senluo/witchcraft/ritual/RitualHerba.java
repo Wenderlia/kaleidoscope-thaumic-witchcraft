@@ -17,7 +17,7 @@ public final class RitualHerba {
         set(vessel, marked ? 1 : 0);
     }
     public static void set(BlockEntity vessel, int count) {
-        if (count < 0 || count > 3) throw new IllegalArgumentException("Invalid ritual Herba count");
+        if (count < 0) throw new IllegalArgumentException("Invalid ritual Herba count");
         if (count(vessel) == count) return;
         var level = vessel.getLevel();
         if (level == null || level.isClientSide) return;

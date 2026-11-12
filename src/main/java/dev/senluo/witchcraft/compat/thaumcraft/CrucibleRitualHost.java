@@ -29,6 +29,15 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 final class CrucibleRitualHost {
     private static final AspectId HERBA = CrucibleRitualRecipes.HERBA;
     private CrucibleRitualHost() {}
+    static void register() {
+        for (var definition : List.of(StructuralRitualStore.PREPARATION, StructuralRitualStore.STEAM, StructuralRitualStore.SUCTION)) {
+            RitualCenters.registerHost(definition.kind(), entity -> EssentiaStores.pot(entity) != null);
+            RitualCenters.observeAvailability(definition.kind(), (level, handle) -> SteamWork.fields(level).remove(handle.id()));
+        }
+    }
+    private static BlockEntity host(ServerLevel level, UUID id) {
+        return EssentiaStores.pot(RitualCenters.target(level, id));
+    }
 
     static List<StructuralRitualStore.Handle> sessions(BlockEntity pot) {
         if (!(pot.getLevel() instanceof ServerLevel level)) return List.of();
@@ -60,11 +69,9 @@ final class CrucibleRitualHost {
             RitualPlane.invalidate(level, pot.getBlockPos());
             var sample = input.get(RitualContent.TAGLOCK_SAMPLE.get());
             var site = RitualCenters.site(pot).orElse(null);
-            UUID proposed = UUID.randomUUID();
             if (draft.isPresent() || sample == null || !sample.supported() || !sample.isPlayer() || site == null
                     || !RitualCenters.current(level, site) || !view.boiling()
-                    || RitualResearch.check(level, sample.subject(), StructuralRitualStore.PREPARATION.research()) != RitualResearch.Result.ALLOWED
-                    || !GoldenRitualSlots.allocate(level, site.plane(), proposed, RitualRings.SMALL).containsKey(proposed)) {
+                    || RitualResearch.check(level, sample.subject(), StructuralRitualStore.PREPARATION.research()) != RitualResearch.Result.ALLOWED) {
                 bounce(item); return Optional.of(false);
             }
             long capacity = view.stableCapacity();
@@ -72,13 +79,13 @@ final class CrucibleRitualHost {
                 bounce(item); return Optional.of(false);
             }
             CompoundTag terms = new CompoundTag(); terms.putInt("Format", 3); terms.putBoolean("Armed", false);
-            terms.putLong("Plane", site.plane().anchor().asLong());
+            terms.putLong("Plane", site.footprint().anchor().asLong());
             if (store.begin(level, StructuralRitualStore.PREPARATION, site.center(), sample.subject(), terms).isEmpty()) {
                 bounce(item); return Optional.of(false);
             }
             SteamRituals.refreshHerba(pot);
             consume(item, 1); addPaidAspects(level, pot, Map.of(HERBA, 1));
-            RitualHerba.set(pot, Math.min(3, RitualHerba.count(pot) + 1));
+            RitualHerba.set(pot, Math.addExact(RitualHerba.count(pot), 1));
             RitualCenterTicks.track(level, pot.getBlockPos());
             sound(level, pot.getBlockPos(), SoundEvents.BREWING_STAND_BREW, 0.4F, 1.2F);
             return Optional.of(true);
@@ -100,14 +107,14 @@ final class CrucibleRitualHost {
                 }
             }
             RitualPlane.invalidate(level, pot.getBlockPos());
-            var site = draft.flatMap(h -> RitualCenters.site(pot, store.progress(h.id()).orElseThrow().terms())).orElse(null);
+            var site = draft.map(h -> store.site(level, h.id())).orElse(null);
             if (site == null || !RitualCenters.current(level, site) || !view.boiling()
-                    || !GoldenRitualSlots.replacing(level, site.plane(), draft.orElseThrow().id(), recipe.definition.minimumRing()).containsKey(draft.orElseThrow().id())
-                    || recipe.offerings.stream().anyMatch(o -> offering(level, RitualOfferingArea.outermost(site.plane()), o.item()).isEmpty())) {
+
+                    || recipe.offerings.stream().anyMatch(o -> offering(level, RitualOfferingArea.outermost(site.footprint()), o.item()).isEmpty())) {
                 bounce(item); return Optional.of(false);
             }
             var terms = recipe.quote(pot, item.getUUID());
-            terms.ifPresent(value -> value.putLong("Plane", site.plane().anchor().asLong()));
+            terms.ifPresent(value -> value.putLong("Plane", site.footprint().anchor().asLong()));
             if (terms.isEmpty() || !recipe.canPay(pot, terms.get())
                     || !store.select(level, draft.get().id(), recipe.definition, terms.get(), item.getUUID())) bounce(item);
             return Optional.of(false);
@@ -123,8 +130,7 @@ final class CrucibleRitualHost {
                         && CrucibleRitualRecipes.is(input, o.item())) return Optional.of(false);
             }
         }
-        if (sessions.stream().noneMatch(h -> RitualCenters.site(pot, store.progress(h.id()).orElseThrow().terms())
-                .filter(site -> RitualCenters.current(level, site)).isPresent())) { bounce(item); return Optional.of(false); }
+        if (sessions.stream().noneMatch(h -> store.eligible(level, h.id()))) { bounce(item); return Optional.of(false); }
         Map<AspectId, Integer> aspects = AspectQueryApi.item(input).amounts();
         long perUnit = aspects.values().stream().filter(n -> n > 0).mapToLong(Integer::longValue).sum();
         if (perUnit <= 0) { bounce(item); return Optional.of(false); }
@@ -147,57 +153,57 @@ final class CrucibleRitualHost {
         Set<UUID> steamed = new HashSet<>(); Set<BlockPos> vented = new HashSet<>();
         Set<BlockPos> watered = new HashSet<>();
         var channels = new ArrayList<SuctionChannels.Pulse>();
-        var allocations = new HashMap<BlockPos, Map<UUID, Integer>>();
         var sessions = store.inDimension(level.dimension().location());
         // Settle existing evaporation before ANY co-hosted ritual observes water availability.
         if (level.getGameTime() % 20 == 0) for (var h : sessions) {
             var recipe = CrucibleRitualRecipes.from(h.definition());
-            BlockPos pos = h.center().position();
-            if (recipe.isEmpty() || recipe.get() == CrucibleRitualRecipes.SUCTION || watered.contains(pos)
+            if (recipe.isEmpty() || recipe.get() == CrucibleRitualRecipes.SUCTION) continue;
+            var actualHost = host(level, h.id());
+            if (actualHost == null) { store.revoke(level, h.id()); continue; }
+            BlockPos pos = actualHost.getBlockPos();
+            if (watered.contains(pos)
                     || !level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)) continue;
             var pot = EssentiaStores.pot(level.getBlockEntity(pos));
             if (pot == null) continue;
             var progress = store.progress(h.id()).orElseThrow();
-            var site = RitualCenters.site(pot, progress.terms()).orElse(null);
+            var site = store.site(level, h.id());
             if (progress.phase() == StructuralRitualStore.Phase.ACTIVE && recipe.get().valid(progress.terms())
-                    && site != null && site.reference().equals(h.center()) && RitualCenters.current(level, site)
-                    && allocations.computeIfAbsent(site.plane().anchor(), ignored -> GoldenRitualSlots.allocate(
-                            level, site.plane(), null, RitualRings.SMALL)).containsKey(h.id())) {
+                    && site != null && store.eligible(level, h.id())) {
                 watered.add(pos); evaporate(level, pot);
             }
         }
         for (var h : sessions) {
             var recipe = CrucibleRitualRecipes.from(h.definition());
             if (recipe.isEmpty() && !h.definition().kind().equals(StructuralRitualStore.PREPARATION.kind())) continue;
-            BlockPos pos = h.center().position();
+            var actualHost = host(level, h.id());
+            if (actualHost == null) { store.revoke(level, h.id()); continue; }
+            BlockPos pos = actualHost.getBlockPos();
             if (!level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)) { SteamWork.fields(level).remove(h.id()); continue; }
             var entity = level.getBlockEntity(pos);
             var pot = EssentiaStores.pot(entity);
             var observed = RitualCenters.observe(entity).filter(RitualCenters.Center::mayPrepare);
             var p = store.progress(h.id()).orElseThrow();
-            var site = RitualCenters.site(pot, p.terms()).filter(s -> s.reference().equals(h.center())
-                    && RitualCenters.current(level, s)).orElse(null);
-            var presence = observed.isPresent() ? StructuralRitualStore.Presence.PRESENT
-                    : pot != null ? StructuralRitualStore.Presence.UNLOADED : StructuralRitualStore.Presence.MISSING;
-            boolean allocated = site != null && store.bindSite(level, h.id(), site.plane().anchor(), false)
-                    && allocations.computeIfAbsent(site.plane().anchor(), ignored -> GoldenRitualSlots.allocate(
-                            level, site.plane(), null, RitualRings.SMALL)).containsKey(h.id());
-            var shape = allocated && recipe.isPresent() && recipe.get().valid(p.terms()) ? RitualShape.Match.VALID : RitualShape.Match.INVALID;
+            var site = store.site(level, h.id());
+            var presence = observed.isPresent() ? StructuralRitualStore.Presence.PRESENT : StructuralRitualStore.Presence.UNLOADED;
+            var shape = recipe.isPresent() && recipe.get().valid(p.terms()) ? RitualShape.Match.VALID : RitualShape.Match.INVALID;
             // The shared store preserves paid active receipts and rechecks unfinished preparations.
             var result = store.advance(level, h.id(),
                     recipe.map(r -> r.definition).orElse(StructuralRitualStore.PREPARATION), presence,
-                    observed.map(RitualCenters.Center::reference).orElse(null), shape,
+                    shape,
                     pot != null && EssentiaStores.hasWater(pot),
                     (token, terms) -> recipe.flatMap(r -> quote(level, pos, h.id(), r, token.index(), terms)));
             if (result.phase() == StructuralRitualStore.Phase.ENDED) {
-                SteamWork.fields(level).remove(h.id()); store.finish(h.id());
-                if (pot != null && observed.map(c -> c.reference().equals(h.center())).orElse(false))
+                RitualCenters.end(level, h.id());
+                if (pot != null && observed.isPresent())
                     RitualHerba.set(pot, Math.min(RitualHerba.count(pot), liveCount(pot)));
                 continue;
             }
             if (recipe.isPresent() && result.newlyCommittedStep() >= 0)
                 stageSound(level, pos, recipe.get(), p.terms(), result.newlyCommittedStep());
-            if (!result.mayRun() || recipe.isEmpty()) { SteamWork.fields(level).remove(h.id()); continue; }
+            if (!result.mayRun() || recipe.isEmpty()) {
+                if (!store.pending(h.id())) SteamWork.fields(level).remove(h.id());
+                continue;
+            }
             CompoundTag terms = store.progress(h.id()).orElseThrow().terms();
             if (recipe.get() == CrucibleRitualRecipes.SUCTION) {
                 SteamWork.fields(level).remove(h.id());
@@ -221,11 +227,11 @@ final class CrucibleRitualHost {
     private static Optional<StructuralRitualStore.PreparedStep> quote(ServerLevel level, BlockPos pos, UUID session,
             CrucibleRitualRecipes recipe, int step, CompoundTag terms) {
         var pot = EssentiaStores.pot(level.getBlockEntity(pos));
-        var site = RitualCenters.site(pot, terms).orElse(null);
+        var site = StructuralRitualStore.get(level).site(level, session);
         if (pot == null || !EssentiaStores.hasWater(pot) || !recipe.valid(terms)
                 || site == null || !RitualCenters.current(level, site)
                 || trigger(level, pos, session, recipe, terms).isEmpty()) return Optional.empty();
-        var area = RitualOfferingArea.outermost(site.plane());
+        var area = RitualOfferingArea.outermost(site.footprint());
         var offerings = recipe.offerings;
         boolean last = step == offerings.size();
         var triggerItem = trigger(level, pos, session, recipe, terms).orElse(null);
@@ -233,7 +239,6 @@ final class CrucibleRitualHost {
         if (triggerItem == null || !last && source == null || last && !recipe.canPay(pot, terms)) return Optional.empty();
         return Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> {
             if (level.getBlockEntity(pos) != pot || !EssentiaStores.hasWater(pot) || !RitualCenters.current(level, site)
-                    || !GoldenRitualSlots.allocate(level, site.plane(), null, RitualRings.SMALL).containsKey(session)
                     || trigger(level, pos, session, recipe, terms).filter(current -> current == triggerItem).isEmpty()) return false;
             if (!last && !availableOffering(area, source, offerings.get(step).item())) return false;
             if (last && !recipe.pay(pot, terms)) return false;

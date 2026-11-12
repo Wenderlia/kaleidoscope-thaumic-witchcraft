@@ -86,7 +86,7 @@ public final class ProductionScheduler {
             if (!crops.steps.isEmpty()) jobs.add(crops);
             if (!source.amber()) {
                 List<BlockPos> targets = machineOffers.computeIfAbsent(group, colony -> world.machines.get(colony).stream()
-                        .filter(pos -> MachineWork.operation(world.level, pos) != null).toList());
+                        .filter(pos -> MachineWork.eligible(world.level, pos)).toList());
                 MachineJob machines = new MachineJob(source, group, modeRate, targets);
                 if (!machines.targets.isEmpty()) jobs.add(machines);
             }

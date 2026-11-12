@@ -5,6 +5,8 @@ final class VishroomShape {
     record Cell(int x, int y, int z, int part) {}
     static final int PARTS = 59;
     static final int STEM = 56;
+    static final int TUFT = 57;
+    static final int YOUNG = 58;
     static final Cell[] CELLS = {
         new Cell(0, 1, 0, 56),
         new Cell(1, 0, 0, 56),

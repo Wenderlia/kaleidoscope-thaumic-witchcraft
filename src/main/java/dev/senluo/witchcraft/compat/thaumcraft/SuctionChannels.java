@@ -1,6 +1,7 @@
 package dev.senluo.witchcraft.compat.thaumcraft;
 
 import dev.senluo.witchcraft.ritual.SuctionCharge;
+import dev.senluo.witchcraft.ritual.StructuralRitualStore;
 import dev.senluo.witchcraft.ritual.SuctionTransferStore;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
 import dev.tc4port.thaumcraft.api.aspect.AspectId;
@@ -26,6 +27,16 @@ final class SuctionChannels {
     };
     private record RateKey(int groups, int interval, int perPulse) {}
     record Pulse(UUID ritual, BlockPos center, SuctionCharge charge, long amount) {}
+    private static final class Contribution {
+        final UUID ritual; long remaining;
+        Contribution(Pulse pulse) { ritual = pulse.ritual; remaining = pulse.amount; }
+    }
+    private static long remaining(ServerLevel level, List<Contribution> contributions) {
+        long sum = 0;
+        for (var contribution : contributions) if (contribution.remaining > 0 && StructuralRitualStore.get(level).running(level, contribution.ritual))
+            sum = sum > Long.MAX_VALUE - contribution.remaining ? Long.MAX_VALUE : sum + contribution.remaining;
+        return sum;
+    }
     private record Destination(BlockPos position, Direction face) {}
     private record Route(BlockPos source, Direction sourceFace, BlockPos target, Direction targetFace, AspectId aspect) {}
     private record Sent(Route route, long tick) {}
@@ -57,11 +68,11 @@ final class SuctionChannels {
             if (receipt.uncertain() || !loaded(level, receipt.outlet().position())) continue;
             settle(level, journal, receipt, index, sent);
         }
-        Map<BlockPos, Long> budgets = new TreeMap<>();
+        Map<BlockPos, List<Contribution>> budgets = new TreeMap<>();
         for (Pulse channel : channels) for (BlockPos source : index.sources(level, channel.center, channel.charge))
-            budgets.merge(source, channel.amount, (left, right) -> left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right);
+            budgets.computeIfAbsent(source, unused -> new ArrayList<>()).add(new Contribution(channel));
         for (var entry : budgets.entrySet()) {
-            BlockPos sourcePos = entry.getKey(); long budget = entry.getValue();
+            BlockPos sourcePos = entry.getKey(); var contributions = entry.getValue(); long budget = remaining(level, contributions);
             if (budget <= 0 || !loaded(level, sourcePos)) continue;
             var outlet = new SuctionTransferStore.Outlet(level.dimension().location(), sourcePos);
             if (journal.holds(outlet)) continue;
@@ -93,6 +104,10 @@ final class SuctionChannels {
                     if (quote <= 0 || !loaded(level, destination.position)) continue;
                     source = endpoint(level, sourcePos, face);
                     if (source == null || level.getBlockEntity(sourcePos) != be) break;
+                    // Drop revoked contributions before quoting; debit this exact entitlement after extraction.
+                    contributions.removeIf(c -> !StructuralRitualStore.get(level).running(level, c.ritual));
+                    quote = (int)Math.min(quote, remaining(level, contributions));
+                    if (quote <= 0) break;
                     int extracted = EssentiaApi.take(level, source, aspect, quote, face, EssentiaTransferMode.EXECUTE);
                     if (extracted <= 0) continue;
                     var receipt = journal.record(outlet, face, aspect.value(), extracted);
@@ -102,7 +117,9 @@ final class SuctionChannels {
                         journal.accepted(receipt, delivered);
                         if (delivered > 0) visualize(level, new Route(sourcePos, face, destination.position, destination.face, aspect), sent);
                     }
-                    budget -= extracted;
+                    long debit = extracted;
+                    for (var contribution : contributions) { long amount = Math.min(debit, contribution.remaining); contribution.remaining -= amount; debit -= amount; if (debit == 0) break; }
+                    budget = Math.min(budget - extracted, remaining(level, contributions));
                 }
             }
         }

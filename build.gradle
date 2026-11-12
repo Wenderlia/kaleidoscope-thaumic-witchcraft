@@ -44,6 +44,9 @@ def tcApi = tcReference.developer_jars.find { it.jar.startsWith('dev/tc/') && it
 if (tcApi == null || !new File(tcReferenceDir, tcApi.jar).isFile())
     throw new GradleException('Missing same-build TC4R API JAR; import the matching developer archive.')
 dependencies {
+    // Optional GUI public APIs; not shipped or installed with the mod. See dependencies/gui-compat.
+    compileOnly files(new File(managementDir, 'dependencies/gui-compat/InventoryProfilesNext-neoforge-1.21.1-2.2.5.jar'))
+    compileOnly files(new File(managementDir, 'dependencies/gui-compat/ftb-library-neoforge-2101.1.37.jar'))
     compileOnly files(new File(managementDir, 'references/botania-1.21.1-457-1/botania-neoforge-1.21.1-457-20260917.083205-1.jar'))
     compileOnly files(new File(managementDir, 'references/tacz-1.1.8-hotfix-r7/tacz-neoforge-1.21.1-1.1.8-hotfix-r7.jar'))
     compileOnly compatJars

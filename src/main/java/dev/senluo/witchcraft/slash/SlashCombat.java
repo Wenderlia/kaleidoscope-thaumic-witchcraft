@@ -18,6 +18,9 @@ public final class SlashCombat {
         return source != null && source.getDirectEntity() instanceof SlashEntity;
     }
 
+    /** Blocking policy is independent of armor penetration and the host's other damage rules. */
+    public static boolean bypassesBlocking(DamageSource source) { return slash(source); }
+
     /** Adjust the armor input once, retaining the host's toughness/enchantment calculation. */
     public static float effectiveArmor(DamageSource source, float armor) {
         return source != null && source.getDirectEntity() instanceof SlashEntity blade

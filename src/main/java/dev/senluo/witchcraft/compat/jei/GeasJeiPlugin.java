@@ -10,6 +10,9 @@ import net.neoforged.fml.ModList;
 @JeiPlugin
 public final class GeasJeiPlugin implements IModPlugin {
     public ResourceLocation getPluginUid() { return ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft","geas"); }
+    @Override public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        ReservoirGuiHandler.register(registration);
+    }
     @Override public void registerCategories(IRecipeCategoryRegistration r) {
         if (ModList.get().isLoaded("thaumcraft")) for (var rite : dev.senluo.witchcraft.ritual.GeasRites.ALL)
             r.addRecipeCategories(new InfusionGeasCategory(r.getJeiHelpers().getGuiHelper(), rite));

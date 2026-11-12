@@ -4,13 +4,14 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class ReservoirBlockEntity extends BlockEntity {
+    // Transient feedback revision. Menus observe commits without scanning players or replaying saved audio.
+    private long transferRevision;
     private ItemStack bag=ItemStack.EMPTY;
     private long lastPortTick=Long.MIN_VALUE;
     private boolean pickingUp;
@@ -91,15 +92,14 @@ public final class ReservoirBlockEntity extends BlockEntity {
         // Ports use game time, not extra machine ticks. No offline catch-up or duplicate pulse from accelerators.
         if(level.isClientSide || tick%5!=0 || entity.lastPortTick==tick || entity.isRemoved())return;
         entity.lastPortTick=tick;
-        if(ReservoirContent.isBackpack(entity.bag) && ReservoirTransfers.processInput(level,entity.bag))entity.changed();
+        if(ReservoirContent.isBackpack(entity.bag)){
+            var result=ReservoirTransfers.processInputResult(level,entity.bag);
+            if(result.movedEssentia())entity.transferRevision++;
+            if(result.changed())entity.changed();
+        }
         if(entity.available())ReservoirContent.bridge.tickPlaced(entity);
     }
-    public void open(ServerPlayer player){
-        if(bag.isEmpty() || !ReservoirData.supported(bag))return;
-        ItemStack bound=bag;
-        player.openMenu(new SimpleMenuProvider((id,inventory,p)->new ReservoirMenu(id,inventory,bound,
-                ()->!isRemoved() && bag==bound && p.level()==level && p.canInteractWithBlock(worldPosition,1),this::changed),bag.getHoverName()));
-    }
+    long transferRevision(){return transferRevision;}
     protected void saveAdditional(CompoundTag tag,HolderLookup.Provider provider){super.saveAdditional(tag,provider);tag.put("bag",bag.saveOptional(provider));}
     protected void loadAdditional(CompoundTag tag,HolderLookup.Provider provider){super.loadAdditional(tag,provider);bag=ItemStack.parseOptional(provider,tag.getCompound("bag"));}
     public CompoundTag getUpdateTag(HolderLookup.Provider provider){return saveWithoutMetadata(provider);}

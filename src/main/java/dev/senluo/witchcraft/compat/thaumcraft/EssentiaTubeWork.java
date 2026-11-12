@@ -14,6 +14,8 @@ final class EssentiaTubeWork implements WorkSources.Process<BlockEntity> {
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("essentia_tube"), new EssentiaTubeWork());
     }
 
+    @Override public boolean supportsSteam() { return true; }
+
     @Override
     public double price(ServerLevel level, BlockEntity tube) {
         // Transport does not create a second income source for the essentia being moved.

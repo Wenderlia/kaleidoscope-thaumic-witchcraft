@@ -17,21 +17,65 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class SuctionRitualGameTests {
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
-    public static void smallestEligibleRingsRemainIndependent(GameTestHelper h) {
-        UUID steam = UUID.randomUUID(), suction = UUID.randomUUID(), third = UUID.randomUUID();
-        var requests = List.of(new RitualRings.Request(steam, 1), new RitualRings.Request(suction, 2), new RitualRings.Request(third, 1));
-        var yes=RitualShape.Match.VALID;var no=RitualShape.Match.INVALID;
-        var sparse = RitualRings.allocate(new RitualRings.Layout(yes,no,yes), requests);
-        h.assertTrue(sparse.get(steam) == 1 && sparse.get(suction) == 3 && !sparse.containsKey(third), "Small + large can run small + medium rituals");
-        var full = RitualRings.allocate(new RitualRings.Layout(yes,yes,yes), requests);
-        h.assertTrue(full.get(steam) == 1 && full.get(suction) == 2 && full.get(third) == 3, "One whole smallest eligible ring per ordered claim");
-        h.assertTrue(RitualRings.allocate(new RitualRings.Layout(yes,no,no), List.of(new RitualRings.Request(suction, 2), new RitualRings.Request(steam, 1))).get(steam) == 1,
-                "An ineligible older ritual cannot occupy a too-small ring");
-        h.assertTrue(!RitualRings.allocate(RitualRings.Layout.NONE, requests).containsKey(steam), "A broken ring grants no execution");
-        var partial=RitualRings.allocate(new RitualRings.Layout(yes,RitualShape.Match.UNLOADED,yes),requests);
-        h.assertTrue(partial.equals(sparse),"Unknown rings retain their own state but cannot grant a slot");
-        var largeOnly=RitualRings.allocate(new RitualRings.Layout(no,no,yes),requests);
-        h.assertTrue(largeOnly.size()==1&&largeOnly.get(steam)==3,"Large alone supplies exactly one slot, oldest eligible first");
+    public static void unknownSupplyPreservesReservationsAndStableWaiting(GameTestHelper h) {
+        UUID large = UUID.randomUUID(), small = UUID.randomUUID();
+        var requests = List.of(
+                new RitualPointAllocation.Request(large, 3, 10L, 0, List.of(10L), true),
+                new RitualPointAllocation.Request(small, 1, 20L, 1, List.of(20L), true));
+        var confirmed = java.util.Map.of(10L, 0, 20L, 1);
+        var possible = java.util.Map.of(10L, 3, 20L, 1);
+        var waiting = RitualPointAllocation.observe(confirmed, possible, requests, List.of());
+        h.assertTrue(waiting.reservations().size() == 2 && waiting.pending().equals(java.util.Set.of(large)),
+                "An unknown ring keeps its receipt but cannot run; independent known supply still runs");
+        var restored = RitualPointAllocation.observe(possible, possible, requests, List.of());
+        h.assertTrue(restored.pending().isEmpty() && restored.reservations().size() == 2,
+                "Loaded evidence resumes both receipts without deleting their reservation");
+        var broken = RitualPointAllocation.observe(confirmed, confirmed, requests,
+                List.of(new RitualPointAllocation.Loss(10L, 3)));
+        h.assertTrue(!broken.reservations().containsKey(large) && broken.reservations().containsKey(small),
+                "Confirmed loss releases only the affected receipt");
+
+        var shared = List.of(
+                new RitualPointAllocation.Request(small, 1, 10L, 0, List.of(10L, 20L), true),
+                new RitualPointAllocation.Request(large, 2, 20L, 1, List.of(10L, 20L), false));
+        var low = java.util.Map.of(10L, 2, 20L, 0);
+        var high = java.util.Map.of(10L, 3, 20L, 0);
+        var first = RitualPointAllocation.observe(low, high, shared, List.of(new RitualPointAllocation.Loss(20L, 2)));
+        var reloaded = RitualPointAllocation.observe(low, high, shared.stream().map(r ->
+                new RitualPointAllocation.Request(r.id(), r.cost(), r.origin(), r.order(), r.pools(), true)).toList(), List.of());
+        h.assertTrue(first.pending().equals(reloaded.pending()),
+                "Uncertain waiting order does not depend on first admission or transient loss notifications");
+        h.succeed();
+    }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
+    public static void sharedPointsRerouteAndPauseByLostTier(GameTestHelper h) {
+        UUID small = UUID.randomUUID(), medium = UUID.randomUUID(), large = UUID.randomUUID();
+        var combined = RitualPointAllocation.allocate(java.util.Map.of(10L, 1, 20L, 2), List.of(
+                new RitualPointAllocation.Request(large, 3, 10L, 0, List.of(10L, 20L), false)), List.of());
+        h.assertTrue(combined.grants().get(large).values().stream().mapToInt(Integer::intValue).sum() == 3,
+                "A three-point ritual may combine small and medium pools");
+        var rerouted = RitualPointAllocation.allocate(java.util.Map.of(10L, 1, 20L, 1), List.of(
+                new RitualPointAllocation.Request(small, 1, 10L, 0, List.of(10L, 20L), true),
+                new RitualPointAllocation.Request(medium, 1, 10L, 1, List.of(10L), true)), List.of());
+        h.assertTrue(rerouted.grants().get(small).containsKey(20L) && rerouted.grants().get(medium).containsKey(10L),
+                "Reroute a flexible claimant before suspending the claimant that can only reach one pool");
+        var loss = RitualPointAllocation.allocate(java.util.Map.of(10L, 4), List.of(
+                new RitualPointAllocation.Request(medium, 2, 10L, 0, List.of(10L), true),
+                new RitualPointAllocation.Request(large, 3, 10L, 1, List.of(10L), true)),
+                List.of(new RitualPointAllocation.Loss(10L, 2)));
+        h.assertTrue(loss.paused().contains(medium) && loss.grants().containsKey(large),
+                "Losing two points pauses the two-point ritual even when the actual deficit is only one");
+        var fallback = RitualPointAllocation.allocate(java.util.Map.of(10L, 2), List.of(
+                new RitualPointAllocation.Request(small, 1, 10L, 0, List.of(10L), true),
+                new RitualPointAllocation.Request(medium, 2, 10L, 1, List.of(10L), true)), List.of());
+        h.assertTrue(fallback.paused().contains(small) && fallback.grants().containsKey(medium),
+                "Without a loss-tier basis, smaller costs are released first");
+        var origin = RitualPointAllocation.allocate(java.util.Map.of(10L, 0, 20L, 2), List.of(
+                new RitualPointAllocation.Request(small, 2, 10L, 0, List.of(10L, 20L), true),
+                new RitualPointAllocation.Request(medium, 2, 20L, 1, List.of(10L, 20L), true)),
+                List.of(new RitualPointAllocation.Loss(10L, 2)));
+        h.assertTrue(origin.paused().contains(small) && origin.grants().containsKey(medium),
+                "Within the lost tier, the damaged pool's originating ritual is paused first");
         h.succeed();
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
@@ -61,36 +105,37 @@ public final class SuctionRitualGameTests {
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
     public static void multipleReceiptsSurviveReloadWithoutChangingIdentity(GameTestHelper h) throws Exception {
-        var level = h.getLevel(); var store = new StructuralRitualStore();
-        var ref = new RitualCenters.Reference(level.dimension().location(), h.absolutePos(new BlockPos(3, 3, 3)), UUID.randomUUID());
-        var center = new RitualCenters.Center(ref, ref.position(), true);
-        UUID player = UUID.randomUUID(); CompoundTag terms = new CompoundTag(); terms.putInt("Format", 3); terms.putBoolean("Armed", false);
-        // This tests the generic ledger; real vessel qualification is exercised by SteamRitualGameTests.
-        var steam = new StructuralRitualStore.Definition(StructuralRitualStore.STEAM.kind(),1,80,new int[]{20,40,60,80},1,Optional.empty());
-        var suction = new StructuralRitualStore.Definition(StructuralRitualStore.SUCTION.kind(),1,100,new int[]{20,40,60,80,100},2,Optional.empty());
-        var preparation = new StructuralRitualStore.Definition(ResourceLocation.parse("kaleidoscope_witchcraft:test_preparation"),
-                1,1,new int[]{1},1,Optional.empty());
-        UUID first = store.begin(level, steam, center, player, terms).orElseThrow();
-        UUID second = store.begin(level, suction, center, player, terms).orElseThrow();
-        UUID third = store.begin(level, preparation, center, player, terms).orElseThrow();
-        h.assertTrue(store.begin(level, preparation, center, player, terms).isEmpty(), "Three physical rings cannot host a fourth claim");
-        var clone = new RitualCenters.Center(new RitualCenters.Reference(ref.dimension(), ref.position().east(), ref.identity()), ref.position().east(), true);
-        h.assertTrue(store.begin(level, steam, clone, player, terms).isEmpty(), "A copied core cannot claim the original identity elsewhere");
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
+        var plane = h.absolutePos(new BlockPos(8, 3, 8));
+        RitualFrameworkGameTests.circle(h, plane, RitualShape.SMALL, RitualShape.MEDIUM, RitualShape.LARGE);
+        var center = RitualFrameworkGameTests.center(h, plane.above()); var ref = center.reference();
+        UUID player = UUID.randomUUID(); var terms = new CompoundTag();
+        var small = new StructuralRitualStore.Definition(ResourceLocation.parse("kaleidoscope_witchcraft:small_fixture"), 1, 1, new int[]{1}, 1, Optional.empty());
+        var medium = new StructuralRitualStore.Definition(ResourceLocation.parse("kaleidoscope_witchcraft:medium_fixture"), 1, 1, new int[]{1}, 2, Optional.empty());
+        UUID first = store.begin(level, small, center, player, terms).orElseThrow();
+        UUID second = store.begin(level, medium, center, player, terms).orElseThrow();
+        UUID third = store.begin(level, small, center, player, terms).orElseThrow();
+        UUID fourth = store.begin(level, small, center, player, terms).orElseThrow();
+        UUID fifth = store.begin(level, small, center, player, terms).orElseThrow();
+        h.assertTrue(store.begin(level, small, center, player, terms).isEmpty(), "Six points admit five receipts costing 1+2+1+1+1, without an old three-receipt limit");
         CompoundTag runtime = new CompoundTag(); runtime.putLong("FlowCredit", 13); store.runtime(level, second, runtime);
         var load = StructuralRitualStore.class.getDeclaredMethod("load", CompoundTag.class, HolderLookup.Provider.class); load.setAccessible(true);
         var restored = (StructuralRitualStore)load.invoke(null, store.save(new CompoundTag(), level.registryAccess()), level.registryAccess());
-        h.assertTrue(restored.allAt(ref).stream().map(StructuralRitualStore.Handle::id).toList().equals(List.of(first, second, third))
+        var ids = List.of(first, second, third, fourth, fifth);
+        h.assertTrue(restored.allAt(ref).stream().map(StructuralRitualStore.Handle::id).toList().equals(ids)
                 && restored.runtime(second).getLong("FlowCredit") == 13 && !restored.progress(second).orElseThrow().available(),
                 "Order and fractional clock persist; availability must be revalidated");
-        restored.end(level, first); restored.finish(first);
-        h.assertTrue(restored.allAt(ref).size() == 2 && restored.progress(second).isPresent(), "Ending one receipt does not erase its siblings");
+        RitualCenters.end(level, first);
+        h.assertTrue(store.allAt(ref).size() == 4 && store.progress(second).isPresent(), "Ending one receipt does not erase its siblings");
+        for (var id : ids) RitualCenters.end(level, id);
         h.succeed();
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
     public static void newResearchGatePausesLegacyPreparationButKeepsPaidRun(GameTestHelper h) throws Exception {
-        var level=h.getLevel();var store=new StructuralRitualStore();
-        var ref=new RitualCenters.Reference(level.dimension().location(),h.absolutePos(new BlockPos(3,3,3)),UUID.randomUUID());
-        var center=new RitualCenters.Center(ref,ref.position(),true);
+        var level=h.getLevel();var store=StructuralRitualStore.get(level);
+        var plane=h.absolutePos(new BlockPos(8,3,8));
+        RitualFrameworkGameTests.circle(h,plane,RitualShape.MEDIUM);
+        var center=RitualFrameworkGameTests.center(h,plane.above());
         var player=SteamRitualGameTests.researchedPlayer(h,"legacy-ritual");
         var kind=ResourceLocation.parse("kaleidoscope_witchcraft:test_research_receipt");
         var legacy=new StructuralRitualStore.Definition(kind,1,1,new int[]{1},1,Optional.empty());
@@ -101,20 +146,18 @@ public final class SuctionRitualGameTests {
         StructuralRitualStore.StepAction pay=(token,terms)->Optional.of(new StructuralRitualStore.PreparedStep(terms,()->{
             payments.incrementAndGet();return true;
         }));
-        h.assertTrue(store.advance(level,active,legacy,StructuralRitualStore.Presence.PRESENT,ref,RitualShape.Match.VALID,pay).mayRun()
+        h.assertTrue(store.advance(level,active,legacy,StructuralRitualStore.Presence.PRESENT,RitualShape.Match.VALID,pay).mayRun()
                 &&payments.get()==1,"The old unguarded receipt was already fully paid before the policy changed");
-        var load=StructuralRitualStore.class.getDeclaredMethod("load",CompoundTag.class,HolderLookup.Provider.class);load.setAccessible(true);
-        var restored=(StructuralRitualStore)load.invoke(null,store.save(new CompoundTag(),level.registryAccess()),level.registryAccess());
-        var waiting=restored.advance(level,preparing,current,StructuralRitualStore.Presence.PRESENT,ref,RitualShape.Match.VALID,pay);
-        var running=restored.advance(level,active,current,StructuralRitualStore.Presence.PRESENT,ref,RitualShape.Match.VALID,pay);
-        h.assertTrue(waiting.phase()==StructuralRitualStore.Phase.PREPARING&&!waiting.mayRun()
-                &&restored.progress(preparing).orElseThrow().committedSteps()==0&&restored.progress(preparing).orElseThrow().elapsed()==0,
-                "Reloaded unguarded preparation adopts the current research and cannot advance or spend");
-        h.assertTrue(restored.allAt(ref).stream().filter(handle->handle.id().equals(preparing)).findFirst().orElseThrow()
-                .definition().research().equals(current.research()),"The preparation saves the current requirement instead of retaining a bypass");
-        h.assertTrue(running.mayRun()&&payments.get()==1&&restored.progress(active).orElseThrow().committedSteps()==1,
-                "A paid active receipt survives the changed requirement and does not replay its payment");
-        h.succeed();
+        h.runAfterDelay(1, () -> {
+            var waiting=store.advance(level,preparing,current,StructuralRitualStore.Presence.PRESENT,RitualShape.Match.VALID,pay);
+            var running=store.advance(level,active,current,StructuralRitualStore.Presence.PRESENT,RitualShape.Match.VALID,pay);
+            h.assertTrue(waiting.phase()==StructuralRitualStore.Phase.PREPARING&&!waiting.mayRun()
+                    &&store.progress(preparing).orElseThrow().committedSteps()==0&&store.progress(preparing).orElseThrow().elapsed()==0,
+                    "An unfinished preparation adopts the current research without spending");
+            h.assertTrue(running.mayRun()&&payments.get()==1&&store.progress(active).orElseThrow().committedSteps()==1,
+                    "An already-paid receipt keeps working without replaying payment");
+            RitualCenters.end(level, preparing);RitualCenters.end(level, active);h.succeed();
+        });
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=40, batch="suction-contracts")
     public static void partialInsertionRetainsExtractedMatter(GameTestHelper h) throws Exception {

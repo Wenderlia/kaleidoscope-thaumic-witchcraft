@@ -16,7 +16,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 /** Loaded, placed stabilizers only. Cache scores, never block entities or persistent ownership. */
 final class CrucibleStabilizers {
     private record Key(BlockPos anchor, int ring) {}
-    private record Entry(int points, long tick, Set<Long> chunks,
+    private record Entry(int points, Set<Long> chunks,
                          List<dev.senluo.witchcraft.time.ConnectedTreeWood.Connection> wood) {}
     private static final class Index {
         final Map<Key, Entry> entries = new LinkedHashMap<>(32, .75F, true);
@@ -53,12 +53,14 @@ final class CrucibleStabilizers {
         Index index = LEVELS.computeIfAbsent(level, unused -> new Index());
         Key key = new Key(plane.anchor(), plane.outermostRing());
         long now = level.getGameTime();
-        var temporal = dev.senluo.witchcraft.time.TemporalWorld.get(level);
         Entry old = index.entries.get(key);
-        if (old != null && now >= old.tick && now - old.tick < 20 && old.wood.stream().allMatch(proof -> proof.current(now))
+        // Ordinary material scores follow block/tag notifications. Living wood carries its own
+        // connection proof, including the fallback for changes without a topology notification.
+        if (old != null && old.wood.stream().allMatch(proof -> proof.current(now))
                 && old.chunks.stream().allMatch(c -> loaded(level, c)))
             return OptionalInt.of(old.points);
         index.remove(key);
+        var temporal = dev.senluo.witchcraft.time.TemporalWorld.get(level);
         var area = RitualOfferingArea.outermost(plane);
         var bounds = area.bounds();
         Set<BlockPos> positions = new HashSet<>();
@@ -90,7 +92,7 @@ final class CrucibleStabilizers {
             points += !mirror.equals(pos) && positions.contains(mirror) ? 2 : 1;
         }
         if (index.entries.size() >= 1024) index.remove(index.entries.keySet().iterator().next());
-        index.entries.put(key, new Entry(points, now, Set.copyOf(chunks), List.copyOf(wood)));
+        index.entries.put(key, new Entry(points, Set.copyOf(chunks), List.copyOf(wood)));
         for (long chunk : chunks) index.watchers.computeIfAbsent(chunk, unused -> new HashSet<>()).add(key);
         return OptionalInt.of(points);
     }

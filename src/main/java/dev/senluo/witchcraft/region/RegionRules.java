@@ -2,6 +2,7 @@ package dev.senluo.witchcraft.region;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.ToLongBiFunction;
 import dev.senluo.witchcraft.KaleidoscopeWitchcraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -17,10 +18,17 @@ public final class RegionRules {
     public static final ResourceLocation NO_MOB_BLOCK_CHANGES = id("no_mob_block_changes");
     public static final ResourceLocation NO_EXPLOSION_BLOCK_CHANGES = id("no_explosion_block_changes");
     private static final Map<ServerLevel, RegionRuleStore> LOADED = new WeakHashMap<>();
-    private static final Map<ResourceLocation, BiPredicate<ServerLevel, RegionRuleStore.Condition>> CONDITIONS = new HashMap<>();
+    private record ConditionType(BiPredicate<ServerLevel, RegionRuleStore.Condition> check,
+                                 ToLongBiFunction<ServerLevel, RegionRuleStore.Condition> version) {}
+    private static final Map<ResourceLocation, ConditionType> CONDITIONS = new HashMap<>();
     public static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(KaleidoscopeWitchcraft.MOD_ID, path); }
     public static void registerCondition(ResourceLocation kind, BiPredicate<ServerLevel, RegionRuleStore.Condition> check) {
-        if (CONDITIONS.putIfAbsent(kind, Objects.requireNonNull(check)) != null) throw new IllegalStateException("Duplicate region condition");
+        registerCondition(kind, check, (level, condition) -> 0L);
+    }
+    public static void registerCondition(ResourceLocation kind, BiPredicate<ServerLevel, RegionRuleStore.Condition> check,
+                                         ToLongBiFunction<ServerLevel, RegionRuleStore.Condition> version) {
+        if (CONDITIONS.putIfAbsent(kind, new ConditionType(Objects.requireNonNull(check), Objects.requireNonNull(version))) != null)
+            throw new IllegalStateException("Duplicate region condition");
     }
     public static RegionRuleStore store(ServerLevel level) {
         if (!level.getServer().isSameThread()) throw new IllegalStateException("Region rules belong to server thread");
@@ -34,7 +42,10 @@ public final class RegionRules {
     public static boolean applies(ServerLevel level, BlockPos pos, ResourceLocation rule) {
         return store(level).applies(rule, pos, c -> {
             var check = CONDITIONS.get(c.kind());
-            return check != null && check.test(level, c);
+            return check != null && check.check.test(level, c);
+        }, c -> {
+            var check = CONDITIONS.get(c.kind());
+            return check == null ? 0L : check.version.applyAsLong(level, c);
         });
     }
     public static void blockChanged(ServerLevel level, BlockPos pos) {

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public final class KaleidoscopeWitchcraft {
     public static final String MOD_ID = "kaleidoscope_witchcraft";
     // Shared handshake also guards synced attachment layouts, not just explicitly registered payloads.
-    public static final String NETWORK_VERSION = "46";
+    public static final String NETWORK_VERSION = "48";
 
     public KaleidoscopeWitchcraft(IEventBus bus, net.neoforged.fml.ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
@@ -66,7 +66,7 @@ public final class KaleidoscopeWitchcraft {
         NeoForge.EVENT_BUS.addListener(LivingInteractions::rightClick);
         bus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
             dev.senluo.witchcraft.ritual.RitualCenters.registerRuntime();
-            dev.senluo.witchcraft.time.WorkTicks.registerEffect(dev.senluo.witchcraft.ritual.SteamWork::afterNative);
+            dev.senluo.witchcraft.time.WorkTicks.registerEffect(dev.senluo.witchcraft.ritual.SteamWork::affected, dev.senluo.witchcraft.ritual.SteamWork::afterNative);
             dev.senluo.witchcraft.time.AccelerationSources.registerObserver(dev.senluo.witchcraft.ritual.SteamWork::observeSources);
             dev.senluo.witchcraft.ritual.TemporalInfusion.register();
             if (ModList.get().isLoaded("thaumcraft")) {

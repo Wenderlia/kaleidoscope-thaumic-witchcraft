@@ -65,12 +65,18 @@ public final class NodeSteam {
             collect(previousOutputs, (VisSource) node);
             nativeTick.run();
         } : nativeTick;
-        AccelerationSources.run(NodePromotion.influence(level, pos).owners(), () -> ExtraTicks.run(() -> {
+        ExtraTicks.run(() -> {
             int left = RitualWorkBudget.claim(level, RitualWorkBudget.Kind.NODE, pos, rate.subtract(BigInteger.ONE));
+            int completed = 0;
             while (left-- > 0 && available(level, pos, node)) {
-                WorkTicks.additional(level, node, advance);
+                var influence = NodePromotion.influence(level, pos);
+                BigInteger current = influence.multiplier().min(rate);
+                if (current.compareTo(BigInteger.valueOf((long) completed + 1)) <= 0 || !available(level, pos, node)) break;
+                CURRENT.set(new Work(node, current));
+                AccelerationSources.run(influence.owners(), () -> WorkTicks.additional(level, node, advance));
+                completed++;
             }
-        }));
+        });
         // The native ticker refreshes rather than adds its per-tick output. Preserve every produced pool,
         // but only until the next native opportunity. Unload/reload cannot store free network energy.
         if (!previousOutputs.isEmpty() && available(level, pos, node) && node.getBlockState().is(ThaumcraftContent.block("energized_aura_node")))
@@ -83,6 +89,7 @@ public final class NodeSteam {
 
     static void register() {
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("aura_node"), new WorkSources.Process<>() {
+            public boolean nativeContext() { return true; }
             public double price(ServerLevel level, BlockEntity node) { return WorkSources.UPDATE_PRICE; }
             public void tick(ServerLevel level, BlockEntity node, Runnable nativeTick) {
                 opportunity(level, node.getBlockPos(), node, nativeTick);
@@ -120,8 +127,9 @@ public final class NodeSteam {
 
     private static BigInteger speed(ServerLevel level, BlockPos pos) {
         Work work = CURRENT.get();
+        BigInteger current = NodePromotion.influence(level, pos).multiplier();
         return work != null && work.node.getLevel() == level && work.node.getBlockPos().equals(pos)
-                ? work.multiplier : NodePromotion.influence(level, pos).multiplier();
+                ? work.multiplier.min(current) : current;
     }
 
     private static boolean available(ServerLevel level, BlockPos pos, BlockEntity node) {

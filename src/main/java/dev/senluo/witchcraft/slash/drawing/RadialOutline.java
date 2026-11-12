@@ -9,6 +9,22 @@ import net.minecraft.world.phys.Vec3;
 public final class RadialOutline {
     public static final int MAX_PARTS = 512;
     public record Edge(Vec3 first, Vec3 last, Vec3 middle, Vec3 axis, double half) {
+        /** Preserve the baked chord and its radial path when trimming a blade interval. */
+        public Edge slice(double from, double to) {
+            if (!Double.isFinite(from) || !Double.isFinite(to) || from < 0 || to > 1 || from >= to)
+                throw new IllegalArgumentException("Invalid radial interval");
+            Vec3 a = first.lerp(last, from), b = first.lerp(last, to);
+            return new Edge(a, b, a.add(b).scale(.5), axis, half * (to - from));
+        }
+        /** Solve offset = radius * (first + u * (last - first)), independently of a saved front radius. */
+        public double fractionAt(Vec3 offset) {
+            double along = first.dot(axis);
+            Vec3 outward = first.subtract(axis.scale(along));
+            double radius = offset.dot(outward) / outward.lengthSqr();
+            // At the release centre no angular position exists; only that case uses the midpoint.
+            if (Math.abs(radius) <= 1.0E-12) return .5;
+            return Math.clamp((offset.dot(axis) / radius - along) / (half * 2), 0, 1);
+        }
         public SlashGeometry.Sweep sweep(Vec3 center, double before, double after) {
             return new SlashGeometry.Sweep(center.add(middle.scale(before)), center.add(middle.scale(after)),
                     axis, half * before, half * after);

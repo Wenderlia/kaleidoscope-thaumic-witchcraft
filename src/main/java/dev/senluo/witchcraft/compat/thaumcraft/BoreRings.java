@@ -34,6 +34,7 @@ public final class BoreRings {
 
     public static void register() {
         WorkSources.registerProcess(ThaumcraftContent.blockEntity("arcane_bore"), new WorkSources.Process<>() {
+            public boolean nativeContext() { return true; }
             public double price(ServerLevel level, BlockEntity bore) { return WorkSources.UPDATE_PRICE; }
             public void tick(ServerLevel level, BlockEntity bore, Runnable nativeTick) {
                 state(bore).tick(bore, nativeTick);
@@ -102,6 +103,12 @@ public final class BoreRings {
         private BoreExcavation excavation;
         private int scanRadius, scanDepth;
 
+        boolean permits(ServerLevel level, BlockEntity bore, BoreExcavation expected) {
+            var owner = mine;
+            return owner != null && excavation == expected && DeepDrilling.mine(level, bore) == owner
+                    && mine == owner && excavation == expected;
+        }
+
         BoreStorage.Account account(BlockEntity bore) {
             if (account == null) account = BoreStorage.get(bore);
             return account;
@@ -126,6 +133,7 @@ public final class BoreRings {
             running = true;
             try {
                 scanned = null; selected = null;
+                boolean minePending = false;
                 if (bore.getLevel() instanceof ServerLevel level) {
                     int actual = RitualPlane.find(level, bore.getBlockPos()).map(p -> p.rings().completeMask()).orElse(0);
                     if (actual != mask) {
@@ -133,12 +141,18 @@ public final class BoreRings {
                         scanRadius = scanDepth = 0;
                     }
                     var currentMine = DeepDrilling.mine(level, bore);
-                    if (mine != currentMine) {
+                    minePending = currentMine == null && mine != null
+                            && dev.senluo.witchcraft.ritual.StructuralRitualStore.get(level).pending(mine.id);
+                    if (!minePending && mine != currentMine) {
                         if (mine != null) mine.detach(bore);
                         mine = currentMine;
                         excavation = null;
                     }
-                    if (mine != null) {
+                    if (minePending) {
+                        // Keep the existing read context while permission is unresolved; do not select work.
+                        if (bore instanceof dev.tc4port.thaumcraft.api.machine.ArcaneBoreView view)
+                            mine.samples.maintain(bore, displayedRadius(view));
+                    } else if (mine != null) {
                         excavation = mine.bind(bore);
                         excavation.before(level, bore, this, mine.samples);
                     }
@@ -155,7 +169,7 @@ public final class BoreRings {
                 }
                 if (selected != null && selected.outcome() == ArcaneBoreEvent.Target.Outcome.DIG) nativeIdle = false;
                 if (!bore.isRemoved() && bore.getLevel() instanceof ServerLevel level) {
-                    if (excavation != null)
+                    if (excavation != null && !minePending)
                         excavation.after(level, bore, this, mine.samples,
                                 nativeIdle && DeepDrilling.mine(level, bore) == mine);
                     BoreRepair.afterNative(level, bore, inventory, mask);

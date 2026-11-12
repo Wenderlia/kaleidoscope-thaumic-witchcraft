@@ -9,69 +9,165 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class RitualFrameworkGameTests {
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=20)
+    public static void geometryRefreshOnlyRevokesLostPermission(GameTestHelper h) {
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
+        var plane = h.absolutePos(new BlockPos(8, 3, 8));
+        circle(h, plane, RitualShape.SMALL, RitualShape.MEDIUM);
+        var center = center(h, plane.above());
+        var kind = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "refresh_" + java.util.UUID.randomUUID());
+        var revoked = new java.util.concurrent.atomic.AtomicInteger();
+        RitualCenters.observeAvailability(kind, (world, handle) -> revoked.incrementAndGet());
+        var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 1, java.util.Optional.empty());
+        var id = store.begin(level, definition, center, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
+                (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
+        h.assertTrue(store.running(level, id), "The paid receipt initially runs");
+        level.setBlock(plane.offset(1, 0, 1), Blocks.STONE.defaultBlockState(), 3);
+        h.assertTrue(store.running(level, id) && revoked.get() == 0, "Unrelated changes preserve the active receipt");
+        level.removeBlock(plane.offset(RitualShape.SMALL.marks().getFirst()), false);
+        h.assertTrue(store.running(level, id) && revoked.get() == 0, "Remaining capacity keeps the same work running after a real ring loss");
+        level.removeBlock(plane.offset(RitualShape.MEDIUM.marks().getFirst()), false);
+        h.assertTrue(!store.running(level, id) && revoked.get() == 1, "The actual loss of all supply revokes once before work can commit");
+        h.assertTrue(store.progress(id).orElseThrow().committedSteps() == 1, "Pausing preserves paid progress");
+        circle(h, plane, RitualShape.SMALL);
+        h.assertTrue(store.eligible(level, id), "Repair wakes the cached negative result");
+        RitualCenters.end(level, id);
+        h.succeed();
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=10)
     public static void paymentRechecksAuthorityAfterQuotation(GameTestHelper h) {
-        var level = h.getLevel(); var store = new StructuralRitualStore();
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
         var allowed = new java.util.concurrent.atomic.AtomicBoolean(true);
         var paid = new java.util.concurrent.atomic.AtomicBoolean();
         var provider = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "authority_" + java.util.UUID.randomUUID());
         RitualResearch.register(provider, (world, owner, key) -> allowed.get() ? RitualResearch.Result.ALLOWED : RitualResearch.Result.DENIED);
         var definition = new StructuralRitualStore.Definition(provider, 1, 1, new int[]{1},
                 java.util.Optional.of(new RitualResearch.Requirement(provider, "fixture")));
-        var pos = h.absolutePos(new BlockPos(2, 2, 2));
-        var center = new RitualCenters.Center(new RitualCenters.Reference(level.dimension().location(), pos, java.util.UUID.randomUUID()), pos, true);
+        var pos = h.absolutePos(new BlockPos(8, 3, 8));
+        circle(h, pos, RitualShape.SMALL);
+        var center = center(h, pos.above());
         var id = store.begin(level, definition, center, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
-        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, center.reference(), RitualShape.Match.VALID,
+        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> {
                     allowed.set(false);
                     return java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> { paid.set(true); return true; }));
                 });
         h.assertTrue(!paid.get() && store.progress(id).orElseThrow().committedSteps() == 0,
                 "A previously allowed check cannot pay after the quotation callback revokes research");
+        RitualCenters.end(level, id);
         h.succeed();
     }
 
-    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=10)
-    public static void planeIndexTracksReceiptsWithoutChangingPriority(GameTestHelper h) throws Exception {
-        var level = h.getLevel(); var dimension = level.dimension().location();
-        var store = new StructuralRitualStore(); var owner = java.util.UUID.randomUUID();
-        var a = h.absolutePos(new BlockPos(2, 3, 2)); var b = a.offset(8, 0, 0);
-        var firstCenter = new RitualCenters.Center(new RitualCenters.Reference(dimension, a.above(), java.util.UUID.randomUUID()), a.above(), true);
-        var secondCenter = new RitualCenters.Center(new RitualCenters.Reference(dimension, a.above(2), java.util.UUID.randomUUID()), a.above(2), true);
-        var definition = new StructuralRitualStore.Definition(net.minecraft.resources.ResourceLocation.parse("kaleidoscope_witchcraft:index_fixture"),
-                1, 1, new int[]{1}, java.util.Optional.empty());
-        var terms = new net.minecraft.nbt.CompoundTag(); terms.putLong("Plane", a.asLong());
-        terms.putInt(GoldenRitualSlots.PINNED_RING, 2);
-        var first = store.begin(level, definition, firstCenter, owner, new net.minecraft.nbt.CompoundTag()).orElseThrow();
-        var second = store.begin(level, definition, secondCenter, owner, terms).orElseThrow();
-        var resolved = new java.util.concurrent.atomic.AtomicInteger();
-        h.assertTrue(store.atPlane(dimension, a, handle -> { resolved.incrementAndGet(); return true; }).size() == 2
-                && resolved.get() == 1, "Only an unbound receipt needs geometric resolution");
-        h.assertTrue(store.bindSite(level, first, a, false), "Binding an unpaid or paid receipt indexes its plane");
-        java.util.function.Predicate<StructuralRitualStore.Handle> noUnbound = handle -> { throw new AssertionError("Unexpected unbound scan"); };
-        h.assertTrue(store.atPlane(dimension, a, noUnbound).stream().map(StructuralRitualStore.Handle::id).toList()
-                .equals(java.util.List.of(first, second)), "Late binding preserves original start priority");
-        var other = terms.copy(); other.putLong("Plane", b.asLong());
-        h.assertTrue(store.select(level, first, definition, other, null)
-                && store.atPlane(dimension, a, noUnbound).size() == 1, "Changing preparation type updates the old plane");
-        h.assertTrue(store.prepareTerms(level, first, terms)
-                && store.atPlane(dimension, a, noUnbound).getFirst().id().equals(first)
-                && store.bearingRing(first) == 2, "Editing terms restores order and the scalar pinned-ring query");
-        store.advance(level, first, definition, StructuralRitualStore.Presence.PRESENT, firstCenter.reference(), RitualShape.Match.VALID,
-                (token, current) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(other, () -> false)));
-        h.assertTrue(store.atPlane(dimension, a, noUnbound).size() == 2, "Failed payment cannot move the indexed receipt");
-        // A separate receipt can commit in this tick without bypassing per-session advancement rules.
-        store.advance(level, second, definition, StructuralRitualStore.Presence.PRESENT, secondCenter.reference(), RitualShape.Match.VALID,
-                (token, current) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(other, () -> true)));
-        h.assertTrue(store.atPlane(dimension, b, noUnbound).getFirst().id().equals(second), "Successful commit moves the plane exactly once");
+    static void circle(GameTestHelper h, BlockPos plane, RitualShape... shapes) {
+        for (var shape : shapes) for (var offset : shape.marks()) {
+            var at = plane.offset(offset);
+            h.getLevel().setBlock(at, Blocks.STONE.defaultBlockState(), 3);
+            h.getLevel().setBlock(at.above(), RitualContent.CHALK_SURFACE.get().defaultBlockState(), 3);
+        }
+    }
+    static RitualCenters.Center center(GameTestHelper h, BlockPos pos) {
+        h.getLevel().setBlock(pos, Blocks.BARREL.defaultBlockState(), 3);
+        return RitualCenters.observe(h.getLevel().getBlockEntity(pos)).orElseThrow();
+    }
+    static RitualCenters.Center savingCenter(GameTestHelper h, BlockPos axis) {
+        h.getLevel().setBlock(axis, Blocks.STONE.defaultBlockState(), 3);
+        h.getLevel().setBlock(axis.above(), RitualContent.GOLDEN_HEART.get().defaultBlockState(), 3);
+        return RitualCenters.observe(h.getLevel().getBlockEntity(axis.above())).orElseThrow();
+    }
+
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=20)
+    public static void savingMembersDoNotRelayPointSupply(GameTestHelper h) {
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
+        var plane = h.absolutePos(new BlockPos(8, 3, 8));
+        var boundary = plane.above(7); var remote = plane.above(14);
+        circle(h, plane, RitualShape.SMALL);
+        circle(h, boundary, RitualShape.SMALL);
+        circle(h, remote, RitualShape.SMALL);
+        var work = center(h, plane);
+        savingCenter(h, boundary);
+        var kind = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "direct_supply_" + java.util.UUID.randomUUID());
+        RitualCenters.registerHost(kind, entity -> entity instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity);
+        var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 2, java.util.Optional.empty());
+        var id = store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var payments = new java.util.concurrent.atomic.AtomicInteger();
+        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
+                (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> { payments.incrementAndGet(); return true; })));
+        h.assertTrue(store.running(level, id), "Two directly covering one-point rings combine, including the seventh layer");
+        level.removeBlock(boundary.offset(RitualShape.SMALL.marks().getFirst()), false);
+        h.assertTrue(RitualPlane.at(level, remote).isPresent(), "The remote ring remains complete beside the saving station");
+        h.assertTrue(!store.running(level, id), "A saving station cannot lend its remote ring to the work center fourteen layers away");
+        h.assertTrue(payments.get() == 1 && store.progress(id).orElseThrow().committedSteps() == 1,
+                "Losing direct capacity preserves the paid milestone");
+        circle(h, boundary, RitualShape.SMALL);
+        h.assertTrue(store.eligible(level, id), "Repairing the direct boundary ring wakes the cached missing supply");
+        RitualCenters.end(level, id);
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=20)
+    public static void savingHandoffKeepsOriginalExecutionAndSupply(GameTestHelper h) {
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
+        var plane = h.absolutePos(new BlockPos(8, 3, 8));
+        var remote = plane.above(14);
+        circle(h, plane, RitualShape.SMALL);
+        circle(h, remote, RitualShape.SMALL);
+        var primary = savingCenter(h, plane);
+        savingCenter(h, plane.above(7));
+        var kind = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "saved_execution_" + java.util.UUID.randomUUID());
+        var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 1, java.util.Optional.empty());
+        var id = store.begin(level, definition, primary, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
+                (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
+        h.assertTrue(store.running(level, id), "A generic rite can start with a saving station as its original center");
+        level.removeBlock(primary.reference().position(), false);
+        h.assertTrue(store.running(level, id), "Another saving station preserves the generic rite without its original physical member");
+        var continued = store.site(level, id);
+        h.assertTrue(continued.position().equals(primary.reference().position()) && continued.axis().equals(plane)
+                        && continued.footprint().anchor().equals(plane),
+                "Saving handoff preserves the execution position, axis and effect plane");
+        level.removeBlock(plane.offset(RitualShape.SMALL.marks().getFirst()), false);
+        h.assertTrue(RitualPlane.at(level, remote).isPresent() && !store.running(level, id),
+                "The surviving station does not move the receiver to its own remote supply");
+        circle(h, plane, RitualShape.SMALL);
+        h.assertTrue(store.eligible(level, id) && store.progress(id).orElseThrow().committedSteps() == 1,
+                "Restoring original direct supply resumes eligibility without losing payment");
+        RitualCenters.end(level, id);
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=40)
+    public static void sharedPointsAndSavingMembersSurviveReload(GameTestHelper h) throws Exception {
+        var level = h.getLevel(); var store = StructuralRitualStore.get(level);
+        var plane = h.absolutePos(new BlockPos(8, 3, 8));
+        circle(h, plane, RitualShape.SMALL, RitualShape.MEDIUM);
+        var work = center(h, plane.above());
+        for (int y : new int[]{3, 5}) {
+            level.setBlock(plane.above(y-1), Blocks.STONE.defaultBlockState(), 3);
+            level.setBlock(plane.above(y), RitualContent.GOLDEN_HEART.get().defaultBlockState(), 3);
+        }
+        var kind = net.minecraft.resources.ResourceLocation.parse("kaleidoscope_witchcraft:member_fixture");
+        RitualCenters.registerHost(kind, entity -> entity instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity);
+        var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 3, java.util.Optional.empty());
+        var id = store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        h.assertTrue(store.members(id).size() == 3 && store.eligible(level, id), "Small plus medium funds one three-point receipt with three members");
+        h.assertTrue(store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).isEmpty(), "Members cannot duplicate shared capacity");
+        store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
+                (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
         var load = StructuralRitualStore.class.getDeclaredMethod("load", net.minecraft.nbt.CompoundTag.class, net.minecraft.core.HolderLookup.Provider.class);
         load.setAccessible(true);
-        var restored = (StructuralRitualStore) load.invoke(null, store.save(new net.minecraft.nbt.CompoundTag(), level.registryAccess()), level.registryAccess());
-        h.assertTrue(restored.atPlane(dimension, a, noUnbound).getFirst().id().equals(first)
-                && restored.atPlane(dimension, b, noUnbound).getFirst().id().equals(second), "Reload rebuilds indexes from the same paid receipts");
-        restored.end(level, second);
-        h.assertTrue(restored.atPlane(dimension, b, noUnbound).isEmpty() && restored.finish(second)
-                && restored.atPlane(dimension, b, noUnbound).isEmpty(), "Ended and removed receipts do not occupy rings");
+        var restored = (StructuralRitualStore)load.invoke(null, store.save(new net.minecraft.nbt.CompoundTag(), level.registryAccess()), level.registryAccess());
+        h.assertTrue(restored.members(id).equals(store.members(id)) && restored.progress(id).orElseThrow().committedSteps() == 1
+                && !restored.progress(id).orElseThrow().available(), "Reload keeps all members and payment, and requires fresh authorization");
+        level.removeBlock(plane.above(3), false);
+        h.assertTrue(store.eligible(level, id), "Removing one saving station leaves the required work function available");
+        level.removeBlock(work.reference().position(), false);
+        h.assertTrue(!store.eligible(level, id) && !RitualCenters.state(level, id).gone(), "A saving station preserves progress while the work function is absent");
+        center(h, work.reference().position());
+        h.assertTrue(store.eligible(level, id), "A surviving saving station can restore the work function at its registered address");
+        RitualCenters.end(level, id);
+        h.assertTrue(store.progress(id).isEmpty(), "Successful cleanup removes the receipt immediately");
         h.succeed();
     }
 
@@ -147,7 +243,7 @@ public final class RitualFrameworkGameTests {
         for (var item : dropped) item.discard();
         h.assertTrue(selected.anchor().equals(axis.below()) && selected.rings().count() == 1
                 && selected.rings().complete(RitualRings.Ring.SMALL),
-                "Equal distances choose the lower plane; the upper large ring grants neither capacity nor another slot");
+                "Spatial selection prefers the lower plane; the separate point allocator may also use the upper pool");
         h.succeed();
     }
 

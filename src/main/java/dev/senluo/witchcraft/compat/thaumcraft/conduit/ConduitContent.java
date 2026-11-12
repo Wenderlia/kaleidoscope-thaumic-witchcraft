@@ -26,7 +26,8 @@ public final class ConduitContent {
         bus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) -> event.enqueueWork(() ->
             dev.senluo.witchcraft.time.WorkSources.registerProcess(ConduitEntity.class, new dev.senluo.witchcraft.time.WorkSources.Process<ConduitEntity>() {
                 public double price(net.minecraft.server.level.ServerLevel level, ConduitEntity entity) { return 0; }
-                public boolean steamWork(net.minecraft.server.level.ServerLevel level, ConduitEntity entity) { return true; }
+                public Runnable batch(net.minecraft.server.level.ServerLevel level, ConduitEntity entity, int steps) { return entity.batch(level, steps); }
+                public boolean supportsSteam() { return true; }
                 public boolean outputWork(net.minecraft.server.level.ServerLevel level, ConduitEntity entity) { return true; }
             })));
         bus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {

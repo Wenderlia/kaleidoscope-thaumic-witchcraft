@@ -237,7 +237,7 @@ final class ReservoirWandCharging {
     }
 
     private static boolean installed(ServerPlayer player,ItemStack bag,int slot,ItemStack device){
-        return player.isAlive() && !player.isSpectator() && ReservoirContent.worn(player)==bag
+        return player.isAlive() && !player.isSpectator() && ReservoirEquipment.worn(player)==bag
                 && ReservoirData.supported(bag)
                 && ItemStack.matches(device,ReservoirData.slot(bag,slot,player.registryAccess()));
     }

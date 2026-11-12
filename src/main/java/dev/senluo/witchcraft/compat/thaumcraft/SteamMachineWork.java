@@ -50,6 +50,7 @@ final class SteamMachineWork {
 
     private static void register(BlockEntityType<?> type, BiPredicate<ServerLevel, BlockEntity> admission) {
         WorkSources.registerProcess(type, new WorkSources.Process<>() {
+            public boolean supportsSteam() { return true; }
             // Preserve the previous unknown-machine quote and supply eligibility.
             public double price(ServerLevel level, BlockEntity entity) { return WorkSources.UPDATE_PRICE; }
             public boolean outputWork(ServerLevel level, BlockEntity entity) { return true; }

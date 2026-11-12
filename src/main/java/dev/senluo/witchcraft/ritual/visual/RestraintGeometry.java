@@ -24,18 +24,12 @@ public final class RestraintGeometry {
         }
     }
     public record OfferingPulse(V source,double age) {}
-    /** Host-provided anchors, relative to matrix centre; pure immutable presentation data. */
-    public record Layout(double groundY, double groundRadius, List<V> offerings) {
-        public static final int MAX_OFFERINGS=8;
+    /** Host-provided ring plane, relative to matrix centre; pure immutable presentation data. */
+    public record Layout(double groundY, double groundRadius) {
         public Layout {
             if(!Double.isFinite(groundY) || !Double.isFinite(groundRadius)
                     || groundRadius<=0 || groundRadius>8 || Math.abs(groundY)>12)
                 throw new IllegalArgumentException("Invalid ritual layout");
-            offerings=List.copyOf(offerings);
-            if(offerings.size()>MAX_OFFERINGS || offerings.stream().anyMatch(v->
-                    !Double.isFinite(v.x) || !Double.isFinite(v.y) || !Double.isFinite(v.z)
-                    || Math.abs(v.x)>10 || Math.abs(v.z)>10 || Math.abs(v.y)>12))
-                throw new IllegalArgumentException("Invalid offering anchors");
         }
     }
     @FunctionalInterface public interface Sink {
@@ -49,6 +43,7 @@ public final class RestraintGeometry {
             gradientQuad(material,a,b,c,d,r,g,blue,alpha,r,g,blue,alpha);
         }
     }
+    // Display envelopes only; the host owns assembly and work timing.
     public static final int FORM_TICKS=80, COMPLETE_TICKS=30, CANCEL_TICKS=14;
     // Shared square 16x16 source; its negative space and pixel proportions must remain intact.
     public static final double HEIGHT=2.1, WIDTH=2.1, RISE=1.7;

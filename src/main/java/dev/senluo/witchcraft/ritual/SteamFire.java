@@ -60,6 +60,14 @@ public final class SteamFire {
                 nativeTick.run();
                 if (!level.hasChunkAt(pos) || !level.getBlockState(pos).is(block)) return;
                 if (call.delay <= 0) return; // A third-party ticker intentionally stopped scheduling.
+                long current = SteamWork.doublings(level, Vec3.atCenterOf(pos));
+                if (current != n) {
+                    // The callback changed its sources. Rebase the next opportunity without spending stale credit.
+                    clocks.remove(pos);
+                    long divisor = current >= 31 ? Integer.MAX_VALUE : 1L << current;
+                    level.scheduleTick(pos, block, (int) Math.max(1L, (call.delay + divisor - 1) / divisor));
+                    return;
+                }
                 delay = delay.add(BigInteger.valueOf(call.delay));
                 if (delay.signum() <= 0 && level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)
                         && RitualWorkBudget.claim(level, RitualWorkBudget.Kind.FIRE, pos, BigInteger.ONE) == 0) {
@@ -87,9 +95,16 @@ public final class SteamFire {
         int end = after - extra;
         if (!entity.fireImmune() && !entity.isInLava()) {
             for (int period = after / 20; period > end / 20 && entity.isAlive(); period--) {
+                if (SteamWork.doublings(level, entity.position()) < n) return;
                 entity.hurt(entity.damageSources().onFire(), 1);
                 // Respect callbacks which extinguish, replace or remove the burning entity.
                 if (entity.level() != level || entity.getRemainingFireTicks() != after) return;
+                if (SteamWork.doublings(level, entity.position()) < n) {
+                    // Preserve only the time step whose damage was already committed.
+                    int completed = (after - period * 20) / unit + 1;
+                    if (entity.isAlive()) entity.setRemainingFireTicks(Math.max(end, after - completed * unit));
+                    return;
+                }
             }
         }
         if (entity.isAlive()) entity.setRemainingFireTicks(end);

@@ -5,18 +5,28 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.damagesource.DamageSource;
+import dev.senluo.witchcraft.combat.DamageReceipt;
 
 /** One standard weapon-hit path for every blade geometry; no per-enchantment names or copied formulas. */
 final class SlashWeaponEffects {
     private SlashWeaponEffects() {}
     static boolean hit(SlashEntity slash, ServerPlayer player, Entity target) {
+        return strike(slash, player, target, false).accepted();
+    }
+    /** One native hit. Only the committed receipt prices the consumed section. */
+    static double sectionHit(SlashEntity slash, ServerPlayer player, Entity target) {
+        return strike(slash, player, target, true).spentFraction();
+    }
+    private static DamageReceipt strike(SlashEntity slash, ServerPlayer player, Entity target, boolean sectional) {
         var level = player.serverLevel();
         var weapon = slash.getWeaponItem();
         var source = slash.damageSource(player);
         float damage = EnchantmentHelper.modifyDamage(level, weapon, target, source, (float) slash.potential().damage());
-        if (!Float.isFinite(damage) || damage <= 0 || !target.hurt(source, damage)) return false;
-        afterHit(slash, player, target, source);
-        return true;
+        if (!Float.isFinite(damage) || damage <= 0) return new DamageReceipt(false, false, 0, 0, 0);
+        DamageReceipt receipt = sectional ? DamageReceipt.capture(target, source, () -> target.hurt(source, damage))
+                : new DamageReceipt(target.hurt(source, damage), false, 0, 0, 0);
+        if (receipt.accepted()) afterHit(slash, player, target, source);
+        return receipt;
     }
     static boolean fissionHit(SlashEntity slash, ServerPlayer player, Entity target, double potential, long blades) {
         var source = slash.damageSource(player);

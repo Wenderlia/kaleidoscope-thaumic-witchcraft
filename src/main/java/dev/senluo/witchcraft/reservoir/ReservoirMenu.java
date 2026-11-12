@@ -4,16 +4,14 @@ import net.minecraft.world.*;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import java.util.function.BooleanSupplier;
 import static dev.senluo.witchcraft.reservoir.ReservoirLayout.*;
 
 /** Only real slots use inventory sync. The hidden read-only slot carries a compact chamber snapshot. */
+@org.anti_ad.mc.ipn.api.IPNIgnore
 public final class ReservoirMenu extends AbstractContainerMenu {
-    public static final int TOGGLE_PLUGIN=100;
     private final Inventory playerInventory;
     private final ItemStack bag;
-    private final BooleanSupplier valid;
-    private final Runnable changed;
+    private final ReservoirSession session;
     private final int snapshotSlot,playerStart,storageSlots;
     private final ReservoirLayout layout;
     public ReservoirLayout layout(){return layout;}
@@ -22,12 +20,13 @@ public final class ReservoirMenu extends AbstractContainerMenu {
     private boolean refreshing;
     // Screen-local visibility only: inventory sync, quick-move and plugin work keep their real slots.
     private boolean pluginsVisible=true;
-    public ReservoirMenu(int id,Inventory inventory,ReservoirProfile profile){this(id,inventory,ItemStack.EMPTY,()->true,()->{},profile);}
-    public ReservoirMenu(int id,Inventory inventory,ItemStack bag,BooleanSupplier valid,Runnable changed){
-        this(id,inventory,bag,valid,changed,ReservoirProfile.of(bag));
+    public ReservoirMenu(int id,Inventory inventory,ReservoirProfile profile){this(id,inventory,null,profile);}
+    ReservoirMenu(int id,Inventory inventory,ReservoirSession session){
+        this(id,inventory,session,ReservoirProfile.of(session.bag()));
     }
-    private ReservoirMenu(int id,Inventory inventory,ItemStack bag,BooleanSupplier valid,Runnable changed,ReservoirProfile profile){
-        super(ReservoirContent.menu(profile),id);this.playerInventory=inventory;this.bag=bag;this.valid=valid;this.changed=changed;
+    private ReservoirMenu(int id,Inventory inventory,ReservoirSession session,ReservoirProfile profile){
+        super(ReservoirContent.menu(profile),id);
+        this.playerInventory=inventory;this.session=session;this.bag=session==null?ItemStack.EMPTY:session.bag();
         layout=new ReservoirLayout(profile);storageSlots=profile.storageSlots();snapshotSlot=storageSlots;playerStart=snapshotSlot+1;
         storage=new SimpleContainer(storageSlots){
             @Override public int getMaxStackSize(ItemStack stack){return ReservoirData.PORT_LIMIT;}
@@ -50,9 +49,9 @@ public final class ReservoirMenu extends AbstractContainerMenu {
         for(int col=0;col<9;col++)addPlayerSlot(inventory,col,layout.inventoryX()+col*18,HOTBAR_Y);
         refresh();
         storage.addListener(ignored->{
-            if(refreshing || bag.isEmpty() || !valid.getAsBoolean())return;
+            if(refreshing || session==null || !session.valid(inventory.player))return;
             for(int i=0;i<storageSlots;i++)ReservoirData.slot(bag,i,storage.getItem(i),inventory.player.registryAccess());
-            changed.run();
+            session.changed();
         });
     }
     private void addPlayerSlot(Inventory inventory,int index,int x,int y){
@@ -87,7 +86,15 @@ public final class ReservoirMenu extends AbstractContainerMenu {
     public ItemStack snapshot(){return snapshot.getItem(0);}
     public boolean pluginsVisible(){return pluginsVisible;}
     public void setPluginsVisible(boolean visible){pluginsVisible=visible;}
-    public boolean stillValid(Player player){return valid.getAsBoolean() && player.isAlive() && !dev.senluo.witchcraft.ritual.OwnershipRitual.frozen(player);}
+    ReservoirSession session(){return session;}
+    public boolean stillValid(Player player){
+        return session!=null?session.valid(player)
+                :player.isAlive() && !dev.senluo.witchcraft.ritual.OwnershipRitual.frozen(player);
+    }
+    @Override public void removed(Player player){
+        super.removed(player);
+        if(session!=null)session.close();
+    }
     public void clicked(int slot,int button,ClickType type,Player player){
         if(!bag.isEmpty()){
             if(!stillValid(player))return;
@@ -96,8 +103,21 @@ public final class ReservoirMenu extends AbstractContainerMenu {
             if(slot>=0 && slot<slots.size() && slots.get(slot).getItem()==bag)return;
             refresh();
         }
-        if(portClick(slot,button,type,player))return;
-        super.clicked(slot,button,type,player);
+        // Compare only user commits. Refresh and background charging must never sound like a click.
+        ItemStack[] before=null;
+        if(!bag.isEmpty()){
+            before=new ItemStack[storageSlots];
+            for(int i=0;i<storageSlots;i++)before[i]=storage.getItem(i).copy();
+        }
+        if(!portClick(slot,button,type,player))super.clicked(slot,button,type,player);
+        if(before!=null){
+            boolean ports=false,plugins=false;
+            for(int i=0;i<storageSlots;i++)if(!ItemStack.matches(before[i],storage.getItem(i))){
+                if(i<ReservoirData.FIRST_PLUGIN_SLOT)ports=true;else plugins=true;
+            }
+            if(plugins)ReservoirFeedback.play(player,ReservoirFeedback.Action.PLUGIN);
+            else if(ports)ReservoirFeedback.play(player,ReservoirFeedback.Action.CONTAINER);
+        }
     }
     private boolean portClick(int index,int button,ClickType type,Player player){
         if(index<0 || index>=ReservoirData.FIRST_PLUGIN_SLOT)return false;
@@ -118,23 +138,16 @@ public final class ReservoirMenu extends AbstractContainerMenu {
                 && !ItemStack.isSameItemSameComponents(stored,getCarried());
     }
     public boolean clickMenuButton(Player player,int id){
-        int pluginSlot=id-TOGGLE_PLUGIN;
-        if(pluginSlot>=ReservoirData.FIRST_PLUGIN_SLOT && pluginSlot<storageSlots){
-            if(bag.isEmpty() || !stillValid(player) || !getCarried().isEmpty() || !ReservoirData.supported(bag))return false;
-            var plugin=ReservoirData.slot(bag,pluginSlot,player.registryAccess());
-            if(plugin.getCount()!=1 || !ReservoirData.supported(plugin)
-                    || !(plugin.getItem() instanceof ReservoirPluginItem item) || !item.canToggle())return false;
-            item.toggle(plugin);ReservoirData.slot(bag,pluginSlot,plugin,player.registryAccess());
-            changed.run();refresh();
-            if(player instanceof net.minecraft.server.level.ServerPlayer server)dev.senluo.witchcraft.brew.FrostAbilities.sync(server);
-            broadcastChanges();return true;
-        }
-        if(id<0 || id>=layout.profile.cells || bag.isEmpty() || !stillValid(player))return false;
-        if(!getCarried().isEmpty() && !ReservoirContent.bridge.label(player.level(),bag,id,getCarried()))return false;
-        ReservoirData.select(bag,id);changed.run();return true;
+        if(session==null)return false;
+        var result=session.control(player,id,getCarried());
+        if(!result.changed())return false;
+        broadcastChanges();
+        session.feedback(result);
+        return true;
     }
     public void broadcastChanges(){
-        if(!bag.isEmpty() && valid.getAsBoolean()){
+        if(session!=null)session.pollTransfers();
+        if(session!=null && session.valid(playerInventory.player)){
             // Processing belongs to the holder's server tick; opening extra views never adds work pulses.
             refresh();
             var view=new ItemStack(bag.getItem());

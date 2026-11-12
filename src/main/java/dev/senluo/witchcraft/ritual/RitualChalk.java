@@ -124,7 +124,7 @@ public final class RitualChalk {
             if (!(redraw ? marks.replace(pos, mark) : marks.put(pos, mark))) return InteractionResult.FAIL;
             dev.senluo.witchcraft.time.TemporalWorld.get((ServerLevel) level).trees.rememberInscription(pos, mark);
         }
-        changed((ServerLevel) level, chunk);
+        changed((ServerLevel) level, chunk, pos, !redraw);
         // Cosmetic rerolls retain the existing no-wear repeat interaction.
         if (!knife && !redraw) ChalkUsage.consume(context);
         if (knife) level.playSound(null, pos, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, .35F, 1.2F);
@@ -169,7 +169,7 @@ public final class RitualChalk {
         var chunk = chunk(level, pos);
         if (chunk == null || level.getBlockState(pos.above()).is(RitualContent.CHALK_SURFACE.get())) return;
         var records = chunk.getData(RitualContent.CHALK_MARKS);
-        if (records.get(pos) == null && records.put(pos, mark)) changed(level, chunk);
+        if (records.get(pos) == null && records.put(pos, mark)) changed(level, chunk, pos, true);
     }
 
     /** Quote preserving a real thin layer on its original supporting block, without editing it. */
@@ -208,13 +208,14 @@ public final class RitualChalk {
                     && mark.equals(records.get(support)))
                 dev.senluo.witchcraft.time.TemporalWorld.get(level).trees.rememberInscription(support, mark);
             else if (added && mark.equals(records.get(support))) records.remove(support);
-            changed(level, chunk);
+            changed(level, chunk, support, true);
         }
     }
 
     /** Called after a successful world mutation, through the existing narrow geometry hook. */
     public static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
-        RitualShapeCache.changed(level, net.minecraft.world.level.ChunkPos.asLong(pos));
+        RitualShapeCache.blockChanged(level, pos, before, after);
+        if (before.getBlock() != after.getBlock()) RitualCenters.changed(level, pos);
         LevelChunk chunk = chunk(level, pos);
         ChalkMarks marks = chunk == null ? null : chunk.getExistingDataOrNull(RitualContent.CHALK_MARKS);
         if (marks == null || marks.get(pos) == null) return;
@@ -225,12 +226,26 @@ public final class RitualChalk {
             dev.senluo.witchcraft.time.TemporalWorld.get(level).trees.rememberInscription(pos, carving);
         }
         if (before.is(after.getBlock()) && surface(level, pos, after) >= 0) return;
-        if (marks.remove(pos)) changed(level, chunk);
+        if (marks.remove(pos)) changed(level, chunk, pos, true);
     }
 
-    private static void changed(ServerLevel level, LevelChunk chunk) {
-        dev.senluo.witchcraft.region.RegionRules.chunkChanged(level, chunk.getPos().toLong());
-        RitualShapeCache.changed(level, chunk.getPos().toLong());
+    /** The upper cell matters only for chalk identity or an actual obstruction of an exposed mark. */
+    static boolean affectsGeometry(ServerLevel level, BlockPos support, BlockPos pos, BlockState before, BlockState after) {
+        if (before == after) return false;
+        if (support.equals(pos)) return true;
+        if (!support.above().equals(pos)) return false;
+        boolean wasChalk = before.is(RitualContent.CHALK_SURFACE.get()), chalk = after.is(RitualContent.CHALK_SURFACE.get());
+        if (wasChalk || chalk) return wasChalk != chalk;
+        var mark = mark(level, support);
+        if (mark != null && mark.medium() == 1 && wood(level.getBlockState(support))) return false;
+        return before.getFluidState().isEmpty() != after.getFluidState().isEmpty()
+                || before.getCollisionShape(level, pos).isEmpty() != after.getCollisionShape(level, pos).isEmpty();
+    }
+    private static void changed(ServerLevel level, LevelChunk chunk, BlockPos support, boolean geometry) {
+        if (geometry) {
+            dev.senluo.witchcraft.region.RegionRules.blockChanged(level, support);
+            RitualShapeCache.markChanged(level, support);
+        }
         chunk.setUnsaved(true);
         DIRTY.computeIfAbsent(level, key -> new LinkedHashSet<>()).add(chunk.getPos().toLong());
     }

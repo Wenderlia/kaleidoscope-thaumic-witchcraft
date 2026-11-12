@@ -11,6 +11,19 @@ final class RadialSlashView {
         previousAlpha = new float[count]; alpha = new float[count]; targetAlpha = new float[count];
     }
 
+    /** A trimmed child inherits the displayed motion of its previous front. */
+    RadialSlashView remap(int[] parents) {
+        RadialSlashView result = new RadialSlashView(parents.length);
+        for (int i = 0; i < parents.length; i++) {
+            int old = parents[i];
+            if (old < 0 || old >= target.length) continue;
+            result.previous[i] = previous[old]; result.displayed[i] = displayed[old]; result.target[i] = target[old];
+            result.previousAlpha[i] = previousAlpha[old]; result.alpha[i] = alpha[old]; result.targetAlpha[i] = targetAlpha[old];
+        }
+        result.interpolation = interpolation;
+        return result;
+    }
+
     void accept(double[] radii, byte[] phases, byte[] moving) {
         for (int i = 0; i < target.length; i++) {
             // A late observer or a resumed, invisible front starts at its known position.
