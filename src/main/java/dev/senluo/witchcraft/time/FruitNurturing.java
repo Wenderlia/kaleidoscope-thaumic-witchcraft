@@ -31,8 +31,10 @@ public final class FruitNurturing {
 
     void observed(LivingEntity core, Map<BlockPos, Integer> nodes) {
         Entry entry = entries.computeIfAbsent(core.getBlockPos().immutable(), p -> new Entry(core));
-        entry.sources = Map.copyOf(nodes);
-        invalidate(core.getBlockPos());
+        if (!entry.sources.equals(nodes)) {
+            entry.sources = Map.copyOf(nodes);
+            invalidate(core.getBlockPos());
+        }
     }
     void forget(BlockPos core) {
         Entry entry = entries.remove(core);
@@ -47,6 +49,34 @@ public final class FruitNurturing {
         if (entry != null) { entry.revision++; entry.ready.clear(); }
     }
     boolean staining(BlockPos pos) { return pos.equals(staining); }
+
+    void blockChanged(BlockPos pos, BlockState before, BlockState after) {
+        if (entries.isEmpty() || before.is(after.getBlock()) || staining(pos)) return;
+        boolean routeChanged = before.is(TemporalContent.TIME_LEAVES.get()) != after.is(TemporalContent.TIME_LEAVES.get())
+                || FruitWoods.nodeGrade(before) != FruitWoods.nodeGrade(after)
+                || FruitWoods.channelGrade(before) != FruitWoods.channelGrade(after);
+        if (routeChanged) {
+            for (BlockPos origin : trees.treesAround(pos)) {
+                Entry entry = entries.get(origin);
+                if (entry != null && trees.mayUse(entry.core, pos)
+                        && !entry.core.tissue.shapeSpace.pruned(pos.subtract(origin).asLong())) invalidate(origin);
+            }
+        }
+        // A fruit's own spawn/harvest already has a callback and must not cancel its search.
+        if (before.isAir() == after.isAir() || before.is(TemporalContent.FRUIT.get()) || after.is(TemporalContent.FRUIT.get())) return;
+        BlockPos leaf = pos.above();
+        BlockPos owner = trees.ownerAt(leaf);
+        Entry entry = entries.get(owner);
+        if (entry != null && level.hasChunkAt(leaf) && level.getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get())
+                && trees.plannedLeaf(entry.core, leaf) == TreeLogic.LeafSupport.PRESENT) invalidate(owner);
+    }
+
+    void claimed(BlockPos pos, BlockPos owner) {
+        if (entries.isEmpty() || entries.size() == 1 && entries.containsKey(owner) || !level.hasChunkAt(pos)) return;
+        BlockState state = level.getBlockState(pos);
+        if (!state.is(TemporalContent.TIME_LEAVES.get()) && FruitWoods.channelGrade(state) < 0) return;
+        for (BlockPos other : trees.treesAround(pos)) if (!other.equals(owner)) invalidate(other);
+    }
     void fruitRemoved(BlockPos core) {
         Entry entry = entries.get(core);
         if (entry != null && entry.waiting) entry.queued = -1;

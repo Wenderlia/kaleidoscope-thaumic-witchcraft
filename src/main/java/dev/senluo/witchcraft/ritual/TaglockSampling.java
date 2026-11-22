@@ -43,10 +43,11 @@ public final class TaglockSampling {
                 || entity.getBoundingBox().inflate(entity.getPickRadius()).clip(eye, end).isPresent());
     }
 
-    public static void fromSelf(ServerPlayer player, InteractionHand hand) {
-        if (!canSampleSelf(player, hand)) return;
+    public static boolean fromSelf(ServerPlayer player, InteractionHand hand) {
+        if (!canSampleSelf(player, hand)) return false;
         boolean paid = player.isCreative() || player.hurt(player.damageSources().generic(), 1.0F);
         if (paid && player.isAlive()) bind(player, hand, player);
+        return true;
     }
 
     // Intercept before villager trading/animal interaction; a successful client result ends

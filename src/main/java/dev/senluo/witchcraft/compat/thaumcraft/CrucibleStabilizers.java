@@ -39,8 +39,7 @@ final class CrucibleStabilizers {
         return InfusionStabilizers.ordinary(state);
     }
     private static boolean loaded(ServerLevel level, long chunk) {
-        ChunkPos pos = new ChunkPos(chunk);
-        return level.getChunkSource().getChunkNow(pos.x, pos.z) != null && level.shouldTickBlocksAt(pos.getWorldPosition());
+        return dev.senluo.witchcraft.world.ChunkActivity.active(level, chunk);
     }
     /** A missing part of a possible ring must not be mistaken for a broken ring and lower safe capacity. */
     static boolean canInspect(ServerLevel level, BlockPos axis) {
@@ -52,11 +51,10 @@ final class CrucibleStabilizers {
     static OptionalInt score(ServerLevel level, RitualPlane plane) {
         Index index = LEVELS.computeIfAbsent(level, unused -> new Index());
         Key key = new Key(plane.anchor(), plane.outermostRing());
-        long now = level.getGameTime();
         Entry old = index.entries.get(key);
         // Ordinary material scores follow block/tag notifications. Living wood carries its own
         // connection proof, including the fallback for changes without a topology notification.
-        if (old != null && old.wood.stream().allMatch(proof -> proof.current(now))
+        if (old != null && old.wood.stream().allMatch(proof -> proof.current())
                 && old.chunks.stream().allMatch(c -> loaded(level, c)))
             return OptionalInt.of(old.points);
         index.remove(key);

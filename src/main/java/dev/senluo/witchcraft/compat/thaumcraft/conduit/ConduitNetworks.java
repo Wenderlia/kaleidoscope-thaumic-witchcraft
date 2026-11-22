@@ -61,7 +61,7 @@ final class ConduitNetworks {
         finally { world.running = false; }
     }
 
-    private record Node(ConduitEntity pipe, Node parent, int depth) {}
+    private record Node(ConduitEntity pipe, Node parent, int depth, int order) {}
     private record Route(long first, long last) {}
     static final class Network {
         boolean valid, retired, ready;
@@ -77,15 +77,12 @@ final class ConduitNetworks {
         private final Map<Route, List<ConduitEntity>> paths = new LinkedHashMap<>(16, .75F, true);
         private int pathReferences;
         void attach(ConduitEntity pipe, Node parent) {
-            Node node = new Node(pipe, parent, parent == null ? 0 : parent.depth + 1);
+            Node node = new Node(pipe, parent, parent == null ? 0 : parent.depth + 1, nodes.size());
             nodes.put(pipe.getBlockPos().asLong(), node); frontier.add(node); pipe.network = this;
             stockChanged(pipe);
         }
         void stockChanged(ConduitEntity pipe) {
             if (pipe.hasStock()) stocked.add(pipe); else stocked.remove(pipe);
-        }
-        boolean hasLocalMatter(SuctionTransferStore journal, net.minecraft.resources.ResourceLocation dimension) {
-            return !stocked.isEmpty() || journal.hasInDimension(dimension, SuctionTransferStore.Scope.CONDUIT);
         }
         List<ConduitEntity> path(BlockPos first, BlockPos last) {
             if (!valid) return List.of();
@@ -128,12 +125,16 @@ final class ConduitNetworks {
         final Map<Long, Set<ConduitEntity>> chunks = new HashMap<>();
         final Set<ConduitEntity> pending = new LinkedHashSet<>(), sync = new LinkedHashSet<>();
         final Set<Network> networks = new LinkedHashSet<>();
+        final Map<Network, List<Node>> receipts = new IdentityHashMap<>();
+        long receiptVersion = Long.MIN_VALUE;
+        boolean receiptTopologyChanged = true;
         Network building;
         boolean running;
         World(ServerLevel level) { this.level = level; }
         void invalidate(Network n) {
             if (n == null || n.retired) return;
             n.retired = true; n.valid = false; n.pressure = 0; networks.remove(n);
+            receiptTopologyChanged = true;
             n.clearPaths();
             if (building == n) building = null;
             for (var node : n.nodes.values()) if (node.pipe.network == n) { node.pipe.network = null; pending.add(node.pipe); }
@@ -147,6 +148,7 @@ final class ConduitNetworks {
                     var iterator = pending.iterator(); var seed = iterator.next(); iterator.remove();
                     if (seed.isRemoved() || loaded.get(seed.getBlockPos().asLong()) != seed || seed.network != null) { budget--; continue; }
                     n = new Network(); n.attach(seed, null); networks.add(n); building = n;
+                    receiptTopologyChanged = true;
                 }
                 Node node = n.frontier.poll();
                 if (node == null) { n.valid = true; building = null; continue; }
@@ -158,7 +160,7 @@ final class ConduitNetworks {
                     if (next != null && !next.isRemoved() && next.open(side.getOpposite())) {
                         if (next.network == n) continue;
                         if (next.network != null) { invalidate(next.network); invalidate(n); break; }
-                        n.attach(next, node); pending.remove(next);
+                        n.attach(next, node); pending.remove(next); receiptTopologyChanged = true;
                     } else if (next == null) {
                         var port = new Port(node.pipe.getBlockPos(), side);
                         // Keep every boundary coordinate. Capability absence may change without a block update.
@@ -196,6 +198,30 @@ final class ConduitNetworks {
             if (!level.hasChunkAt(port.position()) || level.getBlockState(port.position()).isAir()) return null;
             return n.query(this, port, () -> ConduitEndpoint.resolve(level, port), null);
         }
+        List<Node> localMatter(Network n, SuctionTransferStore journal) {
+            long version = journal.outletVersion(level.dimension().location(), SuctionTransferStore.Scope.CONDUIT);
+            if (receiptTopologyChanged || receiptVersion != version) {
+                receipts.clear();
+                for (var receipt : journal.inDimension(level.dimension().location(), SuctionTransferStore.Scope.CONDUIT)) {
+                    var pipe = loaded.get(receipt.outlet().position().asLong());
+                    var owner = pipe == null ? null : pipe.network;
+                    if (owner == null || owner.retired) continue;
+                    var node = owner.nodes.get(pipe.getBlockPos().asLong());
+                    if (node != null && node.pipe == pipe) receipts.computeIfAbsent(owner, unused -> new ArrayList<>()).add(node);
+                }
+                receiptVersion = version; receiptTopologyChanged = false;
+            }
+            var pending = receipts.getOrDefault(n, List.of());
+            if (n.stocked.isEmpty() && pending.isEmpty()) return List.of();
+            var result = new ArrayList<Node>(n.stocked.size() + pending.size());
+            for (var pipe : n.stocked) {
+                var node = n.nodes.get(pipe.getBlockPos().asLong());
+                if (node != null && node.pipe == pipe) result.add(node);
+            }
+            for (var node : pending) if (!n.stocked.contains(node.pipe)) result.add(node);
+            result.sort(Comparator.comparingInt(Node::order));
+            return result;
+        }
         void work(Network n, SuctionTransferStore journal) {
             if (!n.ready) return;
             n.ready = false;
@@ -215,8 +241,9 @@ final class ConduitNetworks {
             int turn = n.cursor++; Collections.rotate(inputs, Math.floorMod(turn, inputs.size()));
             if (!outputs.isEmpty()) Collections.rotate(outputs, Math.floorMod(turn, outputs.size()));
             // Settled buffers and partial receipts drain before any fresh foreign extraction.
-            if (n.hasLocalMatter(journal, level.dimension().location())) {
-                var nodes = new ArrayList<>(n.nodes.values()); Collections.rotate(nodes, Math.floorMod(turn, nodes.size()));
+            var nodes = localMatter(n, journal);
+            if (!nodes.isEmpty()) {
+                Collections.rotate(nodes, Math.floorMod(turn, nodes.size()));
                 for (Node node : nodes) {
                     if (!n.valid) return;
                     var receipt = journal.receipt(outlet(node.pipe.getBlockPos()));
@@ -245,7 +272,7 @@ final class ConduitNetworks {
             AspectId aspect = wanted == null ? filter : wanted;
             var journal = SuctionTransferStore.get(level);
             if (!journal.supported()) return null;
-            if (n.hasLocalMatter(journal, level.dimension().location())) for (Node node : n.nodes.values()) {
+            for (Node node : localMatter(n, journal)) {
                 var buffer = node.pipe;
                 var owner = buffer.getBlockPos();
                 var receipt = journal.receipt(outlet(owner));

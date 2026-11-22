@@ -5,7 +5,8 @@ import dev.tc4port.thaumcraft.api.event.NodeEcologyEvent;
 import dev.tc4port.thaumcraft.api.node.NodeApi;
 import dev.tc4port.thaumcraft.api.node.VisSource;
 import dev.tc4port.thaumcraft.api.aspect.VisAction;
-import dev.tc4port.thaumcraft.api.aspect.VisChannel;
+import dev.tc4port.thaumcraft.api.aspect.AspectId;
+import dev.tc4port.thaumcraft.api.vis.VisTypes;
 import dev.senluo.witchcraft.time.ExtraTicks;
 import dev.senluo.witchcraft.time.AccelerationSources;
 import dev.senluo.witchcraft.time.WorkTicks;
@@ -13,7 +14,8 @@ import dev.senluo.witchcraft.time.WorkSources;
 import dev.senluo.witchcraft.ritual.RitualWorkBudget;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import java.math.BigInteger;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +25,6 @@ public final class NodeSteam {
     private record Work(BlockEntity node, BigInteger multiplier) {}
     private static final ThreadLocal<Work> CURRENT = new ThreadLocal<>();
     private static final boolean BOTANIA = net.neoforged.fml.ModList.get().isLoaded("botania");
-    private static final VisChannel[] CHANNELS = VisChannel.values();
     private NodeSteam() {}
 
     /** Resolve the field once for the original opportunity and every extra native step it owns. */
@@ -59,10 +60,11 @@ public final class NodeSteam {
         if (rate.equals(BigInteger.ONE)) return;
         boolean energized = node.getBlockState().is(ThaumcraftContent.block("energized_aura_node"))
                 && level.getCapability(dev.tc4port.thaumcraft.api.node.VisCapabilities.SOURCE, pos, null) instanceof NodeOutput;
-        var previousOutputs = new EnumMap<VisChannel, BigInteger>(VisChannel.class);
+        var previousOutputs = new LinkedHashMap<AspectId, BigInteger>();
+        var types = energized ? VisTypes.block(node) : List.<AspectId>of();
         Runnable advance = energized ? () -> {
             // Transfer the old balance exactly once, just before the native ticker replaces it.
-            collect(previousOutputs, (VisSource) node);
+            collect(previousOutputs, (VisSource) node, types);
             nativeTick.run();
         } : nativeTick;
         ExtraTicks.run(() -> {
@@ -80,7 +82,7 @@ public final class NodeSteam {
         // The native ticker refreshes rather than adds its per-tick output. Preserve every produced pool,
         // but only until the next native opportunity. Unload/reload cannot store free network energy.
         if (!previousOutputs.isEmpty() && available(level, pos, node) && node.getBlockState().is(ThaumcraftContent.block("energized_aura_node")))
-            NodeOutput.publish(node, previousOutputs);
+            NodeOutput.publish(node, types, previousOutputs);
     }
 
     /** Only the native discharge growth roll opts into this; hungry-node feeding remains unchanged. */
@@ -95,11 +97,10 @@ public final class NodeSteam {
                 opportunity(level, node.getBlockPos(), node, nativeTick);
             }
         });
-        AccelerationSources.registerObserver((level, entity) -> {
-            if (entity.getType() != ThaumcraftContent.blockEntity("aura_node")) return;
+        AccelerationSources.registerSource((level, entity, owner) -> {
+            if (entity.getType() != ThaumcraftContent.blockEntity("aura_node")) return false;
             var influence = NodePromotion.influence(level, entity.getBlockPos());
-            if (influence.multiplier().compareTo(BigInteger.ONE) > 0)
-                for (var owner : influence.owners()) AccelerationSources.renew(level, entity, owner, 1);
+            return influence.multiplier().compareTo(BigInteger.ONE) > 0 && influence.owners().contains(owner);
         });
         var bus = net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
         bus.addListener((NodeEcologyEvent.Recharge event) -> {
@@ -138,8 +139,8 @@ public final class NodeSteam {
                 && (node.getBlockState().is(ThaumcraftContent.block("aura_node")) || node.getBlockState().is(ThaumcraftContent.block("energized_aura_node")))
                 && level.hasChunksAt(pos.offset(-2, 0, -2), pos.offset(2, 0, 2));
     }
-    private static void collect(Map<VisChannel, BigInteger> produced, VisSource source) {
-        for (VisChannel channel : CHANNELS) {
+    private static void collect(Map<AspectId, BigInteger> produced, VisSource source, List<AspectId> types) {
+        for (AspectId channel : types) {
             int remaining = source.takeVis(channel, Integer.MAX_VALUE, VisAction.EXECUTE, 0);
             if (remaining > 0) produced.merge(channel, BigInteger.valueOf(remaining), BigInteger::add);
         }

@@ -78,7 +78,7 @@ final class SlashAimRoll {
             var sweep = new SlashGeometry.Sweep(piece.from, piece.to, blade,
                     shape.halfLength(piece.before), shape.halfLength(piece.after));
             AABB envelope = sweep.bounds();
-            if (!SlashCollision.bounded(envelope) || !SlashCollision.loaded(player.serverLevel(), envelope))
+            if (!SlashCollision.bounded(envelope) || !SlashQueries.loaded(player.serverLevel(), envelope))
                 return new Clearance(0, false);
             double first = Double.POSITIVE_INFINITY;
             for (BlockPos cursor : BlockPos.betweenClosed(BlockPos.containing(envelope.minX, envelope.minY, envelope.minZ),

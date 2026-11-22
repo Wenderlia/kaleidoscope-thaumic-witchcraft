@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 
 /** Matrix eligibility combines complete geometry with the shared rune-stabilization observation. */
 public final class InfusionRings {
-    private static final RuneStabilization.Stabilizer STABILIZERS = InfusionStabilizers::matches;
     private InfusionRings() {}
     static Optional<RitualPlane> find(ServerLevel level, BlockPos matrix) {
         RitualPlane.invalidate(level, matrix);
@@ -22,14 +21,14 @@ public final class InfusionRings {
         return Optional.empty();
     }
     static Optional<RitualPlane> at(ServerLevel level, BlockPos anchor) {
-        var rings = new RitualRings.Layout(match(level, anchor, RitualShape.SMALL),
-                match(level, anchor, RitualShape.MEDIUM), match(level, anchor, RitualShape.LARGE));
+        var rings = dev.senluo.witchcraft.world.ChunkActivity.within(level, () -> new RitualRings.Layout(
+                match(level, anchor, RitualShape.SMALL), match(level, anchor, RitualShape.MEDIUM), match(level, anchor, RitualShape.LARGE)));
         return rings.count() == 0 ? Optional.empty() : Optional.of(new RitualPlane(anchor, rings));
     }
     private static RitualShape.Match match(ServerLevel level, BlockPos anchor, RitualShape shape) {
         var geometry = shape.match(level, anchor);
         if (geometry != RitualShape.Match.VALID) return geometry;
-        return switch (RuneStabilization.all(level, anchor, shape, STABILIZERS)) {
+        return switch (RuneStabilization.all(level, anchor, shape, InfusionStabilizers.RUNES)) {
             case STABILIZED -> RitualShape.Match.VALID;
             case UNSTABILIZED -> RitualShape.Match.INVALID;
             case UNLOADED -> RitualShape.Match.UNLOADED;

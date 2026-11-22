@@ -3,7 +3,10 @@ package dev.senluo.witchcraft.client;
 import com.mojang.datafixers.util.Either;
 import dev.senluo.witchcraft.KaleidoscopeWitchcraft;
 import dev.senluo.witchcraft.time.TemporalTooltips;
+import java.util.List;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.core.component.DataComponents;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -39,28 +42,9 @@ public final class TemporalTooltipEvents {
         dev.senluo.witchcraft.compat.quark.QuarkFoodTooltip.fit(event);
         if (!event.getItemStack().has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)
                 && !event.getItemStack().has(DataComponents.HIDE_TOOLTIP)) {
-            String registeredName = ModList.get().getModContainerById(KaleidoscopeWitchcraft.MOD_ID)
-                    .map(container -> container.getModInfo().getDisplayName()).orElse(TemporalTooltips.source().getString());
-            boolean hasSource = false;
-            for (int i=0;i<event.getTooltipElements().size();i++) {
-                if (event.getTooltipElements().get(i).left().map(line -> TemporalTooltips.isSource(line,registeredName)).orElse(false)) {
-                    if (hasSource) { event.getTooltipElements().remove(i--); continue; }
-                    hasSource = true;
-                }
-            }
-            if (!hasSource) event.getTooltipElements().add(Either.left(TemporalTooltips.source()));
-            // Keep the single authorized flavor line immediately above the actual source provider.
-            var elements = event.getTooltipElements();
-            var lore = elements.stream().filter(element -> element.left().map(text ->
-                    storageKey(text).startsWith("vintage.")).orElse(false)).findFirst();
-            if (lore.isPresent()) {
-                elements.removeIf(element -> element.left().map(text -> storageKey(text).startsWith("vintage.")).orElse(false));
-                for (int i = 0; i < elements.size(); i++) {
-                    if (elements.get(i).left().map(text -> TemporalTooltips.isSource(text,registeredName)).orElse(false)) {
-                        elements.add(i, lore.get()); break;
-                    }
-                }
-            }
+            String registered = ModList.get().getModContainerById(KaleidoscopeWitchcraft.MOD_ID)
+                    .map(container -> container.getModInfo().getDisplayName()).orElse(null);
+            placeSourceAndLore(event.getTooltipElements(), registered);
         }
         int width = Math.max(40, Math.min(240, event.getScreenWidth() - 24));
         width = event.getMaxWidth() > 0 ? Math.min(width, event.getMaxWidth()) : width;
@@ -95,7 +79,40 @@ public final class TemporalTooltipEvents {
         }
     }
 
-    private static String storageKey(net.minecraft.network.chat.FormattedText text) {
+    static void placeSourceAndLore(List<Either<FormattedText, TooltipComponent>> elements, String registered) {
+        var fallback = TemporalTooltips.source();
+        String translated = fallback.getString();
+        String registeredName = registered == null ? translated : registered;
+        Either<FormattedText, TooltipComponent> firstSource = null;
+        Either<FormattedText, TooltipComponent> firstLore = null;
+        for (var rows = elements.listIterator(); rows.hasNext();) {
+            var row = rows.next();
+            var text = row.left().orElse(null);
+            if (text == null) continue;
+            if (TemporalTooltips.isSource(text, registeredName, translated)) {
+                if (firstSource != null) {
+                    rows.remove();
+                    continue;
+                }
+                firstSource = row;
+            }
+            if (firstLore == null && storageKey(text).startsWith("vintage.")) firstLore = row;
+        }
+        if (firstSource == null) {
+            firstSource = Either.left(fallback);
+            elements.add(firstSource);
+        }
+        if (firstLore == null) return;
+        elements.removeIf(row -> storageKey(row.left().orElse(null)).startsWith("vintage."));
+        for (int i = 0; i < elements.size(); i++) {
+            if (elements.get(i) == firstSource) {
+                elements.add(i, firstLore);
+                return;
+            }
+        }
+    }
+
+    private static String storageKey(FormattedText text) {
         if (text instanceof net.minecraft.network.chat.Component component
                 && component.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents translation) {
             String prefix = "tooltip.kaleidoscope_witchcraft.";

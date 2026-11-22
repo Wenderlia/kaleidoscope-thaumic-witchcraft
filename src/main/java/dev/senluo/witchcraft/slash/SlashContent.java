@@ -1,6 +1,7 @@
 package dev.senluo.witchcraft.slash;
 
 import dev.senluo.witchcraft.KaleidoscopeWitchcraft;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -20,6 +21,9 @@ public final class SlashContent {
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, KaleidoscopeWitchcraft.MOD_ID);
     private static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, KaleidoscopeWitchcraft.MOD_ID);
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, KaleidoscopeWitchcraft.MOD_ID);
+    private static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, KaleidoscopeWitchcraft.MOD_ID);
+    public static final DeferredHolder<ParticleType<?>, ParticleType<SlashHitParticle>> HIT =
+            PARTICLES.register("slash_hit", SlashHitParticle::type);
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<FocusMemory>> MEMORY = COMPONENTS.registerComponentType(
             "slash_focus", b -> b.persistent(FocusMemory.CODEC).networkSynchronized(ByteBufCodecs.fromCodec(FocusMemory.CODEC)));
     public static final DeferredItem<Item> FOCUS = ITEMS.register("slash_focus", () ->
@@ -33,6 +37,8 @@ public final class SlashContent {
             () -> SoundEvent.createVariableRangeEvent(id("slash.release")));
     public static final DeferredHolder<SoundEvent, SoundEvent> CONTACT = SOUNDS.register("slash.contact",
             () -> SoundEvent.createVariableRangeEvent(id("slash.contact")));
+    public static final DeferredHolder<SoundEvent, SoundEvent> BLACK_FLASH_CONTACT = SOUNDS.register("slash.black_flash_contact",
+            () -> SoundEvent.createVariableRangeEvent(id("slash.black_flash_contact")));
     public static final DeferredHolder<SoundEvent, SoundEvent> BLOCKED_STONE = SOUNDS.register("slash.blocked_stone",
             () -> SoundEvent.createVariableRangeEvent(id("slash.blocked_stone")));
     static final List<DeferredHolder<SoundEvent, SoundEvent>> BLOCKED_HARDNESS = IntStream
@@ -47,7 +53,7 @@ public final class SlashContent {
     private SlashContent() {}
     public static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(KaleidoscopeWitchcraft.MOD_ID, path); }
     public static void register(IEventBus bus) {
-        ITEMS.register(bus); COMPONENTS.register(bus); ENTITIES.register(bus); SOUNDS.register(bus);
+        ITEMS.register(bus); COMPONENTS.register(bus); ENTITIES.register(bus); SOUNDS.register(bus); PARTICLES.register(bus);
         SlashRhythm.register(bus);
         bus.addListener(SlashRequests::register);
         bus.addListener(dev.senluo.witchcraft.slash.drawing.SlashDrawing::register);

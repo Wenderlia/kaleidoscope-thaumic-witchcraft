@@ -10,8 +10,6 @@ public final class Colony {
     public final List<BlockPos> roots;
     public final Set<BlockPos> rootSet;
     public final List<BlockPos> logs;
-    long reserveTick = Long.MIN_VALUE;
-    long reserveAmount;
     private int productionMode;
     private long modeChosenAt;
     private java.util.UUID modeChoice;

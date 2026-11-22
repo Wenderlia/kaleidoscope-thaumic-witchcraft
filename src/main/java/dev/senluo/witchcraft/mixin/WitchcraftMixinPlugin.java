@@ -11,6 +11,8 @@ import java.util.Set;
 public final class WitchcraftMixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.biolith."))
+            return LoadingModList.get().getModFileById("biolith") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.botania."))
             return LoadingModList.get().getModFileById("botania") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.draconic."))
@@ -32,6 +34,7 @@ public final class WitchcraftMixinPlugin implements IMixinConfigPlugin {
                     && mods.getModFileById("tiab") != null;
         }
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.time.")) return true;
+        if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.worldgen.")) return true;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.thaumcraft."))
             return LoadingModList.get().getModFileById("thaumcraft") != null;
         if (mixinClassName.startsWith("dev.senluo.witchcraft.mixin.ritual.")) return true;

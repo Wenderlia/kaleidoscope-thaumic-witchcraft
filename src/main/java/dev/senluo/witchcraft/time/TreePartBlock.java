@@ -37,6 +37,6 @@ public class TreePartBlock extends RotatedPillarBlock {
     }
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moved) {
         super.onRemove(state,level,pos,replacement,moved);
-        if (!state.is(replacement.getBlock()) && level instanceof ServerLevel server) TemporalWorld.get(server).trees.removed(pos);
+        if (!state.is(replacement.getBlock()) && level instanceof ServerLevel server) TemporalWorld.get(server).trees.removed(pos,state);
     }
 }

@@ -60,7 +60,7 @@ public final class BoreRings {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, (ArcaneBoreEvent.Harvest event) -> {
             State state = state(event.view());
             if (state != null && state.excavation != null && event.view() instanceof BlockEntity bore)
-                state.excavation.harvest(event, bore, state);
+                state.excavation.harvest(event, bore, state, state.mine.samples);
         });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ArcaneBoreEvent.Harvested event) -> {
             State state = state(event.view());
@@ -99,7 +99,7 @@ public final class BoreRings {
         private ArcaneBoreOperationEvent.Scan scanned;
         private ArcaneBoreEvent.Target selected;
         private BoreStorage.Account account;
-        private DeepMineStore.Mine mine;
+        private DeepMines.Mine mine;
         private BoreExcavation excavation;
         private int scanRadius, scanDepth;
 
@@ -133,6 +133,8 @@ public final class BoreRings {
             running = true;
             try {
                 scanned = null; selected = null;
+                // The old session may already have dropped its binding while native cancellation was busy.
+                if (excavation != null && !excavation.retryCancellation(bore)) return;
                 boolean minePending = false;
                 if (bore.getLevel() instanceof ServerLevel level) {
                     int actual = RitualPlane.find(level, bore.getBlockPos()).map(p -> p.rings().completeMask()).orElse(0);
@@ -144,6 +146,7 @@ public final class BoreRings {
                     minePending = currentMine == null && mine != null
                             && dev.senluo.witchcraft.ritual.StructuralRitualStore.get(level).pending(mine.id);
                     if (!minePending && mine != currentMine) {
+                        if (excavation != null && !excavation.cancel(bore)) return;
                         if (mine != null) mine.detach(bore);
                         mine = currentMine;
                         excavation = null;
@@ -160,7 +163,13 @@ public final class BoreRings {
                             .requestedTarget(level, bore.getBlockPos()).orElse(null);
                     if (requested != null && (excavation == null || !excavation.owns(requested))) nativeIdle = false;
                 }
-                toolWear.during(nativeTick);
+                var nativeExcavation = excavation;
+                if (nativeExcavation != null) nativeExcavation.beginNativeCall();
+                try {
+                    toolWear.during(nativeTick);
+                } finally {
+                    if (nativeExcavation != null) nativeExcavation.endNativeCall(bore);
+                }
                 // isWorking() retains the last dig position in TC. Observe completed public operations instead.
                 // On reload, wait for a fresh Scan before submitting addon targets.
                 if (scanned != null) {

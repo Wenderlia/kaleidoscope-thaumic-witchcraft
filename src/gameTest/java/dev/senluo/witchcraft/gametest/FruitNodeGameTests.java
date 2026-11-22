@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /** Prepared regression scenarios; compilation does not imply these have run. */
@@ -19,9 +20,12 @@ public final class FruitNodeGameTests {
         h.assertTrue(trees.fruits(core).isEmpty(), "No automatic side-root fruit in a new tree");
         BlockPos node = core.getBlockPos().above();
         h.getLevel().setBlock(node,FruitWoods.FAMILIES.get(1).node().get().defaultBlockState(),3);
-        trees.tick(core);
-        for (int i=0;i<20;i++) trees.flush();
+        for (int i=0;i<20;i++) { trees.tick(core); trees.flush(); }
         var fruit = trees.fruits(core).getFirst();
+        var decor = core.getBlockPos().offset(6,1,5);
+        h.getLevel().setBlock(decor,Blocks.STONE.defaultBlockState(),3);
+        h.getLevel().setBlock(decor,Blocks.ANDESITE.defaultBlockState(),3);
+        h.assertTrue(fruit.limit()==2,"An unrelated decoration leaves the current honey route usable");
         h.assertTrue(trees.fruits(core).size()==1 && fruit.grade==0 && fruit.targetGrade==2,
                 "One honey node starts one common juvenile, not an intermediate dawn fruit");
         h.assertTrue(fruit.remainingFee()==6000*Tissue.TU && fruit.remainingTicks()==6000,
@@ -41,9 +45,35 @@ public final class FruitNodeGameTests {
         core.tissue.setCoreQuantity(1000*Tissue.TU);
         trees.beforeWoodRemoval(node);
         h.getLevel().removeBlock(node,false);
+        h.assertTrue(fruit.limit()==0,"Removing the active source immediately suspends its fruit");
         for(int i=0;i<20;i++)trees.flush();
         h.assertTrue(h.getLevel().getBlockState(node).is(FruitWoods.FAMILIES.get(1).channel().get()),
                 "Harvesting a node restores the matching channel, never another node");
+        h.succeed();
+    }
+
+    @GameTest(batch="regrowthFruitSite", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=100)
+    public static void clearedHangingSiteWakesWaitingSource(GameTestHelper h) {
+        var core = TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var level = h.getLevel();
+        var trees = TemporalWorld.get(level).trees;
+        BlockPos origin = core.getBlockPos(), open = null;
+        for (var cell : TreeLogic.shape(origin).entrySet()) {
+            BlockPos below = cell.getKey().below();
+            if (!cell.getValue().is(TemporalContent.TIME_LEAVES.get()) || !level.getBlockState(below).isAir()) continue;
+            level.setBlock(below,Blocks.STONE.defaultBlockState(),3);
+            open = below;
+        }
+        h.assertTrue(open != null, "The crown has at least one hanging site");
+        level.setBlock(origin.above(),FruitWoods.FAMILIES.get(1).node().get().defaultBlockState(),3);
+        for (int i=0;i<30;i++) { trees.tick(core); trees.flush(); }
+        h.assertTrue(trees.fruits(core).isEmpty(), "Obstructed sites cannot spawn a fruit");
+        level.removeBlock(open,false);
+        for (int i=0;i<30;i++) { trees.tick(core); trees.flush(); }
+        h.assertTrue(level.getBlockEntity(open) instanceof FruitEntity fruit && fruit.limit()==2
+                && trees.fruits(core).size()==1, "Clearing the only site starts one fruit on the original source");
+        level.removeBlock(origin,false);
         h.succeed();
     }
 

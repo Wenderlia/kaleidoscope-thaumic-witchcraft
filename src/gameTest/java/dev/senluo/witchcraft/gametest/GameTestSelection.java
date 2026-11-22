@@ -19,6 +19,12 @@ public final class GameTestSelection {
             "newResearchGatePausesLegacyPreparationButKeepsPaidRun");
 
     @SubscribeEvent
+    public static void visFixtures(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("thaumcraft"))
+            dev.senluo.witchcraft.compat.thaumcraft.ReservoirChargingGameTests.registerTools(event);
+    }
+
+    @SubscribeEvent
     public static void register(RegisterGameTestsEvent event) {
         String filter=System.getProperty("witchcraft.gameTests", "").trim();
         boolean all=filter.isEmpty();
@@ -33,7 +39,7 @@ public final class GameTestSelection {
             if(method.isAnnotationPresent(GameTest.class) && (all || requested.remove(method.getName().toLowerCase(Locale.ROOT))))event.register(method);
         for(var method:dev.senluo.witchcraft.brew.WineAbilityGameTests.class.getDeclaredMethods())
             if(method.isAnnotationPresent(GameTest.class) && (all || requested.remove(method.getName().toLowerCase(Locale.ROOT))))event.register(method);
-        for (Class<?> type : new Class<?>[]{TurtleFlightGameTests.class, BoundaryPersistenceGameTests.class, TissueDataGameTests.class, TreeWoodGameTests.class, FruitNodeGameTests.class, EventMigrationGameTests.class, TemporalGameTests.class, SideRootGameTests.class, DevelopmentGameTests.class, LinkedDevelopmentGameTests.class, ItemPresentationGameTests.class, RootedFarmlandGameTests.class, TreeGameTests.class, FruitHarvestGameTests.class, FruitTimeGameTests.class, FruitGradeGameTests.class, FruitFeedingGameTests.class, BrewGameTests.class}) {
+        for (Class<?> type : new Class<?>[]{TurtleFlightGameTests.class, BoundaryPersistenceGameTests.class, TissueDataGameTests.class, TreeWoodGameTests.class, dev.senluo.witchcraft.time.TreeDiscoveryGameTests.class, FruitNodeGameTests.class, EventMigrationGameTests.class, TemporalGameTests.class, SideRootGameTests.class, DevelopmentGameTests.class, LinkedDevelopmentGameTests.class, ItemPresentationGameTests.class, RootedFarmlandGameTests.class, TreeGameTests.class, FruitHarvestGameTests.class, FruitTimeGameTests.class, FruitGradeGameTests.class, FruitFeedingGameTests.class, BrewGameTests.class}) {
             // Captured Curios inventory becomes a synthetic method parameter; filter before reflection.
             if (type == TurtleFlightGameTests.class && !net.neoforged.fml.ModList.get().isLoaded("curios")) continue;
             for (var method : type.getDeclaredMethods()) {
@@ -61,7 +67,7 @@ public final class GameTestSelection {
                     || net.neoforged.fml.ModList.get().isLoaded("thaumictinkerer");
             if (all && compatible || requested.remove(method.getName().toLowerCase(Locale.ROOT))) event.register(method);
         }
-        if (thaumcraft) for (var type : new Class<?>[]{dev.senluo.witchcraft.time.TreeBiomeGrowthGameTests.class, SteamRitualGameTests.class, SuctionPresentationGameTests.class, RitualOfferingGameTests.class, FocusCatalogGameTests.class, dev.senluo.witchcraft.slash.SlashProtectionGameTests.class}) {
+        if (thaumcraft) for (var type : new Class<?>[]{dev.senluo.witchcraft.compat.thaumcraft.RitualWaterIndexGameTests.class, RitualRecipeGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.conduit.ConduitRoutingGameTests.class, dev.senluo.witchcraft.time.TreeBiomeGrowthGameTests.class, SteamRitualGameTests.class, SuctionPresentationGameTests.class, RitualOfferingGameTests.class, FocusCatalogGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.SlashCastGameTests.class, dev.senluo.witchcraft.slash.SlashProtectionGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.ReservoirChargingGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.TemporaryMineStorageGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.MineSampleGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.BoreExcavationGameTests.class, dev.senluo.witchcraft.compat.thaumcraft.MineStorageCleanupGameTests.class}) {
             for (var method : type.getDeclaredMethods())
                 if (method.isAnnotationPresent(GameTest.class) && (all || requested.remove(method.getName().toLowerCase(Locale.ROOT)))) event.register(method);
         }

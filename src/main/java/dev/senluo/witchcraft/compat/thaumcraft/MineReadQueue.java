@@ -42,13 +42,14 @@ final class MineReadQueue {
     }
 
     static final class Owner {
-        final UUID id;
-        final MinePrefetch prefetch;
+        // Ticket ownership belongs to this run, not the ritual that may already have resumed.
+        final UUID id = UUID.randomUUID();
+        final MineSupply supply;
         final Map<Long, Entry> entries = new LinkedHashMap<>();
         ServerLevel level;
-        int activeTick, held, pending, allowance = 4;
-        Owner(UUID id, MinePrefetch prefetch) {
-            this.id = id; this.prefetch = prefetch;
+        int held, pending, allowance = 4;
+        Owner(MineSupply supply) {
+            this.supply = supply;
             register();
         }
         void bind(ServerLevel next) {
@@ -56,11 +57,11 @@ final class MineReadQueue {
                 release(); level = next;
                 SERVERS.computeIfAbsent(next.getServer(), unused -> new Queue()).owners.add(this);
             }
-            touch();
         }
-        void touch() { if (level != null) activeTick = level.getServer().getTickCount(); }
-        private void require(long key, boolean entities) {
-            touch();
+        boolean planned(long key) {
+            Entry entry = entries.get(key); return entry != null && entry.planned != Integer.MAX_VALUE;
+        }
+        void require(long key, boolean entities) {
             Entry entry = entries.computeIfAbsent(key, Entry::new);
             int tick = level.getServer().getTickCount();
             if (entry.urgentTick != tick) entry.urgentEntities = false;
@@ -69,7 +70,7 @@ final class MineReadQueue {
         LevelChunk chunk(ChunkPos pos) {
             require(pos.toLong(), true);
             LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
-            return chunk != null && level.areEntitiesLoaded(pos.toLong()) ? chunk : null;
+            return chunk != null && level.areEntitiesLoaded(pos.toLong()) && TemporaryGeneration.ready(level, pos.toLong()) ? chunk : null;
         }
         ChunkAccess structure(ChunkPos pos) {
             require(pos.toLong(), false);
@@ -83,17 +84,25 @@ final class MineReadQueue {
             return level.getChunkSource().getChunkNow(ChunkPos.getX(key), ChunkPos.getZ(key));
         }
         boolean ready(long key, boolean entities) {
-            return entities ? chunkNow(key) != null && level.areEntitiesLoaded(key) : structureNow(key) != null;
+            return entities ? chunkNow(key) != null && level.areEntitiesLoaded(key) && TemporaryGeneration.ready(level, key) : structureNow(key) != null;
+        }
+        boolean leased(long key) {
+            Entry entry = entries.get(key); return entry != null && entry.leased;
         }
         boolean prepared(long key, boolean entities) {
             Entry entry = entries.get(key);
             return entry != null && entry.leased && ready(key, entities);
         }
         void plan(Map<Long, Need> wanted) {
-            for (Entry entry : entries.values()) { entry.planned = Integer.MAX_VALUE; entry.planEntities = false; }
+            // Change only planned uses. Urgent work and live tickets survive until refresh reconciles all uses.
+            for (Entry entry : entries.values()) if (!wanted.containsKey(entry.key) && entry.planned != Integer.MAX_VALUE) {
+                entry.planned = Integer.MAX_VALUE; entry.planEntities = false;
+            }
             wanted.forEach((key, need) -> {
                 Entry entry = entries.computeIfAbsent(key, Entry::new);
-                entry.planned = need.priority(); entry.planEntities = need.entities();
+                if (entry.planned != need.priority() || entry.planEntities != need.entities()) {
+                    entry.planned = need.priority(); entry.planEntities = need.entities();
+                }
             });
         }
         void release() {
@@ -127,6 +136,7 @@ final class MineReadQueue {
                     pending++; queue.pending.add(new Address(level, entry.key));
                 }
             }
+            supply.ticketsChanged();
         }
         private void trimShare(Queue queue, int tick, int fairShare) {
             if (held <= fairShare) return;
@@ -190,7 +200,7 @@ final class MineReadQueue {
         NeoForge.EVENT_BUS.addListener(MineReadQueue::tick);
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
             Queue queue = SERVERS.remove(event.getServer());
-            if (queue != null) for (Owner owner : new ArrayList<>(queue.owners)) owner.prefetch.release();
+            if (queue != null) for (Owner owner : new ArrayList<>(queue.owners)) owner.supply.unload();
         });
     }
     private static void start(ServerTickEvent.Pre event) {
@@ -200,17 +210,18 @@ final class MineReadQueue {
     static void unload(ServerLevel level) {
         Queue queue = SERVERS.get(level.getServer());
         if (queue != null) for (Owner owner : new ArrayList<>(queue.owners))
-            if (owner.level == level) owner.prefetch.release();
+            if (owner.level == level) owner.supply.unload();
     }
     private static void tick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         Queue queue = SERVERS.get(server);
         if (queue == null || !server.tickRateManager().runsNormally()) return;
         int tick = server.getTickCount();
-        for (Owner owner : new ArrayList<>(queue.owners)) {
-            // Check once after every host update; accelerated calls share the same heartbeat.
-            if (owner.activeTick != tick) owner.prefetch.release();
-            else owner.prefetch.prepare(tick);
+        // Rotate preparation as well as tickets: the shared snapshot/restore budget has the same owners.
+        var preparing = new ArrayList<>(queue.owners);
+        int first = preparing.isEmpty() ? 0 : Math.floorMod(queue.cursor, preparing.size());
+        for (int i = 0; i < preparing.size(); i++) {
+            preparing.get((first + i) % preparing.size()).supply.prepare(tick);
         }
         queue.pending.clear();
         for (Owner owner : queue.owners) owner.refresh(queue, tick);

@@ -83,6 +83,9 @@ public final class ReservoirThaumcraft implements ReservoirBridge {
     public void charge(ServerPlayer player,ItemStack bag,int slot,ItemStack device) {
         charging.charge(player,bag,slot,device);
     }
+    @Override public void charge(ServerPlayer player, ItemStack bag, int slot, ReservoirData.View.Slot stored) {
+        charging.charge(player, bag, slot, stored);
+    }
     @Override public void tickPlaced(ReservoirBlockEntity entity){
         var level=entity.getLevel();if(level==null || level.isClientSide || !entity.available())return;
         var sink=new PlacedTransport(entity);

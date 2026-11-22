@@ -37,8 +37,7 @@ public final class SlashCriticalIntent {
     public static void logout(PlayerEvent.PlayerLoggedOutEvent event) { PENDING.remove(event.getEntity()); }
 
     /** Reserve across payment callbacks so a nested cast cannot use the same intent twice. */
-    public static Lease reserve(ServerPlayer player) {
-        SlashRules rules = SlashRules.bindings(player);
+    public static Lease reserve(ServerPlayer player, SlashRules rules) {
         if (rules.inverseChanting()) { PENDING.remove(player); return null; }
         return reserve(player, rules.chantTicks());
     }

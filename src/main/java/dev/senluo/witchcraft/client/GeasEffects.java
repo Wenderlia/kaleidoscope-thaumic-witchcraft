@@ -81,7 +81,6 @@ public final class GeasEffects {
         final long born;
         long received;
         double exitReveal=1;
-        Frame prepared;
         Layout layout;
         final RitualOrbitLights lights;
         final ArrayList<TimedPulse> pulses=new ArrayList<>(4);
@@ -222,30 +221,19 @@ public final class GeasEffects {
         for(Effect effect:EFFECTS.values()) {
             if(effect.origin.distanceToSqr(camera)>48*48 || !current.hasChunkAt(effect.state.matrix()))continue;
             if(!event.getFrustum().isVisible(new AABB(effect.origin.add(-11,-11,-11),effect.origin.add(11,6,11))))continue;
-            V recipient=null;
-            Player player=current.getPlayerByUUID(effect.state.recipient());
-            // Foot position uses the exact ring footprint, including marked edge blocks, at the interpolated frame.
-            if(player!=null && player.isAlive() && !player.isSpectator()) {
-                Vec3 feet=player.getPosition(partial);
-                if(effect.footprint.bounds().contains(feet) && effect.footprint.containsHorizontal(feet)) {
-                    Vec3 chest=feet.add(0,player.getBbHeight()*.65,0);
-                    chest=chest.add(camera.subtract(chest).normalize().scale(player.getBbWidth()*.6));
-                    recipient=vector(chest.subtract(effect.origin));
-                }
-            }
-            effect.prepared=new Frame(effect.state.phase(),effect.age(now),now-effect.born,right,up,
-                    vector(camera.subtract(effect.origin)),recipient,effect.exitReveal,effect.layout,
-                    effect.pulses.stream().map(p->new OfferingPulse(p.source(),now-p.tick())).toList(),effect.state.glyph());
             VISIBLE.add(effect);
         }
         if(VISIBLE.isEmpty()){renderAcceptance(event,camera,right,up,now);return;}
         VISIBLE.sort(Comparator.comparingDouble(e->e.origin.distanceToSqr(camera)));
         int count=Math.min(MAX_VISIBLE,VISIBLE.size());
+        Frame[] frames = new Frame[count];
+        for (int i = 0; i < count; i++)
+            frames[i] = prepareFrame(VISIBLE.get(i), current, camera, right, up, partial, now);
         // Ordinary transparent body first. Flush each far-to-near session, even across glyph textures.
         DIRECT.render(event,buffers->{
             for(int i=count-1;i>=0;i--) {
                 Effect effect=VISIBLE.get(i);RenderType type=GeasRenderTypes.shade(effect.state.glyph());
-                RestraintGeometry.emit(sink(buffers.getBuffer(type),effect.origin.subtract(camera)),effect.prepared,Material.CREST_HALO,now);
+                RestraintGeometry.emit(sink(buffers.getBuffer(type),effect.origin.subtract(camera)),frames[i],Material.CREST_HALO,now);
                 buffers.endBatch(type);
             }
         });
@@ -256,7 +244,7 @@ public final class GeasEffects {
                     Effect effect=VISIBLE.get(i);
                     if(group.glyph()!=null && effect.state.glyph()!=group.glyph())continue;
                     if(vertices==null)vertices=buffers.getBuffer(group.type());
-                    RestraintGeometry.emit(sink(vertices,effect.origin.subtract(camera)),effect.prepared,group.material(),now);
+                    RestraintGeometry.emit(sink(vertices,effect.origin.subtract(camera)),frames[i],group.material(),now);
                 }
                 if(vertices!=null)buffers.endBatch(group.type());
             }
@@ -268,8 +256,8 @@ public final class GeasEffects {
                 for(int i=count-1;i>=0;i--) {
                     Effect effect=VISIBLE.get(i);
                     Sink sink=sink(vertices,effect.origin.subtract(camera));
-                    effect.lights.emit(sink,effect.prepared,now,part.material());
-                    dev.senluo.witchcraft.ritual.visual.RitualRingEffects.emit(sink,effect.prepared,part.material());
+                    effect.lights.emit(sink,frames[i],now,part.material());
+                    dev.senluo.witchcraft.ritual.visual.RitualRingEffects.emit(sink,frames[i],part.material());
                 }
                 buffers.endBatch(part.type());
             }
@@ -278,13 +266,31 @@ public final class GeasEffects {
                 for(int i=count-1;i>=0;i--) {
                     Effect effect=VISIBLE.get(i);if(effect.state.glyph()!=glyph)continue;
                     if(vertices==null)vertices=buffers.getBuffer(type);
-                    RestraintGeometry.emit(sink(vertices,effect.origin.subtract(camera)),effect.prepared,Material.CREST,now);
+                    RestraintGeometry.emit(sink(vertices,effect.origin.subtract(camera)),frames[i],Material.CREST,now);
                 }
                 if(vertices!=null)buffers.endBatch(type);
             }
         });
         renderAcceptance(event,camera,right,up,now);
         VISIBLE.clear();
+    }
+
+    private static Frame prepareFrame(Effect effect, ClientLevel current, Vec3 camera, V right, V up,
+                                      float partial, double now) {
+        V recipient=null;
+        Player player=current.getPlayerByUUID(effect.state.recipient());
+        // Foot position uses the exact ring footprint, including marked edge blocks, at the interpolated frame.
+        if(player!=null && player.isAlive() && !player.isSpectator()) {
+            Vec3 feet=player.getPosition(partial);
+            if(effect.footprint.bounds().contains(feet) && effect.footprint.containsHorizontal(feet)) {
+                Vec3 chest=feet.add(0,player.getBbHeight()*.65,0);
+                chest=chest.add(camera.subtract(chest).normalize().scale(player.getBbWidth()*.6));
+                recipient=vector(chest.subtract(effect.origin));
+            }
+        }
+        return new Frame(effect.state.phase(),effect.age(now),now-effect.born,right,up,
+                vector(camera.subtract(effect.origin)),recipient,effect.exitReveal,effect.layout,
+                effect.pulses.stream().map(p->new OfferingPulse(p.source(),now-p.tick())).toList(),effect.state.glyph());
     }
 
     private static void renderAcceptance(RenderLevelStageEvent event,Vec3 camera,V right,V up,double now) {

@@ -14,6 +14,7 @@ public final class RadialOutline {
             if (!Double.isFinite(from) || !Double.isFinite(to) || from < 0 || to > 1 || from >= to)
                 throw new IllegalArgumentException("Invalid radial interval");
             Vec3 a = first.lerp(last, from), b = first.lerp(last, to);
+            // A child stays on the original chord; its direction is not reconstructed from tiny endpoints.
             return new Edge(a, b, a.add(b).scale(.5), axis, half * (to - from));
         }
         /** Solve offset = radius * (first + u * (last - first)), independently of a saved front radius. */
@@ -47,7 +48,8 @@ public final class RadialOutline {
         for (int i = 1; i < directions.size(); i++) {
             Vec3 a = directions.get(i - 1), b = directions.get(i), delta = b.subtract(a);
             if (delta.lengthSqr() < 1.0E-12 || a.dot(b) < .95) throw new IllegalArgumentException("Invalid radial edge");
-            result.add(new Edge(a, b, a.add(b).scale(.5), delta.normalize(), delta.length() * .5));
+            double length = delta.length();
+            result.add(new Edge(a, b, a.add(b).scale(.5), delta.scale(1 / length), length * .5));
         }
         edges = List.copyOf(result);
     }

@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": {
+    "kaleidoscope_witchcraft:void_essentia_transducer": {
+      "types": [
+        "kaleidoscope_witchcraft:calibration",
+        "thaumcraft:aer"
+      ]
+    },
+    "minecraft:golden_hoe": {
+      "types": [
+        "thaumcraft:aer",
+        "kaleidoscope_witchcraft:calibration"
+      ]
+    },
+    "minecraft:iron_hoe": {
+      "types": [
+        "kaleidoscope_witchcraft:calibration",
+        "thaumcraft:aer"
+      ]
+    }
+  }
+}

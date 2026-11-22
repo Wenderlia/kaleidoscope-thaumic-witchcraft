@@ -1,5 +1,6 @@
 package dev.senluo.witchcraft.client;
 
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
@@ -15,6 +16,14 @@ final class StrokeProjection {
         transform.transform(point.set(x, y, z, 1));
         float[] p = first[index];
         p[0] = point.x; p[1] = point.y; p[2] = point.z; p[3] = point.w; p[4] = u; p[5] = v;
+    }
+
+    boolean quad(Matrix4f transform, Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
+        corner(0, transform, (float)a.x, (float)a.y, (float)a.z, .4F, 1);
+        corner(1, transform, (float)b.x, (float)b.y, (float)b.z, .6F, 1);
+        corner(2, transform, (float)c.x, (float)c.y, (float)c.z, .6F, 0);
+        corner(3, transform, (float)d.x, (float)d.y, (float)d.z, .4F, 0);
+        return clip();
     }
 
     boolean clip() {

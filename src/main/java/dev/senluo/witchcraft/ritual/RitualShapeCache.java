@@ -76,6 +76,7 @@ public final class RitualShapeCache {
         index.removeSelection(axis);
         try {
             var result = RitualPlane.inspect(level, axis);
+            dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
             if (Boolean.TRUE.equals(index.selecting.get(axis)) || LEVELS.get(level) != index
                     || activity != activity(level, chunks)) return Optional.empty();
             if (index.selections.size() >= 1024) index.removeSelection(index.selections.keySet().iterator().next());
@@ -108,7 +109,7 @@ public final class RitualShapeCache {
         long result = 0;
         for (int i = 0; i < chunks.size(); i++) {
             BlockPos pos = chunks.get(i);
-            if (level.hasChunkAt(pos) && level.shouldTickBlocksAt(pos)) result |= 1L << i;
+            if (dev.senluo.witchcraft.world.ChunkActivity.active(level, pos)) result |= 1L << i;
         }
         return result;
     }
@@ -124,6 +125,7 @@ public final class RitualShapeCache {
         index.remove(key);
         try {
             RitualShape.Match result = shape.inspect(level, anchor);
+            dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
             // A world callback can change even a key which has no cache entry yet.
             if (Boolean.TRUE.equals(index.computing.get(key)) || LEVELS.get(level) != index
                     || activity != activity(level, chunks)) return RitualShape.Match.UNLOADED;
@@ -135,6 +137,8 @@ public final class RitualShapeCache {
     }
     static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
         if (before == after) return;
+        dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
+        RuneStabilization.changed(level, pos);
         Index index = LEVELS.get(level);
         if (index != null) {
             for (Key key : List.copyOf(index.computing.keySet())) {
@@ -153,6 +157,7 @@ public final class RitualShapeCache {
         RitualPoints.blockChanged(level, pos, before, after);
     }
     static void markChanged(ServerLevel level, BlockPos support) {
+        RuneStabilization.changed(level, support);
         Index index = LEVELS.get(level);
         if (index != null) {
             for (Key key : List.copyOf(index.computing.keySet())) if (key.uses(support)) index.computing.put(key, true);
@@ -163,6 +168,8 @@ public final class RitualShapeCache {
         RitualPoints.markChanged(level, support);
     }
     static void changed(ServerLevel level, long chunk) {
+        dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
+        RuneStabilization.changed(level, chunk);
         Index index = LEVELS.get(level);
         Set<Key> keys = index == null ? null : index.watchers.get(chunk);
         if (index != null) for (Key key : List.copyOf(index.computing.keySet()))
@@ -194,9 +201,9 @@ public final class RitualShapeCache {
         if (event.getLevel() instanceof ServerLevel level) changed(level, event.getChunk().getPos().toLong());
     }
     @SubscribeEvent public static void unloaded(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level) { LEVELS.remove(level); RitualPoints.clear(level); RitualCenters.clear(level); }
+        if (event.getLevel() instanceof ServerLevel level) { LEVELS.remove(level); RuneStabilization.clear(level); RitualPoints.clear(level); RitualCenters.clear(level); }
     }
     @SubscribeEvent public static void tags(TagsUpdatedEvent event) {
-        if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { LEVELS.clear(); RitualPoints.clear(); }
+        if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { LEVELS.clear(); RuneStabilization.clear(); RitualPoints.clear(); }
     }
 }

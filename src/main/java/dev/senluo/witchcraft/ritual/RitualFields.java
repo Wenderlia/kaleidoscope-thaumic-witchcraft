@@ -2,6 +2,7 @@ package dev.senluo.witchcraft.ritual;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -30,6 +31,7 @@ public final class RitualFields {
     }
     private final Map<UUID, Field> fields = new HashMap<>();
     private final Map<Long, Set<UUID>> chunks = new HashMap<>();
+    private final Map<Long, List<Field>> candidates = new HashMap<>();
     private final java.util.function.LongConsumer changed;
     private final java.util.function.Predicate<UUID> permitted;
     private long revision;
@@ -49,6 +51,7 @@ public final class RitualFields {
             chunks.computeIfAbsent(key, ignored -> new HashSet<>()).add(field.session());
             affected.add(key);
         });
+        affected.forEach(candidates::remove);
         affected.forEach(changed::accept);
     }
     public void remove(UUID session) {
@@ -56,6 +59,7 @@ public final class RitualFields {
         revision++;
         Set<Long> affected = new HashSet<>();
         unlink(session, affected);
+        affected.forEach(candidates::remove);
         affected.forEach(changed::accept);
     }
     private void unlink(UUID session, Set<Long> affected) {
@@ -72,11 +76,9 @@ public final class RitualFields {
             throw new IllegalArgumentException("Non-finite field position");
         for (int attempt = 0; attempt < 2; attempt++) {
             long started = revision;
-            Set<UUID> bucket = chunks.get(ChunkPos.asLong(BlockPos.containing(position)));
             long doublings = 0;
-            if (bucket != null) for (UUID id : java.util.List.copyOf(bucket)) {
-                Field field = fields.get(id);
-                if (field != null && field.contains(position) && permitted.test(id) && fields.get(id) == field)
+            for (Field field : candidates(position)) {
+                if (field.contains(position) && permitted.test(field.session()) && fields.get(field.session()) == field)
                     doublings = Math.addExact(doublings, field.doublings());
             }
             if (revision == started) return new Rate(doublings);
@@ -86,25 +88,42 @@ public final class RitualFields {
     public void clear() {
         revision++;
         var affected = Set.copyOf(chunks.keySet());
-        fields.clear(); chunks.clear();
+        fields.clear(); chunks.clear(); candidates.clear();
         affected.forEach(changed::accept);
     }
     public boolean near(BlockPos pos) { return chunks.containsKey(ChunkPos.asLong(pos)); }
+    private List<Field> candidates(Vec3 position) {
+        long key = ChunkPos.asLong(BlockPos.containing(position));
+        Set<UUID> bucket = chunks.get(key);
+        if (bucket == null) return List.of();
+        return candidates.computeIfAbsent(key, ignored -> bucket.stream().map(fields::get).toList());
+    }
     /** Candidate routing is geometry only; a pending authorization must not erase the wake-up route. */
     public boolean covers(Vec3 position) {
-        Set<UUID> bucket = chunks.get(ChunkPos.asLong(BlockPos.containing(position)));
-        if (bucket != null) for (UUID id : bucket) if (fields.get(id).contains(position)) return true;
+        for (Field field : candidates(position)) if (field.contains(position)) return true;
+        return false;
+    }
+    public boolean hasOwnerAt(Vec3 position, UUID owner) {
+        if (owner == null) return false;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            long started = revision;
+            boolean found = false;
+            for (Field field : candidates(position)) {
+                if (owner.equals(field.owner()) && field.contains(position) && permitted.test(field.session())
+                        && fields.get(field.session()) == field) { found = true; break; }
+            }
+            if (revision == started) return found;
+        }
         return false;
     }
     public Set<UUID> ownersAt(Vec3 position) {
         for (int attempt = 0; attempt < 2; attempt++) {
             long started = revision;
-            Set<UUID> bucket = chunks.get(ChunkPos.asLong(BlockPos.containing(position)));
-            if (bucket == null) return Set.of();
+            var snapshot = candidates(position);
+            if (snapshot.isEmpty()) return Set.of();
             Set<UUID> owners = new HashSet<>();
-            for (UUID id : java.util.List.copyOf(bucket)) {
-                Field field = fields.get(id);
-                if (field != null && field.owner() != null && field.contains(position) && permitted.test(id) && fields.get(id) == field)
+            for (Field field : snapshot) {
+                if (field.owner() != null && field.contains(position) && permitted.test(field.session()) && fields.get(field.session()) == field)
                     owners.add(field.owner());
             }
             if (revision == started) return owners;

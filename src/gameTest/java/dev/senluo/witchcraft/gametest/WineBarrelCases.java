@@ -34,13 +34,19 @@ final class WineBarrelCases {
         ItemStack wheat=new ItemStack(Items.WHEAT,8);h.assertTrue(b.addIngredient(p,wheat) && wheat.isEmpty(),"Wheat may precede the special batch");
         ItemStack honey=new ItemStack(Items.HONEY_BOTTLE,4);
         for(int i=0;i<4;i++)h.assertTrue(b.addIngredient(p,honey),"Honey admitted once");
-        for(int i=0;i<16;i++)h.assertTrue(b.addIngredient(p,TissueItem.stack(root())),"16 unique root stacks fit");
+        Tissue matureWithYoungSide = root();
+        matureWithYoungSide.rootStage = 4;
+        for (int i = 0; i < 16; i++)
+            h.assertTrue(b.addIngredient(p, TissueItem.stack(matureWithYoungSide)), "16 independently stored inputs fit");
         h.assertTrue(!b.addIngredient(p,TissueItem.stack(root())),"Seventeenth root cannot be consumed");
         BarrelBatch batch=((WineBarrel)b).witchcraft$batch();
         h.assertTrue(batch.roots()==16 && batch.honey()==4 && batch.wheat()==8 && b.getIngredient().getStackInSlot(0).isEmpty(),"Batch owns inputs exactly once");
         h.assertTrue(p.getInventory().countItem(Items.GLASS_BOTTLE)==4,"Four honey inputs return four glass bottles");
         CompoundTag saved=b.saveWithoutMetadata(h.getLevel().registryAccess());b.loadWithComponents(saved,h.getLevel().registryAccess());
-        h.assertTrue(batch.roots()==16 && batch.ready(b) && batch.wine().rawTu()==6000,"Reload preserves all root and nested-side stock");
+        WineData brewed = batch.wine();
+        h.assertTrue(batch.roots() == 16 && batch.ready(b) && brewed.rawTu() == 6_000 && brewed.maturity() == .5,
+                "One mature root and one young side retain their stock and mean maturity across reload");
+        WineData expected = brewed.aged(6);
         h.assertTrue(b.closeLid(p),"Complete batch closes");
         h.runAfterDelay(120,()->{
             h.assertTrue(b.isBrewing() && b.getOutput().getStackInSlot(0).getCount()==16 && !batch.active() && b.getFluid().isEmpty(),"Starts once, consumes inputs, creates 16 outputs");
@@ -55,9 +61,9 @@ final class WineBarrelCases {
             var wine=h.getLevel().getEntitiesOfClass(ItemEntity.class,new AABB(tap.below()).inflate(1),e->e.getItem().is(TemporalContent.LIUJIN_VODKA.get()));
             var placed=(com.github.ysbbbbbb.kaleidoscopetavern.blockentity.brew.DrinkBlockEntity)h.getLevel().getBlockEntity(tap.below());
             h.assertTrue(wine.stream().mapToInt(e->e.getItem().getCount()).sum()==15 && placed!=null && !b.isBrewing(),"Native tap places first bottle and drops remaining 15, without changing total yield");
-            WineData placedData=WineData.read(placed.getItems().getFirst());
-            h.assertTrue(placedData!=null && placedData.rawTu()==6000 && placedData.quality()==6,"Placed first bottle retains score and native quality");
-            for(ItemEntity item:wine){WineData data=WineData.read(item.getItem());h.assertTrue(data!=null && data.rawTu()==6000 && data.quality()==6 && data.maturity()==1,"Per-bottle score inputs survive actual tap path");}
+            h.assertTrue(expected.equals(WineData.read(placed.getItems().getFirst())), "Placed bottle retains the aged batch");
+            for (ItemEntity item : wine)
+                h.assertTrue(expected.equals(WineData.read(item.getItem())), "Each tapped bottle retains the same aged batch");
             h.succeed();
         });
     }

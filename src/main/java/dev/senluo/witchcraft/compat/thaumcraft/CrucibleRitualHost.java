@@ -42,7 +42,7 @@ final class CrucibleRitualHost {
     static List<StructuralRitualStore.Handle> sessions(BlockEntity pot) {
         if (!(pot.getLevel() instanceof ServerLevel level)) return List.of();
         var store = StructuralRitualStore.get(level);
-        return RitualCenters.observe(pot).map(c -> store.allAt(c.reference())).orElse(List.of()).stream()
+        return RitualCenters.peek(pot).map(c -> store.allAt(c.reference())).orElse(List.of()).stream()
                 .filter(h -> h.definition().kind().equals(StructuralRitualStore.PREPARATION.kind())
                         || CrucibleRitualRecipes.from(h.definition()).isPresent())
                 .filter(h -> store.progress(h.id()).orElseThrow().phase() != StructuralRitualStore.Phase.ENDED).toList();
@@ -68,9 +68,9 @@ final class CrucibleRitualHost {
         if (input.is(RitualContent.TAGLOCK.get())) {
             RitualPlane.invalidate(level, pot.getBlockPos());
             var sample = input.get(RitualContent.TAGLOCK_SAMPLE.get());
-            var site = RitualCenters.site(pot).orElse(null);
+            var site = RitualCenters.candidate(pot).orElse(null);
             if (draft.isPresent() || sample == null || !sample.supported() || !sample.isPlayer() || site == null
-                    || !RitualCenters.current(level, site) || !view.boiling()
+                    || !site.current(level) || !view.boiling()
                     || RitualResearch.check(level, sample.subject(), StructuralRitualStore.PREPARATION.research()) != RitualResearch.Result.ALLOWED) {
                 bounce(item); return Optional.of(false);
             }
@@ -80,7 +80,7 @@ final class CrucibleRitualHost {
             }
             CompoundTag terms = new CompoundTag(); terms.putInt("Format", 3); terms.putBoolean("Armed", false);
             terms.putLong("Plane", site.footprint().anchor().asLong());
-            if (store.begin(level, StructuralRitualStore.PREPARATION, site.center(), sample.subject(), terms).isEmpty()) {
+            if (store.begin(level, StructuralRitualStore.PREPARATION, site, sample.subject(), terms).isEmpty()) {
                 bounce(item); return Optional.of(false);
             }
             SteamRituals.refreshHerba(pot);
@@ -150,10 +150,16 @@ final class CrucibleRitualHost {
         if (!(event.getLevel() instanceof ServerLevel level) || !level.tickRateManager().runsNormally()) return;
         RitualWaterSupply.tick(level);
         var store = StructuralRitualStore.get(level);
+        var sessions = store.inDimension(level.dimension().location());
+        List<SuctionChannels.Pulse> channels = sessions.isEmpty() ? List.of() : advance(level, store, sessions);
+        SuctionChannels.tick(level, channels);
+    }
+
+    private static List<SuctionChannels.Pulse> advance(ServerLevel level, StructuralRitualStore store,
+                                                        List<StructuralRitualStore.Handle> sessions) {
         Set<UUID> steamed = new HashSet<>(); Set<BlockPos> vented = new HashSet<>();
         Set<BlockPos> watered = new HashSet<>();
         var channels = new ArrayList<SuctionChannels.Pulse>();
-        var sessions = store.inDimension(level.dimension().location());
         // Settle existing evaporation before ANY co-hosted ritual observes water availability.
         if (level.getGameTime() % 20 == 0) for (var h : sessions) {
             var recipe = CrucibleRitualRecipes.from(h.definition());
@@ -181,7 +187,7 @@ final class CrucibleRitualHost {
             if (!level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)) { SteamWork.fields(level).remove(h.id()); continue; }
             var entity = level.getBlockEntity(pos);
             var pot = EssentiaStores.pot(entity);
-            var observed = RitualCenters.observe(entity).filter(RitualCenters.Center::mayPrepare);
+            var observed = RitualCenters.peek(entity).filter(RitualCenters.Center::mayPrepare);
             var p = store.progress(h.id()).orElseThrow();
             var site = store.site(level, h.id());
             var presence = observed.isPresent() ? StructuralRitualStore.Presence.PRESENT : StructuralRitualStore.Presence.UNLOADED;
@@ -222,7 +228,7 @@ final class CrucibleRitualHost {
                 if (vented.add(pos)) vent(level, pot, steamed);
             }
         }
-        SuctionChannels.tick(level, channels);
+        return channels;
     }
     private static Optional<StructuralRitualStore.PreparedStep> quote(ServerLevel level, BlockPos pos, UUID session,
             CrucibleRitualRecipes recipe, int step, CompoundTag terms) {

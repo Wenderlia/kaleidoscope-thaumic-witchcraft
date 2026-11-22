@@ -3,11 +3,10 @@ package dev.senluo.witchcraft.compat.thaumcraft;
 import dev.tc4port.thaumcraft.api.ThaumcraftContent;
 import dev.senluo.witchcraft.ritual.*;
 import dev.tc4port.thaumcraft.api.aspect.VisAction;
-import dev.tc4port.thaumcraft.api.aspect.VisChannel;
+import dev.tc4port.thaumcraft.api.aspect.AspectId;
 import dev.tc4port.thaumcraft.api.aspect.VisCost;
 import dev.tc4port.thaumcraft.api.node.NodeApi;
 import dev.tc4port.thaumcraft.api.node.NodeVis;
-import dev.tc4port.thaumcraft.api.wand.WandApi;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.*;
 import net.minecraft.core.BlockPos;
@@ -19,23 +18,22 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
-import net.minecraft.world.phys.Vec3;
 
 /** Node effect adapter. Geometry, slots, material access and persistence remain shared. */
 public final class NodeRituals implements RitualCenters.Behavior {
     @Override public int activationPriority() { return 40; }
-    @Override public StructuralRitualStore.Definition definition() { return RESTORATION; }
+    @Override public RitualRecipe recipe() { return RECIPE; }
     public static final StructuralRitualStore.Definition RESTORATION = new StructuralRitualStore.Definition(
             ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "aura_restoration"),
             1, 80, new int[]{20, 40, 60, 80}, RitualRings.SMALL, RitualResearch.thaumcraft("CRUCIBLE_STABILITY"));
+    private static final RitualRecipe RECIPE = new RitualRecipe(RESTORATION,
+            java.util.stream.IntStream.range(0, 3).mapToObj(step -> (java.util.function.Predicate<ItemStack>) stack -> matches(stack, step)).toList(), true,
+            new RitualRecipe.Payment(RitualRecipe.SourceOrder.NEAREST, true, Map.of(0, Items.GLASS_BOTTLE), .1, .05,
+                    new RitualRecipe.Completion(SoundEvents.BEACON_ACTIVATE, .5F, 1.2F, null)));
     private record Recharge(ServerPlayer player, int slot, ItemStack wand, ItemStack snapshot, VisCost amount) {}
     private static final RingBonus STABILITY = RingBonus.additive(1, 2, 4, 11);
     private NodeRituals() {}
@@ -44,8 +42,8 @@ public final class NodeRituals implements RitualCenters.Behavior {
         NodePromotion.register();
         RitualCenters.register(new NodeRituals());
         LandPeaceRitual.nodeOffering(new LandPeaceRitual.NodeOffering() {
-            @Override public Optional<LandPeaceRitual.Node> find(ServerLevel level, RitualSite site) {
-                var target = findNode(level, site);
+            @Override public Optional<LandPeaceRitual.Node> find(ServerLevel level, RitualSite.Footprint footprint) {
+                var target = findNodeAtAxis(level, footprint.anchor());
                 return target == null ? Optional.empty() : NodeApi.view(level, target.getBlockPos()).nodeState().instanceId()
                         .map(id -> new LandPeaceRitual.Node(target.getBlockPos(), id));
             }
@@ -68,9 +66,6 @@ public final class NodeRituals implements RitualCenters.Behavior {
     /** Nearest first, above before below on ties; bounded by the existing ritual height convention. */
     static BlockEntity findNode(ServerLevel level, BlockPos heart) {
         return findNodeAtAxis(level, heart.below());
-    }
-    static BlockEntity findNode(ServerLevel level, RitualSite site) {
-        return site.footprint() == null ? null : findNodeAtAxis(level, site.footprint().anchor());
     }
     static BlockEntity findNodeAtAxis(ServerLevel level, BlockPos center) {
         return RitualPlane.centerPositions(center).map(pos -> node(level, pos)).filter(Objects::nonNull).findFirst().orElse(null);
@@ -96,36 +91,16 @@ public final class NodeRituals implements RitualCenters.Behavior {
     private static RitualOfferingArea area(RitualSite.Footprint footprint) {
         return RitualOfferingArea.outermost(footprint);
     }
-    private static Optional<RitualMaterials.Source> offering(ServerLevel level, RitualOfferingArea area, int step) {
-        return RitualMaterials.find(level, area, stack -> matches(stack, step)).stream()
-                .min(Comparator.comparingDouble(source -> source.position().distanceToSqr(area.bounds().getCenter())));
-    }
-    private static List<StructuralRitualStore.Handle> sessions(ServerLevel level, RitualSite site) {
-        return StructuralRitualStore.get(level).atPlane(level.dimension().location(), site.footprint().anchor()).stream()
-                .filter(h -> h.definition().kind().equals(RESTORATION.kind())).toList();
-    }
-    @Override public InteractionResult activate(ServerLevel level, RitualSite site, net.minecraft.server.level.ServerPlayer player) {
-        var center = site.center();
-        if (site.footprint() == null) return InteractionResult.PASS;
-        for (int step = 0; step < 3; step++) if (offering(level, area(site.footprint()), step).isEmpty()) return InteractionResult.PASS;
-        if (!center.mayPrepare()) return InteractionResult.FAIL;
-        if (RitualResearch.check(level, player.getUUID(), RESTORATION.research()) != RitualResearch.Result.ALLOWED) return InteractionResult.FAIL;
-        RitualPlane.invalidate(level, center.axis());
-        var footprint = site.footprint();
-        var node = findNode(level, site);
-        if (footprint == null || node == null || NodeApi.view(level, node.getBlockPos()).nodeState().instanceId().isEmpty()) return InteractionResult.FAIL;
-        var store = StructuralRitualStore.get(level);
-        if (sessions(level, site).stream().anyMatch(h -> store.progress(h.id())
-                .filter(p -> p.phase() == StructuralRitualStore.Phase.PREPARING).isPresent())) return InteractionResult.CONSUME;
-        var area = area(footprint);
-        for (int step = 0; step < 3; step++) if (offering(level, area, step).isEmpty()) return InteractionResult.FAIL;
+    @Override public Optional<CompoundTag> prepare(RitualCandidate site, ServerPlayer player) {
+        var level = player.serverLevel();
+        var node = findNodeAtAxis(level, site.footprint().anchor());
+        if (node == null) return Optional.empty();
+        var identity = NodeApi.view(level, node.getBlockPos()).nodeState().instanceId();
+        if (identity.isEmpty()) return Optional.empty();
         var terms = new CompoundTag();
-        terms.putLong("Plane", footprint.anchor().asLong());
-        terms.putUUID("Node", NodeApi.view(level, node.getBlockPos()).nodeState().instanceId().orElseThrow());
+        terms.putUUID("Node", identity.get());
         terms.putLong("NodePosition", node.getBlockPos().asLong());
-        if (store.begin(level, RESTORATION, center, player.getUUID(), terms).isEmpty()) return InteractionResult.FAIL;
-        
-        return InteractionResult.CONSUME;
+        return Optional.of(terms);
     }
     @Override public void tick(ServerLevel level, RitualSite site, StructuralRitualStore.Handle h) {
         var store = StructuralRitualStore.get(level);
@@ -138,43 +113,12 @@ public final class NodeRituals implements RitualCenters.Behavior {
         if (target(level, progress.terms()) == null) { RitualCenters.end(level, h.id()); return; }
         if (progress.phase() == StructuralRitualStore.Phase.ENDED) { RitualCenters.end(level, h.id()); return; }
         boolean ready = footprint != null && footprint.containsCenter(nodePos);
-        boolean firstAttempt = progress.phase() == StructuralRitualStore.Phase.PREPARING
-                && progress.committedSteps() < RESTORATION.steps().length
-                && progress.elapsed() < RESTORATION.steps()[progress.committedSteps()];
         var result = store.advance(level, h.id(), RESTORATION, StructuralRitualStore.Presence.PRESENT,
                 ready ? RitualShape.Match.VALID : RitualShape.Match.INVALID,
-                (token, terms) -> prepare(level, site, token.index(), terms, firstAttempt));
+                RECIPE.payments(level, site, RESTORATION, progress,
+                        () -> target(level, progress.terms()) != null, () -> RitualRecipe.Commit.APPLIED));
         if (result.mayRun() && level.getGameTime() % 20 == 0 && footprint != null && recharge(level, site, footprint, progress.terms()))
             RitualSounds.infusionPulse(level, site.position());
-    }
-    private static Optional<StructuralRitualStore.PreparedStep> prepare(ServerLevel level, RitualSite site,
-                                                                       int step, CompoundTag terms, boolean firstAttempt) {
-        // Once a milestone is reached, missing materials do not cause twenty inventory scans per second.
-        if (!firstAttempt && level.getGameTime() % 20 != 0 || target(level, terms) == null) return Optional.empty();
-        var footprint = site.footprint();
-        if (footprint == null) return Optional.empty();
-        var source = step < 3 ? offering(level, area(footprint), step).orElse(null) : null;
-        if (step < 3 && source == null) return Optional.empty();
-        return Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> {
-            if (!RitualCenters.current(level, site) || target(level, terms) == null) return false;
-            if (step == 3) {
-                level.playSound(null, site.position(), SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, .5F, 1.2F);
-                return true;
-            }
-            if (!RitualMaterials.inArea(source, area(footprint)) || !matches(source.item(), step)) return false;
-            var removed = source.takeOne();
-            if (removed.isEmpty()) return false;
-            Vec3 origin = source.position();
-            OfferingSounds.absorb(level, origin, removed);
-            // Both ordinary and thrown bottles leave one reusable empty vessel by the actual offering.
-            if (step == 0) level.addFreshEntity(new ItemEntity(level, origin.x, origin.y + .1, origin.z, new ItemStack(Items.GLASS_BOTTLE)));
-            Vec3 end = Vec3.atCenterOf(site.position());
-            for (int i = 0; i < 8; i++) {
-                Vec3 p = origin.lerp(end, i / 7.0);
-                level.sendParticles(ParticleTypes.ENCHANT, p.x, p.y + .1, p.z, 1, .05, .05, .05, .01);
-            }
-            return true;
-        }));
     }
     private static boolean recharge(ServerLevel level, RitualSite site, RitualSite.Footprint footprint, CompoundTag terms) {
         var node = target(level, terms);
@@ -190,12 +134,14 @@ public final class NodeRituals implements RitualCenters.Behavior {
             var inventory = player.getInventory();
             for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
                 var wand = inventory.getItem(slot);
-                var view = WandApi.view(wand).orElse(null);
-                if (view == null) continue;
-                var amounts = new EnumMap<VisChannel, Integer>(VisChannel.class);
-                for (VisChannel channel : VisChannel.values()) {
-                    int capacity = view.capacityCentivis().getOrDefault(channel, 0);
-                    int amount = Math.min(capacity / 10, Math.max(0, capacity - view.visCentivis().getOrDefault(channel, 0)));
+                var storage = WandCharging.storage(wand);
+                if (storage == null) continue;
+                var view = storage.snapshot();
+                var amounts = new LinkedHashMap<AspectId, Integer>();
+                for (var entry : view.capacityCentivis().entrySet()) {
+                    var channel = entry.getKey();
+                    int capacity = entry.getValue();
+                    int amount = Math.min(capacity / 10, Math.max(0, capacity - view.currentCentivis().getOrDefault(channel, 0)));
                     if (amount > 0) amounts.put(channel, amount);
                 }
                 if (amounts.isEmpty()) continue;
@@ -209,7 +155,9 @@ public final class NodeRituals implements RitualCenters.Behavior {
         for (var credit : credits) {
             if (credit.player().getInventory().getItem(credit.slot()) != credit.wand()
                     || !ItemStack.matches(credit.wand(), credit.snapshot())) continue;
-            if (WandApi.insert(credit.player(), credit.wand(), credit.amount(), VisAction.EXECUTE, plan -> {
+            var storage = WandCharging.storage(credit.wand());
+            if (storage == null) continue;
+            if (WandCharging.insert(storage, credit.player(), credit.amount(), plan -> {
                 if (target(level, terms) != node || !RitualCenters.current(level, site) || !credit.player().isAlive()
                         || credit.player().isSpectator() || credit.player().level() != level
                         || credit.player().getInventory().getItem(credit.slot()) != credit.wand()
@@ -251,7 +199,7 @@ public final class NodeRituals implements RitualCenters.Behavior {
             var pos = node.getBlockPos().offset(0, dy + 1, 0);
             if (!level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)
                     || !(level.getBlockEntity(pos) instanceof GoldenHeartEntity heart)
-                    || !heart.center(level).mayPrepare() || findNode(level, pos) != node) continue;
+                    || !RitualCenters.mayPrepare(heart) || findNode(level, pos) != node) continue;
             var plane = RitualPlane.at(level, pos.below()).orElse(null);
             if (plane == null) continue;
             int bonus = (int) STABILITY.resolve(4, plane.rings().completeMask());

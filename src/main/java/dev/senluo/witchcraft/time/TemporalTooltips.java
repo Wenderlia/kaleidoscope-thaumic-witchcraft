@@ -32,8 +32,12 @@ public final class TemporalTooltips {
 
     /** Compare only complete known source names; never delete or recolor another provider's line. */
     public static boolean isSource(FormattedText line, String registeredName) {
+        return isSource(line, registeredName, source().getString());
+    }
+
+    public static boolean isSource(FormattedText line, String registeredName, String translatedName) {
         String text = ChatFormatting.stripFormatting(line.getString());
-        return source().getString().equals(text) || registeredName.equals(text);
+        return translatedName.equals(text) || registeredName.equals(text);
     }
 
     private static Tissue tissue(ItemStack stack) {

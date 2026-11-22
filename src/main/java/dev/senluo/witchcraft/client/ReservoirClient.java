@@ -29,7 +29,13 @@ public final class ReservoirClient {
     private static final KeyMapping OPEN=new KeyMapping("key.kaleidoscope_witchcraft.open_reservoir",GLFW.GLFW_KEY_B,"key.categories.kaleidoscope_witchcraft");
     @SubscribeEvent public static void keys(RegisterKeyMappingsEvent e){e.register(OPEN);}
     @SubscribeEvent public static void screens(RegisterMenuScreensEvent e){e.register(ReservoirContent.MENU.get(),ReservoirScreen::new);e.register(ReservoirContent.SILVER_MENU.get(),ReservoirScreen::new);}
-    @SubscribeEvent public static void reload(RegisterClientReloadListenersEvent e){e.registerReloadListener((ResourceManagerReloadListener)ReservoirMesh::reload);}
+    @SubscribeEvent public static void reload(RegisterClientReloadListenersEvent e){
+        e.registerReloadListener((ResourceManagerReloadListener)resources -> {
+            ReservoirRenderer.clearDisplays();
+            ReservoirData.clearViews();
+            ReservoirMesh.reload(resources);
+        });
+    }
     @SubscribeEvent public static void renders(EntityRenderersEvent.RegisterRenderers e){e.registerBlockEntityRenderer(ReservoirContent.ENTITY.get(),context->new ReservoirRenderer());}
     @SubscribeEvent public static void extensions(RegisterClientExtensionsEvent e){
         e.registerItem(new IClientItemExtensions(){
@@ -61,6 +67,9 @@ public final class ReservoirClient {
     }
     @EventBusSubscriber(modid=KaleidoscopeWitchcraft.MOD_ID,value=Dist.CLIENT)
     public static final class Input {
+        @SubscribeEvent public static void unload(net.neoforged.neoforge.event.level.LevelEvent.Unload event){
+            if(event.getLevel().isClientSide())ReservoirRenderer.clearDisplays();
+        }
         @SubscribeEvent public static void tick(ClientTickEvent.Post e){
             var mc=Minecraft.getInstance();
             while(OPEN.consumeClick())if(mc.player!=null && mc.screen==null && !ReservoirEquipment.accessible(mc.player).isEmpty())PacketDistributor.sendToServer(new ReservoirRuntime.Open());

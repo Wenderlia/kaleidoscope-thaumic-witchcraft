@@ -29,6 +29,7 @@ public final class InfusionGeas {
         final GeasRitualVisuals.Emitter emitter;
         final List<Absorbed> pending = new ArrayList<>();
         long tick = Long.MIN_VALUE;
+        int waitingTicks;
         Runtime(UUID id, GeasRites.Rite rite) { this.id = id; emitter = new GeasRitualVisuals.Emitter(id, rite.glyph()); }
     }
     private record Absorbed(BlockPos source,int ingredientsBefore) {}
@@ -121,7 +122,10 @@ public final class InfusionGeas {
         UUID id = tag.getUUID("Attempt");
         Runtime old = LIVE.get(matrix);
         if (old != null && old.id.equals(id)) return old;
-        Runtime fresh = new Runtime(id, rite(tag)); LIVE.put(matrix, fresh); return fresh;
+        Runtime fresh = new Runtime(id, rite(tag));
+        fresh.waitingTicks = Math.max(0, Math.min(999_999, tag.getInt("WaitingVisualTicks")));
+        if (tag.contains("WaitingVisualTicks")) { tag.remove("WaitingVisualTicks"); matrix.setChanged(); }
+        LIVE.put(matrix, fresh); return fresh;
     }
     private static void clear(BlockEntity matrix) {
         matrix.getPersistentData().remove(KEY); matrix.setChanged(); LIVE.remove(matrix);
@@ -180,9 +184,9 @@ public final class InfusionGeas {
                 || GeasBindings.state(level.getServer(), tag.getUUID("Target"), rite(tag).pair()) != expected(tag)) return;
         if(tag.getBoolean("AcceptancePending"))acceptTarget(level,matrix,tag,live,plane.get());
         if (!state.remainingEssentia().amounts().isEmpty()) {
-            int waiting=Math.max(0,Math.min(999_999,tag.getInt("WaitingVisualTicks")));
-            live.emitter.publish(level,matrix.getBlockPos(),plane.get(),tag.getUUID("Target"),Phase.WAITING,waiting);
-            tag.putInt("WaitingVisualTicks",waiting+1);matrix.setChanged();return;
+            live.emitter.publish(level,matrix.getBlockPos(),plane.get(),tag.getUUID("Target"),Phase.WAITING,live.waitingTicks);
+            live.waitingTicks = Math.min(999_999, live.waitingTicks + 1);
+            return;
         }
         int age = Math.max(0, Math.min(999_999, tag.getInt(ASSEMBLY_AGE)));
         live.emitter.publish(level, matrix.getBlockPos(), plane.get(), tag.getUUID("Target"),

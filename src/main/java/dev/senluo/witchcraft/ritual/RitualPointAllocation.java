@@ -32,12 +32,16 @@ public final class RitualPointAllocation {
 
     public static Result allocate(Map<Long, Integer> capacities, List<Request> requests, List<Loss> losses) {
         var ordered = requests.stream().sorted(Comparator.comparingLong(Request::order).thenComparing(Request::id)).toList();
-        var admitted = new ArrayList<>(ordered.stream().filter(Request::funded).toList());
+        var admitted = new LinkedHashMap<UUID, Request>();
+        for (Request request : ordered) {
+            if (request.funded && admitted.putIfAbsent(request.id, request) != null)
+                throw new IllegalArgumentException("Duplicate ritual");
+        }
         var remainingLosses = new ArrayDeque<>(losses);
         Attempt attempt = fit(capacities, admitted);
         while (!attempt.blocked.isEmpty()) {
             Set<UUID> blocked = attempt.blocked;
-            Loss loss = remainingLosses.stream().filter(l -> admitted.stream()
+            Loss loss = remainingLosses.stream().filter(l -> admitted.values().stream()
                     .anyMatch(r -> blocked.contains(r.id) && r.pools.contains(l.pool))).findFirst().orElse(null);
             if (loss != null) remainingLosses.remove(loss);
             Comparator<Request> priority = Comparator
@@ -46,34 +50,34 @@ public final class RitualPointAllocation {
                     .thenComparingInt(Request::cost)
                     .thenComparing(Comparator.comparingLong(Request::order).reversed())
                     .thenComparing(Request::id);
-            Request victim = admitted.stream().filter(r -> blocked.contains(r.id)).min(priority).orElseThrow();
-            admitted.remove(victim);
+            Request victim = admitted.values().stream().filter(r -> blocked.contains(r.id)).min(priority).orElseThrow();
+            admitted.remove(victim.id);
             attempt = fit(capacities, admitted);
         }
         // Restore waiting receipts in durable order; they do not evict an already admitted receipt.
         var paused = new LinkedHashSet<UUID>();
         for (Request request : ordered) {
-            if (admitted.contains(request)) continue;
+            Request existing = admitted.get(request.id);
+            if (request.equals(existing)) continue;
             // A receipt suspended by this loss must not immediately displace its priority decision.
             if (request.funded) { paused.add(request.id); continue; }
-            admitted.add(request);
+            if (existing != null) throw new IllegalArgumentException("Duplicate ritual");
+            admitted.put(request.id, request);
             Attempt trial = fit(capacities, admitted);
             if (trial.blocked.isEmpty()) attempt = trial;
-            else { admitted.removeLast(); paused.add(request.id); }
+            else { admitted.remove(request.id); paused.add(request.id); }
         }
         return new Result(attempt.grants, Set.copyOf(paused));
     }
 
     /** Unit-capacity augmenting paths can reroute other requests without dropping their paid units. */
-    private static Attempt fit(Map<Long, Integer> capacities, List<Request> requests) {
-        var byId = new LinkedHashMap<UUID, Request>();
-        for (Request r : requests) if (byId.put(r.id, r) != null) throw new IllegalArgumentException("Duplicate ritual");
+    private static Attempt fit(Map<Long, Integer> capacities, Map<UUID, Request> admitted) {
         var slots = new LinkedHashMap<Long, ArrayList<UUID>>();
         capacities.forEach((pool, capacity) -> {
             if (capacity < 0) throw new IllegalArgumentException("Negative pool capacity");
             slots.put(pool, new ArrayList<>());
         });
-        for (Request request : requests) for (int unit = 0; unit < request.cost; unit++) {
+        for (Request request : admitted.values()) for (int unit = 0; unit < request.cost; unit++) {
             var queue = new ArrayDeque<UUID>();
             var seen = new LinkedHashSet<UUID>();
             var parents = new HashMap<UUID, Long>();
@@ -82,7 +86,7 @@ public final class RitualPointAllocation {
             Long free = null;
             while (!queue.isEmpty() && free == null) {
                 UUID current = queue.removeFirst();
-                for (long pool : byId.get(current).pools) {
+                for (long pool : admitted.get(current).pools) {
                     if (via.putIfAbsent(pool, current) != null) continue;
                     var occupants = slots.get(pool);
                     if (occupants == null) continue;
@@ -104,7 +108,7 @@ public final class RitualPointAllocation {
             }
         }
         var grants = new LinkedHashMap<UUID, Map<Long, Integer>>();
-        for (Request r : requests) grants.put(r.id, new LinkedHashMap<>());
+        for (UUID id : admitted.keySet()) grants.put(id, new LinkedHashMap<>());
         slots.forEach((pool, occupants) -> occupants.forEach(id -> grants.get(id).merge(pool, 1, Integer::sum)));
         grants.replaceAll((id, pools) -> Map.copyOf(pools));
         return new Attempt(Map.copyOf(grants), Set.of());

@@ -13,6 +13,46 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class FruitFeedingGameTests {
+    @GameTest(batch="regrowthFunds", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=140)
+    public static void freshLeafReserveProtectsTheNextDeposit(GameTestHelper h) {
+        var core = TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var world = TemporalWorld.get(h.getLevel());
+        var fruit = TreeGameTests.nodeFruit(h,core,1);
+        BlockPos eastLeaf = core.getBlockPos().offset(1,3,0);
+        BlockPos leaf = eastLeaf.equals(fruit.getBlockPos().above()) ? core.getBlockPos().offset(-1,3,0) : eastLeaf;
+        h.runAfterDelay(65,()->{
+            var colony = world.colony(core);
+            core.tissue.setCoreQuantity(0);
+            h.assertTrue(FruitFeeding.reserve(colony)==0, "An intact tree has no paid repair");
+            var player = DevelopmentGameTests.player(h,core);
+            player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SHEARS));
+            player.setPos(leaf.getX()+0.5,leaf.getY(),leaf.getZ()+1.5);
+            h.assertTrue(player.gameMode.destroyBlock(leaf) && h.getLevel().getBlockState(leaf).isAir(), "Shearing removed the leaf");
+            world.trees.flush();
+            world.trees.tick(core);
+            for (int i=0; i<8; i++) world.trees.flush();
+            fruit.invested = TreeBalance.nodeFruitFee(1) - TreeBalance.LEAF_REPAIR;
+            h.assertTrue(fruit.limit()==1 && fruit.remainingFee()==TreeBalance.LEAF_REPAIR,"This live fruit needs exactly the same payment");
+            h.assertTrue(colony.credit(TreeBalance.LEAF_REPAIR,core), "Credit exactly one leaf repair");
+            h.assertTrue(FruitFeeding.reserve(colony)==TreeBalance.LEAF_REPAIR && FruitFeeding.available(colony)==0,
+                    "The confirmed leaf repair protects the deposit");
+            h.assertFalse(fruit.hasten(),"Active fruit catalysis cannot take the leaf's payment");
+            world.trees.tick(core);
+            world.trees.flush();
+            h.assertTrue(h.getLevel().getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get())
+                    && colony.spendable()==0 && FruitFeeding.reserve(colony)==0, "The leaf settles once and releases the quote");
+            world.trees.tick(core);
+            for (int i=0; i<8; i++) world.trees.flush();
+            h.assertTrue(colony.credit(TreeBalance.LEAF_REPAIR,core) && fruit.hasten() && fruit.grade==1 && colony.spendable()==0,
+                    "The same fruit can buy its last 4 TU once the leaf has grown back");
+            h.getLevel().removeBlock(core.getBlockPos(),false);
+            h.succeed();
+        });
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=60)
     public static void ownedFruitFundingReservesTreeAndSharesPayments(GameTestHelper h) {
         LivingEntity core = TreeGameTests.plant(h, true);
@@ -83,27 +123,39 @@ public final class FruitFeedingGameTests {
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=60)
     public static void connectedTreeReservesAddWithoutChangingOnDamage(GameTestHelper h) {
+        var level = h.getLevel();
         LivingEntity first = TreeGameTests.plant(h, true);
-        BlockPos otherPos = first.getBlockPos().east(8);
-        h.getLevel().setBlock(otherPos.below(), Blocks.FARMLAND.defaultBlockState(), 3);
-        h.getLevel().setBlock(otherPos, TemporalContent.CORE.get().defaultBlockState(), 3);
-        LivingEntity second = (LivingEntity) h.getLevel().getBlockEntity(otherPos);
+        BlockPos otherPos = first.getBlockPos().east(12);
+        level.setBlock(otherPos.below(), Blocks.FARMLAND.defaultBlockState(), 3);
+        level.setBlock(otherPos, TemporalContent.CORE.get().defaultBlockState(), 3);
+        LivingEntity second = (LivingEntity) level.getBlockEntity(otherPos);
+        second.tissue.rootStage=4; second.tissue.tree=true; second.changed();
         first.tissue.bond = second.tissue.bond = TreeBond.of(UUID.randomUUID(), "owner");
-        TreeGameTests.crown(h, first);
-        TreeGameTests.crown(h, second);
-        var trees = TemporalWorld.get(h.getLevel()).trees;
-        trees.tick(first); trees.tick(second);
-        second.tissue.setCoreQuantity(600*Tissue.TU);
-        first.tissue.setCoreQuantity(600*Tissue.TU);
+        TemporalWorld.get(level).add(second);
+        TreeGameTests.crown(h,first);
+        TreeGameTests.crown(h,second);
+        var trees = TemporalWorld.get(level).trees;
         Colony group = new Colony(List.of(first, second), List.of());
-        h.assertTrue(FruitFeeding.reserve(group) == 0 && FruitFeeding.available(group) == 1_200*Tissue.TU,
-                "Intact trees leave all stock available");
-        h.getLevel().removeBlock(first.getBlockPos().above(), false);
-        h.assertTrue(trees.restorationReserve(first) == TreeBalance.LOG_REPAIR,
-                "One executable missing log reserves one repair");
-        h.getLevel().setBlock(first.getBlockPos().above(), Blocks.STONE.defaultBlockState(), 3);
-        h.assertTrue(trees.restorationReserve(first) == 0,
-                "A blocked repair must not freeze inventory forever");
+        first.tissue.setCoreQuantity(0); second.tissue.setCoreQuantity(0);
+        for (int i=0;i<20;i++) trees.flush();
+        h.assertTrue(FruitFeeding.reserve(group)==0,"Intact trees leave the wallet available");
+        var firstLeaf = first.getBlockPos().offset(1,3,0);
+        var secondLeaf = second.getBlockPos().offset(1,3,0);
+        level.removeBlock(firstLeaf,false);
+        level.removeBlock(secondLeaf,false);
+        for (int i=0;i<12;i++) trees.flush();
+        h.assertTrue(FruitFeeding.reserve(group)==2*TreeBalance.LEAF_REPAIR, "Both confirmed repairs contribute once");
+        level.setBlock(firstLeaf,Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(FruitFeeding.reserve(group)==TreeBalance.LEAF_REPAIR && trees.restorationReserve(first)==0,
+                "Blocking one repair immediately releases only that tree's reserve");
+        level.removeBlock(otherPos,false);
+        h.assertTrue(FruitFeeding.reserve(group)==0,"Removing a core releases its cached quote, even through an old colony view");
+        level.setBlock(otherPos,TemporalContent.CORE.get().defaultBlockState(),3);
+        var replacement = (LivingEntity)level.getBlockEntity(otherPos);
+        h.assertTrue(replacement != second && trees.restorationReserve(second)==0 && trees.restorationReserve(replacement)==0,
+                "A new core at the same site cannot inherit the old repair bill");
+        level.removeBlock(otherPos,false);
+        level.removeBlock(first.getBlockPos(),false);
         h.succeed();
     }
 

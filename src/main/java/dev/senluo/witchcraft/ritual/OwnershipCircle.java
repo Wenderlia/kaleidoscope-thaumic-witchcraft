@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 record OwnershipCircle(BlockPos center) {
 
     static OwnershipCircle find(ServerLevel level, LivingEntity tree) {
-        return RitualCenters.observe(tree).flatMap(center -> {
+        return RitualCenters.peek(tree).flatMap(center -> {
                     RitualPlane.invalidate(level, center.axis());
                     return center.match(level, RitualShape.SMALL);
                 })

@@ -14,8 +14,10 @@ final class RitualVial {
 
     static UUID token(ItemStack stack) {
         if (!stack.is(RitualContent.TAGLOCK.get())) return null;
-        var data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        return data.hasUUID(KEY) ? data.getUUID(KEY) : null;
+        var data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        if (!data.contains(KEY)) return null;
+        var tag = data.copyTag();
+        return tag.hasUUID(KEY) ? tag.getUUID(KEY) : null;
     }
 
     static boolean reserved(ItemStack stack) {

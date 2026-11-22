@@ -14,6 +14,34 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 /** Narrow production regressions. Compiling these is not an in-world test result. */
 @net.neoforged.neoforge.gametest.PrefixGameTestTemplate(false)
 public final class ProductionGameTests {
+    @GameTest(batch="regrowthProduction", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=150)
+    public static void nativeRepairHasFirstClaimBeforeWorkingFurnace(GameTestHelper h) {
+        var level = h.getLevel();
+        var core = TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var world = TemporalWorld.get(level);
+        BlockPos origin = core.getBlockPos(), machine = origin.east(2), leaf = origin.offset(1,3,0);
+        level.setBlock(origin.east(),TemporalContent.TIME_LOG.get().defaultBlockState(),3);
+        level.setBlock(machine,Blocks.FURNACE.defaultBlockState(),3);
+        var furnace = (AbstractFurnaceBlockEntity)level.getBlockEntity(machine);
+        furnace.setItem(0,new ItemStack(Items.IRON_ORE,8));
+        furnace.setItem(1,new ItemStack(Items.COAL));
+        core.tissue.setCoreQuantity(0);
+        h.runAfterDelay(65,()-> h.startSequence().thenExecute(()->{
+            h.assertTrue(core.canDistribute() && world.machines.get(world.colony(core)).contains(machine)
+                    && MachineWork.operation(level,machine)!=null,"A funded production tick could advance this running furnace");
+            level.removeBlock(leaf,false);
+            core.tissue.setCoreQuantity(TreeBalance.LEAF_REPAIR);
+        }).thenExecuteAfter(1,()->{
+            h.assertTrue(level.getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get()) && core.tissue.stored()==0,
+                    "In the actual world tick, the tree spends all 4 TU before the furnace can take 3 TU");
+            core.tissue.setCoreQuantity(3*Tissue.TU);
+        }).thenExecuteAfter(1,()->{
+            h.assertTrue(core.tissue.stored()==0,"Once the leaf is repaired the furnace spends the next 3 TU");
+            level.removeBlock(origin,false);
+        }).thenSucceed());
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
     public static void machineBudgetExhaustionDoesNotSpendStock(GameTestHelper h) {
         LivingEntity core = TreeGameTests.plant(h, true);
@@ -74,10 +102,14 @@ public final class ProductionGameTests {
                 && access.senluo$litTime() == fuel - 4, "Four native ticks cost 12 TU and advance fuel and work together: stock="
                         + core.tissue.stored() + ", progress=" + (access.senluo$cookingProgress()-progress)
                         + ", fuel=" + (access.senluo$litTime()-fuel));
+        world.production.flush(List.of(core));
+        h.assertTrue(core.tissue.stored() == 9_976 * Tissue.TU && access.senluo$cookingProgress() == progress + 8
+                        && access.senluo$litTime() == fuel - 8,
+                "Reused grouping still quotes live inventory and commits only this operation's four steps");
         h.getLevel().setBlock(log, Blocks.AIR.defaultBlockState(), 3);
         world.invalidateConnections();
         world.production.flush(List.of(core));
-        h.assertTrue(core.tissue.stored() == 9_988 * Tissue.TU && access.senluo$cookingProgress() == progress + 4,
+        h.assertTrue(core.tissue.stored() == 9_976 * Tissue.TU && access.senluo$cookingProgress() == progress + 8,
                 "A disconnected machine receives no additional ticks or charges");
         h.succeed();
     }

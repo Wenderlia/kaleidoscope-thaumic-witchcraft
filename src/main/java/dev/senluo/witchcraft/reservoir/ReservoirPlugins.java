@@ -26,10 +26,9 @@ public final class ReservoirPlugins {
             for(int slot=ReservoirData.FIRST_PLUGIN_SLOT;slot<ReservoirData.storageSlots(bag);slot++){
                 if(ReservoirEquipment.worn(player)!=bag || !player.isAlive() || player.isSpectator()
                         || dev.senluo.witchcraft.ritual.OwnershipRitual.frozen(player))break;
-                ItemStack plugin=ReservoirData.slot(bag,slot,player.registryAccess());
-                if(plugin.getCount()==1 && ReservoirData.supported(plugin)
-                        && plugin.getItem() instanceof ReservoirPluginItem item && item.phase()==phase && item.enabled(plugin))
-                    item.tickInstalled(player,bag,slot,plugin);
+                var stored = ReservoirData.view(bag).stored(slot, player.registryAccess());
+                if (stored.item() instanceof ReservoirPluginItem item && item.phase() == phase && stored.singleSupported())
+                    item.dispatch(player, bag, slot, stored);
             }
         }finally{EXECUTING.remove(player.getUUID());}
     }

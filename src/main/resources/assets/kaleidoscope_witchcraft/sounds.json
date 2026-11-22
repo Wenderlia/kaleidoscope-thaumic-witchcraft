@@ -9,6 +9,11 @@
       "kaleidoscope_witchcraft:slash/contact"
     ]
   },
+  "slash.black_flash_contact": {
+    "sounds": [
+      "kaleidoscope_witchcraft:slash/black_flash_contact"
+    ]
+  },
   "slash.blocked_stone": {
     "sounds": [
       "kaleidoscope_witchcraft:slash/blocked_stone"

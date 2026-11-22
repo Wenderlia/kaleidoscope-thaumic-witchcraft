@@ -33,23 +33,21 @@ public final class RitualCenters {
         public State(boolean present, boolean ready, boolean gone) { this(present, ready, gone, false); }
     }
     public interface Behavior {
-        StructuralRitualStore.Definition definition();
+        RitualRecipe recipe();
+        default StructuralRitualStore.Definition definition() { return recipe().definition(); }
         /** Lower values are dispatched first; equal values use the stable recipe ID. */
         int activationPriority();
         default ResourceLocation kind() { return definition().kind(); }
-        InteractionResult activate(ServerLevel level, RitualSite site, ServerPlayer player);
-        /** Recipe priority is outside plane choice. A rejected candidate may leave another legal plane usable. */
-        default InteractionResult activateCandidates(ServerLevel level, List<RitualSite> sites, ServerPlayer player) {
-            boolean rejected = false;
-            for (var site : sites) {
-                var result = activate(level, site, player);
-                if (result != InteractionResult.PASS && result != InteractionResult.FAIL) return result;
-                rejected |= result == InteractionResult.FAIL;
-            }
-            return rejected ? InteractionResult.FAIL : InteractionResult.PASS;
+        /** Recipe-specific read-only terms. Common matching, research and admission belong to the recipe. */
+        default Optional<CompoundTag> prepare(RitualCandidate site, ServerPlayer player) {
+            return Optional.of(new CompoundTag());
         }
         /** Physical work/parameter function, independent of the clicked or saving object. */
         default Predicate<BlockEntity> target() { return null; }
+        /** False only for effects whose installed state changes with the receipt, site or permission. */
+        default boolean continuous() { return true; }
+        /** External receipt changes wake static publication, including its terminal-result check. */
+        default long publicationVersion(ServerLevel level) { return 0; }
         default void tick(ServerLevel level, RitualSite site, StructuralRitualStore.Handle handle) {}
         /** A committed terminal result can finish even after its working prerequisites disappear. */
         default boolean finished(ServerLevel level, StructuralRitualStore.Handle handle) { return false; }
@@ -65,6 +63,9 @@ public final class RitualCenters {
     private static final List<Behavior> ACTIVATION_ORDER = new ArrayList<>();
     private static final Map<ResourceLocation, BiConsumer<ServerLevel, StructuralRitualStore.Handle>> OBSERVERS = new HashMap<>();
     private static final Map<ServerLevel, Map<UUID, Long>> RETRIES = new WeakHashMap<>();
+    private record Publication(StructuralRitualStore.Progress progress, StructuralRitualStore.Definition definition,
+                               RitualSite site, long permission, long dependency) {}
+    private static final Map<ServerLevel, Map<UUID, Publication>> PUBLISHED = new WeakHashMap<>();
     public static void register(Behavior behavior) {
         if (BEHAVIORS.putIfAbsent(behavior.kind(), behavior) != null) throw new IllegalStateException("Duplicate ritual " + behavior.kind());
         ACTIVATION_ORDER.add(behavior);
@@ -76,12 +77,13 @@ public final class RitualCenters {
     public static void registerRuntime() {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(RitualCenters::tick);
     }
-    public static Optional<RitualSite> site(BlockEntity entity) { return site(entity, new CompoundTag()); }
-    public static Optional<RitualSite> site(BlockEntity entity, CompoundTag terms) {
-        return observe(entity).map(center -> new RitualSite(center,
-                (terms.contains("Plane", Tag.TAG_LONG) ? RitualPlane.at((ServerLevel) entity.getLevel(), BlockPos.of(terms.getLong("Plane")))
-                        : RitualPlane.find((ServerLevel) entity.getLevel(), center.axis()))
-                        .filter(plane -> plane.containsCenter(center.axis())).orElse(null)));
+    public static Optional<RitualCandidate> candidate(BlockEntity entity) { return candidate(entity, new CompoundTag()); }
+    public static Optional<RitualCandidate> candidate(BlockEntity entity, CompoundTag terms) {
+        if (!mayPrepare(entity)) return Optional.empty();
+        ServerLevel level = (ServerLevel) entity.getLevel();
+        return (terms.contains("Plane", Tag.TAG_LONG) ? RitualPlane.at(level, BlockPos.of(terms.getLong("Plane")))
+                : RitualPlane.find(level, axis(entity))).filter(plane -> plane.containsCenter(axis(entity)))
+                .map(plane -> new RitualCandidate(entity, plane));
     }
     public static boolean current(ServerLevel level, RitualSite site) {
         if (site == null) return false;
@@ -93,66 +95,71 @@ public final class RitualCenters {
     }
     public static InteractionResult activate(ServerPlayer player, BlockEntity entity) {
         var level = player.serverLevel();
-        if (entity != null) RitualPlane.invalidate(level, axis(entity));
-        var center = observe(entity).orElse(null);
-        if (center == null) return InteractionResult.PASS;
-        return activateCandidates(player, RitualPlane.candidates(level, center.axis()).stream()
-                .map(plane -> new RitualSite(center, plane)).toList());
+        if (player.isFakePlayer() || player.isSpectator() || !player.mayBuild() || !mayPrepare(entity)
+                || entity.getLevel() != level || !level.mayInteract(player, entity.getBlockPos())) return InteractionResult.PASS;
+        RitualPlane.invalidate(level, axis(entity));
+        return activateCandidates(player, RitualCenterDomain.at(level, axis(entity)).planes().stream()
+                .map(plane -> new RitualCandidate(entity, plane)).toList());
     }
-    public static InteractionResult activate(ServerPlayer player, RitualSite site) {
-        return site == null ? InteractionResult.PASS : activateCandidates(player, List.of(site));
-    }
-    private static InteractionResult activateCandidates(ServerPlayer player, List<RitualSite> candidates) {
+    private static InteractionResult activateCandidates(ServerPlayer player, List<RitualCandidate> candidates) {
         var level = player.serverLevel();
-        if (player.isFakePlayer() || player.isSpectator() || !player.mayBuild()) return InteractionResult.PASS;
-        var sites = candidates.stream().filter(site -> site.center().mayPrepare()
-                && level.mayInteract(player, site.position()) && current(level, site)).toList();
+        var sites = candidates.stream().filter(site -> site.current(level)).toList();
         if (sites.isEmpty()) return InteractionResult.PASS;
-        // Resolve saved associations before dispatch; a new recipe still follows the original matching priority.
-        var store = StructuralRitualStore.get(level);
-        var site = sites.getFirst();
-        var saved = store.allAt(site.reference());
+        var inputs = sites.stream().map(RitualRecipe.Input::new).toList();
         for (var behavior : ACTIVATION_ORDER) {
-            var result = behavior.activateCandidates(level, sites, player);
+            var result = behavior.recipe().activate(player, inputs, behavior::prepare);
             if (result != InteractionResult.PASS) return result;
         }
-        BlockEntity entity = level.getBlockEntity(site.position());
-        if (entity != null && adapter(entity).functions().contains(Function.SAVE)) {
-            if (!saved.isEmpty()) return InteractionResult.CONSUME;
-            for (var candidate : sites) {
-                var receipts = store.atPlane(level.dimension().location(), candidate.footprint().anchor());
-                if (receipts.isEmpty()) continue;
-                var handle = receipts.getFirst();
+        var site = sites.getFirst();
+        BlockEntity entity = site.entity();
+        if (site.current(level) && adapter(entity).functions().contains(Function.SAVE)) {
+            var store = StructuralRitualStore.get(level);
+            var handles = RitualCenterDomain.at(level, site.axis()).planes().stream()
+                    .flatMap(plane -> store.atPlane(level.dimension().location(), plane.anchor()).stream()).toList();
+            var saved = peek(entity).map(center -> store.allAt(center.reference())).orElse(List.of());
+            if (handles.isEmpty()) return saved.isEmpty() ? InteractionResult.PASS : InteractionResult.CONSUME;
+            var center = bind(entity).orElse(null);
+            if (center == null) return InteractionResult.FAIL;
+            var storage = new Member(center.reference(), center.axis(), Role.STORAGE);
+            for (var handle : handles) {
                 var members = new ArrayList<>(store.members(handle.id()));
-                members.add(new Member(candidate.reference(), candidate.axis(), Role.STORAGE));
+                if (members.stream().anyMatch(member -> member.reference().equals(storage.reference()))) continue;
+                members.add(storage);
                 store.members(level, handle.id(), members);
-                return InteractionResult.CONSUME;
             }
+            return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
     }
-    public static Optional<UUID> begin(ServerPlayer player, RitualSite site, StructuralRitualStore.Definition definition, CompoundTag supplied) {
+    public static Optional<UUID> begin(ServerPlayer player, RitualCandidate site, StructuralRitualStore.Definition definition, CompoundTag supplied) {
         CompoundTag terms = supplied.copy(); terms.putLong("Plane", site.footprint().anchor().asLong());
-        return StructuralRitualStore.get(player.serverLevel()).begin(player.serverLevel(), definition, site.center(), player.getUUID(), terms);
+        return StructuralRitualStore.get(player.serverLevel()).begin(player.serverLevel(), definition, site, player.getUUID(), terms);
     }
-    static List<Member> compose(ServerLevel level, RitualSite site, ResourceLocation kind) {
+    record ProposedMember(RitualCandidate candidate, Role role) {
+        Optional<Member> bind() {
+            return RitualCenters.bind(candidate.entity()).map(center -> new Member(center.reference(), center.axis(), role));
+        }
+    }
+    static List<ProposedMember> compose(ServerLevel level, RitualCandidate site, ResourceLocation kind) {
         var target = requirement(kind);
         BlockEntity clicked = level.getBlockEntity(site.position());
         BlockEntity work = target == null ? null : clicked != null && target.test(clicked) ? clicked
                 : HOSTS.containsKey(kind) ? null : find(level, site.footprint().anchor(), target);
         if (work != null && !target.test(work)) work = null;
         if (target != null && work == null) return List.of();
-        Center primary = work == null ? site.center() : observe(work).orElse(null);
-        if (primary == null) return List.of();
-        var members = new LinkedHashMap<Reference, Member>();
+        BlockEntity primary = work == null ? clicked : work;
+        if (!mayPrepare(primary)) return List.of();
+        var members = new LinkedHashMap<BlockPos, ProposedMember>();
         Role primaryRole = work != null ? Role.TARGET : clicked != null && adapter(clicked).functions().contains(Function.SAVE)
                 ? Role.STORAGE : Role.OWNER;
-        members.put(primary.reference(), new Member(primary.reference(), primary.axis(), primaryRole));
+        members.put(primary.getBlockPos(), new ProposedMember(new RitualCandidate(primary, primary.getBlockPos(), axis(primary), site.footprint()), primaryRole));
         RitualPlane.centerPositions(site.footprint().anchor()).flatMap(RitualCenters::positionsAtAxis).distinct()
                 .filter(level::hasChunkAt).map(level::getBlockEntity).filter(Objects::nonNull)
                 .filter(entity -> !entity.isRemoved() && adapter(entity).functions().contains(Function.SAVE)
                         && site.footprint().containsCenter(axis(entity)))
-                .forEach(entity -> observe(entity).ifPresent(center -> members.putIfAbsent(center.reference(), new Member(center.reference(), center.axis(), Role.STORAGE))));
+                .filter(RitualCenters::mayPrepare)
+                .forEach(entity -> members.putIfAbsent(entity.getBlockPos(), new ProposedMember(
+                        new RitualCandidate(entity, entity.getBlockPos(), axis(entity), site.footprint()), Role.STORAGE)));
         return List.copyOf(members.values());
     }
     /** Pure lookup of an already registered identity; unrelated candidates never acquire attachments. */
@@ -203,7 +210,7 @@ public final class RitualCenters {
                     saving ? Role.STORAGE : requirement == null ? Role.OWNER : Role.TARGET));
             if (importedStores && requirement != null) {
                 var candidate = find(level, plane, requirement);
-                if (candidate != null) observe(candidate).ifPresent(c -> migrated.add(new Member(c.reference(), c.axis(), Role.TARGET)));
+                if (candidate != null) bind(candidate).ifPresent(c -> migrated.add(new Member(c.reference(), c.axis(), Role.TARGET)));
             }
             store.members(level, id, migrated); members = store.members(id);
             store.completeMemberImport(level, id);
@@ -221,7 +228,7 @@ public final class RitualCenters {
                 && live.keySet().stream().anyMatch(m -> m.role() == Role.STORAGE)) {
             var candidate = find(level, store.source(id), requirement);
             if (candidate != null) {
-                var c = observe(candidate).orElse(null);
+                var c = bind(candidate).orElse(null);
                 if (c != null) {
                     var completed = new ArrayList<>(members);
                     var member = new Member(c.reference(), c.axis(), Role.TARGET);
@@ -240,7 +247,7 @@ public final class RitualCenters {
                 boolean matches = entity != null && (member.role() == Role.STORAGE
                         ? adapter(entity).functions().contains(Function.SAVE)
                         : member.role() == Role.TARGET && requirement != null && requirement.test(entity));
-                if (matches) observed = observe(entity).orElse(null);
+                if (matches) observed = bind(entity).orElse(null);
             }
             if (observed != null) updated.add(new Member(observed.reference(), observed.axis(), member.role()));
             else updated.add(member);
@@ -266,7 +273,7 @@ public final class RitualCenters {
     static boolean cleanupPending(ServerLevel level, UUID id) {
         var retries = RETRIES.get(level); return retries != null && retries.containsKey(id);
     }
-    static void clear(ServerLevel level) { RETRIES.remove(level); }
+    static void clear(ServerLevel level) { RETRIES.remove(level); PUBLISHED.remove(level); }
     public static void end(ServerLevel level, UUID id) {
         var store = StructuralRitualStore.get(level);
         store.end(level, id);
@@ -274,6 +281,8 @@ public final class RitualCenters {
     }
     /** Only failed cleanup schedules a retry. Revocation itself is already committed in the ledger. */
     static void revoked(ServerLevel level, StructuralRitualStore.Handle handle) {
+        var published = PUBLISHED.get(level);
+        if (published != null) published.remove(handle.id());
         var retries = RETRIES.computeIfAbsent(level, unused -> new HashMap<>());
         if (retries.getOrDefault(handle.id(), Long.MIN_VALUE) > level.getGameTime()) return;
         try {
@@ -304,7 +313,11 @@ public final class RitualCenters {
         for (var h : store.inDimension(level.dimension().location())) {
             if (cleanupPending(level, h.id())) continue;
             var behavior = BEHAVIORS.get(h.definition().kind());
-            if (behavior != null && behavior.finished(level, h)) { end(level, h.id()); continue; }
+            var prior = PUBLISHED.get(level);
+            var installed = prior == null ? null : prior.get(h.id());
+            long dependency = behavior == null ? 0 : behavior.publicationVersion(level);
+            if (behavior != null && (behavior.continuous() || installed == null || installed.dependency != dependency)
+                    && behavior.finished(level, h)) { end(level, h.id()); continue; }
             var state = state(level, h.id());
             if (state.pending()) continue;
             if (store.phase(h.id()) == StructuralRitualStore.Phase.ENDED || state.gone()) {
@@ -317,7 +330,21 @@ public final class RitualCenters {
             }
             if (!store.eligible(level, h.id())) continue;
             var site = store.site(level, h.id());
-            if (site != null) behavior.tick(level, site, h);
+            if (site == null) continue;
+            if (behavior.continuous()) { behavior.tick(level, site, h); continue; }
+            var published = PUBLISHED.computeIfAbsent(level, unused -> new HashMap<>());
+            var before = store.progress(h.id()).orElseThrow();
+            long permission = store.permissionVersion(level, h.id());
+            var old = published.get(h.id());
+            if (before.phase() == StructuralRitualStore.Phase.ACTIVE && before.available()
+                    && old != null && old.progress == before && old.definition == h.definition()
+                    && old.permission == permission && old.dependency == dependency && old.site.equals(site)) continue;
+            behavior.tick(level, site, h);
+            long afterPermission = store.permissionVersion(level, h.id());
+            var after = store.progress(h.id()).orElse(null);
+            if (after != null && after.phase() == StructuralRitualStore.Phase.ACTIVE && after.available())
+                published.put(h.id(), new Publication(after, h.definition(), site, afterPermission, behavior.publicationVersion(level)));
+            else published.remove(h.id());
         }
     }
     public record Reference(ResourceLocation dimension, BlockPos position, UUID identity) {
@@ -337,11 +364,22 @@ public final class RitualCenters {
             return RitualPlane.match(level, axis, shape);
         }
     }
-    @FunctionalInterface public interface Adapter<T extends BlockEntity> {
-        Center observe(ServerLevel level, T entity);
+    public interface Adapter<T extends BlockEntity> {
+        /** Called only when establishing a real membership, never when probing recipes. */
+        default Center bind(ServerLevel level, T entity) {
+            boolean existing = entity.hasData(RitualContent.RITUAL_ANCHOR);
+            var anchor = entity.getData(RitualContent.RITUAL_ANCHOR);
+            if (!existing) entity.setChanged();
+            return new Center(new Reference(level.dimension().location(), entity.getBlockPos(), anchor.identity()),
+                    axis(entity), anchor.supported());
+        }
         default BlockPos axis(T entity) { return entity.getBlockPos(); }
         default java.util.Set<Function> functions() { return java.util.Set.of(Function.ACTIVATE); }
-        default Center peek(ServerLevel level, T entity) { return entity.hasData(RitualContent.RITUAL_ANCHOR) ? observe(level, entity) : null; }
+        default Center peek(ServerLevel level, T entity) { return entity.hasData(RitualContent.RITUAL_ANCHOR) ? bind(level, entity) : null; }
+        default boolean mayPrepare(ServerLevel level, T entity) {
+            var center = peek(level, entity);
+            return center == null || center.mayPrepare();
+        }
         /** Bounded inverse candidates for source-driven target registration. */
         default java.util.stream.Stream<BlockPos> positionsAtAxis(BlockPos axis) {
             return java.util.stream.Stream.of(axis);
@@ -350,16 +388,9 @@ public final class RitualCenters {
     private static final Map<Class<?>, Adapter<BlockEntity>> ADAPTERS = new LinkedHashMap<>();
     static {
         // Standard NeoForge attachment supplies identity; no machine-type allowlist is needed.
-        register(BlockEntity.class, (level, entity) -> {
-            boolean existing = entity.hasData(RitualContent.RITUAL_ANCHOR);
-            var anchor = entity.getData(RitualContent.RITUAL_ANCHOR);
-            if (!existing) entity.setChanged();
-            return new Center(new Reference(level.dimension().location(), entity.getBlockPos(), anchor.identity()),
-                    entity.getBlockPos(), anchor.supported());
-        });
+        register(BlockEntity.class, new Adapter<>() {});
         register(GoldenHeartEntity.class, new Adapter<>() {
             public BlockPos axis(GoldenHeartEntity heart) { return heart.getBlockPos().below(); }
-            public Center observe(ServerLevel level, GoldenHeartEntity heart) { return heart.center(level); }
             public java.util.Set<Function> functions() { return java.util.Set.of(Function.ACTIVATE, Function.SAVE); }
             public java.util.stream.Stream<BlockPos> positionsAtAxis(BlockPos axis) {
                 return java.util.stream.Stream.of(axis.above());
@@ -374,8 +405,9 @@ public final class RitualCenters {
                         ? tree.getBlockPos().offset(dev.senluo.witchcraft.time.TreeOrientation.relative(
                                 new BlockPos(0, 0, 1), tree.tissue.treeFacing)) : tree.getBlockPos();
             }
-            public Center peek(ServerLevel level, dev.senluo.witchcraft.time.LivingEntity tree) { return observe(level, tree); }
-            public Center observe(ServerLevel level, dev.senluo.witchcraft.time.LivingEntity tree) {
+            public boolean mayPrepare(ServerLevel level, dev.senluo.witchcraft.time.LivingEntity tree) { return tree.tissue.supported(); }
+            public Center peek(ServerLevel level, dev.senluo.witchcraft.time.LivingEntity tree) { return bind(level, tree); }
+            public Center bind(ServerLevel level, dev.senluo.witchcraft.time.LivingEntity tree) {
                 return tree.tissue.supported() ? new Center(new Reference(level.dimension().location(), tree.getBlockPos(), tree.tissue.identity),
                         axis(tree), true) : null;
             }
@@ -388,7 +420,8 @@ public final class RitualCenters {
         if (ADAPTERS.containsKey(type)) throw new IllegalStateException("Ritual center adapter already registered: " + type.getName());
         ADAPTERS.put(type, new Adapter<>() {
             public BlockPos axis(BlockEntity entity) { return adapter.axis(type.cast(entity)); }
-            public Center observe(ServerLevel level, BlockEntity entity) { return adapter.observe(level, type.cast(entity)); }
+            public Center bind(ServerLevel level, BlockEntity entity) { return adapter.bind(level, type.cast(entity)); }
+            public boolean mayPrepare(ServerLevel level, BlockEntity entity) { return adapter.mayPrepare(level, type.cast(entity)); }
             public java.util.Set<Function> functions() { return adapter.functions(); }
             public Center peek(ServerLevel level, BlockEntity entity) { return adapter.peek(level, type.cast(entity)); }
             public java.util.stream.Stream<BlockPos> positionsAtAxis(BlockPos axis) { return adapter.positionsAtAxis(axis); }
@@ -414,10 +447,21 @@ public final class RitualCenters {
         return RitualPlane.centerPositions(plane).filter(pos -> level.hasChunkAt(pos) && level.shouldTickBlocksAt(pos))
                 .map(level::getBlockEntity).filter(entity -> entity != null && !entity.isRemoved()).filter(accepts).findFirst().orElse(null);
     }
-    public static Optional<Center> observe(BlockEntity entity) {
-        if (entity == null || entity.isRemoved() || !(entity.getLevel() instanceof ServerLevel level)
-                || !level.hasChunkAt(entity.getBlockPos()) || !level.shouldTickBlocksAt(entity.getBlockPos())) return Optional.empty();
-        Center result = adapter(entity).observe(level, entity);
+    private static boolean loaded(BlockEntity entity) {
+        return entity != null && !entity.isRemoved() && entity.getLevel() instanceof ServerLevel level
+                && level.hasChunkAt(entity.getBlockPos()) && level.shouldTickBlocksAt(entity.getBlockPos())
+                && level.getBlockEntity(entity.getBlockPos()) == entity;
+    }
+    public static boolean mayPrepare(BlockEntity entity) {
+        return loaded(entity) && adapter(entity).mayPrepare((ServerLevel) entity.getLevel(), entity);
+    }
+    public static Optional<Center> peek(BlockEntity entity) {
+        return loaded(entity) ? Optional.ofNullable(adapter(entity).peek((ServerLevel) entity.getLevel(), entity)) : Optional.empty();
+    }
+    public static Optional<Center> bind(BlockEntity entity) {
+        if (!loaded(entity)) return Optional.empty();
+        var level = (ServerLevel) entity.getLevel();
+        Center result = adapter(entity).bind(level, entity);
         if (result != null && (!result.reference.dimension().equals(level.dimension().location())
                 || !result.reference.position().equals(entity.getBlockPos())))
             throw new IllegalStateException("Ritual center adapter returned a foreign location");

@@ -44,6 +44,9 @@ public final class RegionRuleStore extends SavedData {
     private final Map<Long, Set<UUID>> regions = new HashMap<>(), blocks = new HashMap<>(), chunks = new HashMap<>();
     private CompoundTag preserved;
     private long queries, candidates, validations, invalidations;
+    private long receiptVersion;
+    /** Derived publications depend on receipts and shared capacity, not condition-cache refreshes. */
+    public long receiptVersion() { return receiptVersion; }
     public boolean supported() { return preserved == null; }
     public boolean contains(UUID id) { return supported() && entries.containsKey(id); }
     public boolean canInstall(UUID id) { return supported() && (entries.containsKey(id) || entries.size() < MAX_ENTRIES); }
@@ -58,7 +61,7 @@ public final class RegionRuleStore extends SavedData {
             if (!old.entry.equals(entry)) throw new IllegalArgumentException("Conflicting region receipt");
             return;
         }
-        index(entry); setDirty();
+        index(entry); receiptVersion++; setDirty();
     }
     public void remove(UUID id) {
         Cached cached = entries.remove(id);
@@ -69,7 +72,7 @@ public final class RegionRuleStore extends SavedData {
                 unwatch(blocks, pos.asLong(), id); unwatch(chunks, ChunkPos.asLong(pos), id);
             }
         });
-        setDirty();
+        receiptVersion++; setDirty();
     }
     public boolean applies(ResourceLocation rule, BlockPos pos, Predicate<Condition> validate) {
         return applies(rule, pos, validate, condition -> 0L);

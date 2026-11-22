@@ -15,6 +15,9 @@ public interface ReservoirBridge {
     boolean extractToContainer(Level level,ItemStack backpack,ItemStack emptyContainer);
     boolean label(Level level,ItemStack backpack,int cell,ItemStack label);
     void charge(ServerPlayer player,ItemStack backpack,int storageSlot,ItemStack plugin);
+    default void charge(ServerPlayer player, ItemStack bag, int slot, ReservoirData.View.Slot stored) {
+        charge(player, bag, slot, stored.copy());
+    }
     /** Existing placed-backpack pulse; optional host transport operates on the same item stock. */
     default void tickPlaced(ReservoirBlockEntity entity){}
     ReservoirBridge NONE=new ReservoirBridge(){
@@ -24,5 +27,6 @@ public interface ReservoirBridge {
         public boolean extractToContainer(Level l,ItemStack b,ItemStack c){return false;}
         public boolean label(Level l,ItemStack b,int c,ItemStack s){return false;}
         public void charge(ServerPlayer p,ItemStack b,int slot,ItemStack plugin){}
+        public void charge(ServerPlayer p,ItemStack b,int slot,ReservoirData.View.Slot stored){}
     };
 }

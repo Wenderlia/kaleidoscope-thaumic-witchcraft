@@ -64,7 +64,10 @@ public final class OwnershipRitual {
     static boolean hasSession(UUID id) {
         return SESSIONS.values().stream().anyMatch(s -> s.id.equals(id)) || SustainedRitual.hasSession(id);
     }
-
+    private static boolean busy(ServerPlayer target, LivingEntity tree) {
+        return occupied(target) || SESSIONS.values().stream()
+                .anyMatch(session -> session.level == tree.getLevel() && session.core.equals(tree.getBlockPos()));
+    }
 
     public static void start(ServerPlayer initiator, InteractionHand hand, LivingEntity tree) {
         if (!tree.tissue.supported()) { dev.senluo.witchcraft.time.LivingBlock.tell(initiator, "data_unavailable"); return; }
@@ -91,7 +94,7 @@ public final class OwnershipRitual {
                 || !TemporalWorld.get(target.serverLevel()).covers(tree, target.blockPosition())) {
             tell(initiator, "target_outside"); return;
         }
-        if (occupied(target) || SESSIONS.values().stream().anyMatch(s -> s.level == tree.getLevel() && s.core.equals(tree.getBlockPos()))) {
+        if (busy(target, tree)) {
             tell(initiator, "busy"); return;
         }
         TreeBond incoming = TreeBond.of(target.getUUID(), target.getGameProfile().getName());
@@ -100,18 +103,25 @@ public final class OwnershipRitual {
         ServerLevel level = target.serverLevel();
         OwnershipCircle circle = OwnershipCircle.find(level, tree);
         if (circle == null) { rejectOffering(initiator, tree); return; }
+        UUID identity = tree.tissue.identity;
         OwnershipOfferings offerings = OwnershipOfferings.reserve(level, tree.getBlockPos(), circle);
         if (offerings == null) { rejectOffering(initiator, tree); return; }
-        // Third-party item-spawn callbacks must not swap the sample while offerings are reserved.
+        // Native spawn/container callbacks may start another rite or replace its subject/core.
         if (!initiator.getItemInHand(hand).is(RitualContent.TAGLOCK.get())
                 || !sample.equals(initiator.getItemInHand(hand).get(RitualContent.TAGLOCK_SAMPLE.get()))
+                || RitualVial.reserved(initiator.getItemInHand(hand)) || busy(target, tree)
+                || tree.isRemoved() || level.getBlockEntity(tree.getBlockPos()) != tree
+                || !identity.equals(tree.tissue.identity) || !TreeOwnership.canBind(tree) || !tree.tissue.acceptsBond(incoming)
+                || !target.isAlive() || target.isSpectator() || target.serverLevel() != level
+                || initiator.serverLevel() != level || !initiator.mayBuild()
+                || !level.mayInteract(initiator, tree.getBlockPos()) || !TemporalWorld.get(level).covers(tree, target.blockPosition())
                 || RitualResearch.check(level, sample.subject(), RESEARCH) != RitualResearch.Result.ALLOWED
                 || !RitualVial.canReserve(initiator, hand)) {
             offerings.release();
             return;
         }
         Session session = new Session(target, tree, initiator, sample, circle, offerings);
-        SESSIONS.put(target.getUUID(), session);
+        if (SESSIONS.putIfAbsent(target.getUUID(), session) != null) { offerings.release(); return; }
         if (!RitualVial.reserve(initiator, hand, session.id)) {
             SESSIONS.remove(target.getUUID(), session);
             offerings.release();

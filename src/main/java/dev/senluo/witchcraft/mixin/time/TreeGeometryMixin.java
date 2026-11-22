@@ -16,6 +16,7 @@ public abstract class TreeGeometryMixin {
         dev.senluo.witchcraft.time.TreeSignMemory.beforeReplacement(level,pos,before,state);
         boolean changed=original.call(pos,state,flags,recursion);
         if(changed){
+            dev.senluo.witchcraft.compat.thaumcraft.TemporaryGeneration.changed(level,pos);
             dev.senluo.witchcraft.region.RegionRules.blockChanged(level,pos);
             state = level.getBlockState(pos);
             if (before.getBlock() != state.getBlock()) dev.senluo.witchcraft.ritual.SteamFire.replaced(level,pos);
@@ -28,5 +29,10 @@ public abstract class TreeGeometryMixin {
             dev.senluo.witchcraft.time.FluidTime.changed(level);
         }
         return changed;
+    }
+    @org.spongepowered.asm.mixin.injection.Inject(method="blockEntityChanged", at=@org.spongepowered.asm.mixin.injection.At("HEAD"))
+    private void witchcraft$captureChanged(BlockPos pos, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if ((Object)this instanceof ServerLevel level)
+            dev.senluo.witchcraft.compat.thaumcraft.TemporaryGeneration.changed(level,pos);
     }
 }

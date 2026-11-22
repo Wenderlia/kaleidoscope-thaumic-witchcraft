@@ -50,8 +50,8 @@ final class SuctionChannels {
     static void tick(ServerLevel level, List<Pulse> channels) {
         var journal = SuctionTransferStore.get(level);
         if (!journal.supported()) return;
-        var pending = journal.inDimension(level.dimension().location());
-        if (channels.isEmpty() && pending.isEmpty()) {
+        var dimension = level.dimension().location();
+        if (channels.isEmpty() && !journal.hasReceipts(dimension, SuctionTransferStore.Scope.RITUAL)) {
             var old = VISUALS.get(level);
             if (old != null && level.getGameTime() % 100 == 0) {
                 old.values().removeIf(v -> level.getGameTime() < v.tick || level.getGameTime() - v.tick > 100);
@@ -64,13 +64,15 @@ final class SuctionChannels {
         long now = level.getGameTime();
         if (now % 100 == 0) sent.values().removeIf(v -> now < v.tick || now - v.tick > 100);
         // Settles only matter already removed by a prior committed transfer. No offline flow entitlement.
-        if (now % 20 == 0) for (var receipt : pending) {
+        if (now % 20 == 0) for (var receipt : journal.inDimension(dimension)) {
             if (receipt.uncertain() || !loaded(level, receipt.outlet().position())) continue;
             settle(level, journal, receipt, index, sent);
         }
+        if (channels.isEmpty()) return;
         Map<BlockPos, List<Contribution>> budgets = new TreeMap<>();
-        for (Pulse channel : channels) for (BlockPos source : index.sources(level, channel.center, channel.charge))
-            budgets.computeIfAbsent(source, unused -> new ArrayList<>()).add(new Contribution(channel));
+        for (Pulse channel : channels)
+            index.forEachSource(level, channel.center, channel.charge, source ->
+                    budgets.computeIfAbsent(source, unused -> new ArrayList<>()).add(new Contribution(channel)));
         for (var entry : budgets.entrySet()) {
             BlockPos sourcePos = entry.getKey(); var contributions = entry.getValue(); long budget = remaining(level, contributions);
             if (budget <= 0 || !loaded(level, sourcePos)) continue;
@@ -81,10 +83,10 @@ final class SuctionChannels {
             var storage = EssentiaApi.storage(level, sourcePos, null);
             if (storage == null) continue;
             var contents = storage.essentiaContents(null).amounts();
+            if (contents.isEmpty()) continue;
             budget = Math.min(budget, contents.values().stream().filter(n -> n > 0).mapToLong(Integer::longValue).sum());
             var aspects = new ArrayList<>(contents.keySet()); aspects.sort(AspectId::compareTo);
-            if (!aspects.isEmpty()) Collections.rotate(aspects, -(int)Math.floorMod(now / 20, aspects.size()));
-            if (contents.isEmpty()) continue;
+            Collections.rotate(aspects, -(int)Math.floorMod(now / 20, aspects.size()));
             boolean nozzle = be.getType() == dev.tc4port.thaumcraft.api.ThaumcraftContent.blockEntity("advanced_alchemy_furnace");
             var positions = index.destinations(level, sourcePos);
             for (var aspect : aspects) {
@@ -155,17 +157,22 @@ final class SuctionChannels {
         }
     }
     private static Direction output(ServerLevel level, AspectId aspect, BlockPos position, BlockPos target) {
-        // Only the two audited native source types reach this method.
-        Direction result = null; double best = -Double.MAX_VALUE;
+        // A tied or worse face cannot displace the first usable outlet.
+        int dx = target.getX() - position.getX();
+        int dy = target.getY() - position.getY();
+        int dz = target.getZ() - position.getZ();
+        Direction result = null;
         for (var face : FACES) {
+            if (result != null && alignment(face, dx, dy, dz) <= alignment(result, dx, dy, dz)) continue;
             var source = endpoint(level, position, face);
             var view = source == null ? null : source.transferView();
             if (view == null || !view.isConnectable(face) || !view.canOutputTo(face) || view.availableEssentia(aspect, face) <= 0) continue;
-            double dot = (double)(target.getX()-position.getX()) * face.getStepX()
-                    + (double)(target.getY()-position.getY()) * face.getStepY() + (double)(target.getZ()-position.getZ()) * face.getStepZ();
-            if (dot > best) { best = dot; result = face; }
+            result = face;
         }
         return result;
+    }
+    private static long alignment(Direction face, int dx, int dy, int dz) {
+        return (long)face.getAxis().choose(dx, dy, dz) * face.getAxisDirection().getStep();
     }
     private static List<Destination> destinations(ServerLevel level, BlockPos source, AspectId aspect, List<BlockPos> positions) {
         var matching = new ArrayList<Destination>();

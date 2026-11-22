@@ -4,6 +4,7 @@ import dev.tc4port.thaumcraft.api.ThaumcraftContent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import dev.senluo.witchcraft.ritual.SuctionCharge;
 import java.util.*;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -95,26 +96,24 @@ final class SuctionEndpointIndex {
         bucket.checked = now; bucket.dirty = false;
         return bucket;
     }
-    List<BlockPos> sources(ServerLevel level, BlockPos center, SuctionCharge charge) {
-        var result = new ArrayList<BlockPos>();
+    void forEachSource(ServerLevel level, BlockPos center, SuctionCharge charge, Consumer<BlockPos> visit) {
         if (charge.rangeGroups() <= 4) {
             int radius = 4 << charge.rangeGroups();
             for (int cx = (center.getX()-radius) >> 4; cx <= (center.getX()+radius) >> 4; cx++)
                 for (int cz = (center.getZ()-radius) >> 4; cz <= (center.getZ()+radius) >> 4; cz++)
-                    append(result, refresh(level, ChunkPos.asLong(cx, cz)), center, charge);
+                    visitOutlets(refresh(level, ChunkPos.asLong(cx, cz)), center, charge, visit);
         } else {
             // Large logical ranges inspect only loaded columns that actually intersect the field.
             for (long key : List.copyOf(chunks.keySet())) {
                 int x = ChunkPos.getX(key) << 4, z = ChunkPos.getZ(key) << 4;
                 long dx = Math.max(0L, Math.max((long)x-center.getX(), (long)center.getX()-x-15));
                 long dz = Math.max(0L, Math.max((long)z-center.getZ(), (long)center.getZ()-z-15));
-                if (charge.contains((double)dx*dx+(double)dz*dz)) append(result, refresh(level, key), center, charge);
+                if (charge.contains((double)dx*dx+(double)dz*dz)) visitOutlets(refresh(level, key), center, charge, visit);
             }
         }
-        result.sort(BlockPos::compareTo); return result;
     }
-    private static void append(List<BlockPos> output, Bucket bucket, BlockPos center, SuctionCharge charge) {
-        if (bucket != null) for (var pos : bucket.outlets) if (charge.contains(pos.distSqr(center))) output.add(pos);
+    private static void visitOutlets(Bucket bucket, BlockPos center, SuctionCharge charge, Consumer<BlockPos> visit) {
+        if (bucket != null) for (var pos : bucket.outlets) if (charge.contains(pos.distSqr(center))) visit.accept(pos);
     }
     List<BlockPos> destinations(ServerLevel level, BlockPos outlet) {
         Neighbors previous = neighbors.get(outlet);

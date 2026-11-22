@@ -1,12 +1,11 @@
 package dev.senluo.witchcraft.slash;
 
 import java.util.*;
-import java.util.function.DoubleUnaryOperator;
+import dev.senluo.witchcraft.motion.TravelStep;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -34,30 +33,39 @@ final class SlashCollision {
         final Set<UUID> radialTargets = new HashSet<>();
         Budget(dev.senluo.witchcraft.accessory.ProjectileBarrier.FlightSpace space) { this.space = space; }
     }
-    private record Contact(SlashGeometry.Contact hit, BlockPos block, Entity entity) {}
+    private record Contact(int part, double time, SlashGeometry.Contact hit, BlockPos block, Entity entity) {
+        Contact(int part, Timing clock, SlashGeometry.Contact hit, BlockPos block, Entity entity) {
+            this(part, clock == null ? hit.fraction() : clock.at(hit.fraction()), hit, block, entity);
+        }
+    }
+    private static final Comparator<Contact> ORDER = Comparator.comparingDouble(Contact::time)
+            .thenComparingInt(c -> c.block == null ? 1 : 0).thenComparingInt(Contact::part);
     private SlashCollision() {}
 
     /** Reject pathological spatial work before even enumerating chunk coordinates. */
     static boolean bounded(AABB bounds) {
-        double cells = (Math.floor(bounds.maxX) - Math.floor(bounds.minX) + 1)
-                * (Math.floor(bounds.maxY) - Math.floor(bounds.minY) + 1)
-                * (Math.floor(bounds.maxZ) - Math.floor(bounds.minZ) + 1);
+        double cells = SlashQueries.volume(bounds);
         return Double.isFinite(cells) && cells <= MAX_CELLS;
     }
 
-    static boolean loaded(ServerLevel level, AABB bounds) {
-        for (int x = Mth.floor(bounds.minX) >> 4; x <= Mth.floor(bounds.maxX) >> 4; x++)
-            for (int z = Mth.floor(bounds.minZ) >> 4; z <= Mth.floor(bounds.maxZ) >> 4; z++)
-                if (!level.hasChunk(x, z)) return false;
-        return true;
+    static double resolve(SlashEntity slash, ServerPlayer player, SlashQueries.Coverage sweep, Budget budget) {
+        if (slash.hitBlocks.size() >= SlashEntity.MAX_BLOCKS || slash.hitEntities.size() >= SlashEntity.MAX_TARGETS) return 0;
+        List<Contact> contacts = new ArrayList<>();
+        double limit = collect(slash, player, sweep, budget, null, 0, null, false, contacts);
+        if (limit < 0) { budget.exhausted = true; return 0; }
+        contacts.sort(ORDER);
+        for (Contact contact : contacts) {
+            double t = contact.hit.fraction();
+            if (limit < 1 && t >= limit) break;
+            if (interrupted(slash, player)) return t;
+            if (apply(slash, player, contact, sweep.sweep(), 0, Settlement.ORDINARY).outcome == Outcome.BLOCKED
+                    || slash.potential().remaining() <= 0 || slash.fragments() != null) return t;
+        }
+        return limit;
     }
 
-    static double resolve(SlashEntity slash, ServerPlayer player, List<SlashGeometry.Sweep> sweeps, Budget budget) {
-        if (slash.hitBlocks.size() >= SlashEntity.MAX_BLOCKS || slash.hitEntities.size() >= SlashEntity.MAX_TARGETS)
-            return 0;
-        Parts result = collect(slash, player, sweeps, budget, true, null, null, Settlement.ORDINARY);
-        for (boolean accepted : result.accepted) if (!accepted) { budget.exhausted = true; return 0; }
-        return Arrays.stream(result.fractions).min().orElse(0);
+    private static boolean interrupted(SlashEntity slash, ServerPlayer player) {
+        return slash.isRemoved() || !player.isAlive() || player.level() != slash.level() || slash.potential().remaining() <= 0;
     }
 
     /** Same native settlement for linear and radial geometry; a stopped part cannot cancel its neighbours. */
@@ -68,7 +76,8 @@ final class SlashCollision {
         static final Applied HIT = new Applied(Outcome.HIT, 0);
         static final Applied BLOCKED = new Applied(Outcome.BLOCKED, 0);
     }
-    private static Applied apply(SlashEntity slash, ServerPlayer player, Contact contact, double fragmentCost, Settlement settlement) {
+    private static Applied apply(SlashEntity slash, ServerPlayer player, Contact contact, SlashGeometry.Sweep sweep,
+                                 double fragmentCost, Settlement settlement) {
         boolean fragment = settlement == Settlement.FRAGMENT;
         ServerLevel level = player.serverLevel();
         if (contact.block != null) {
@@ -117,14 +126,15 @@ final class SlashCollision {
                         double proportion = SlashWeaponEffects.sectionHit(slash, player, entity);
                         if (proportion <= 0) return Applied.PASS;
                         slash.potential(slash.potential().afterBlock(available * proportion));
-                        slash.contact(contact.hit.point());
+                        livingHit(slash, player, entity, contact.hit.point(), sweep);
                         return new Applied(Outcome.HIT, proportion);
                     }
                     if (!intercepted && !(fragment
                             ? SlashWeaponEffects.fissionHit(slash, player, entity, fragmentCost, 1)
                             : SlashWeaponEffects.hit(slash, player, entity))) return Applied.PASS;
                     slash.potential(fragment ? slash.potential().afterBlock(fragmentCost) : slash.potential().afterEntity());
-                    slash.contact(contact.hit.point());
+                    if (intercepted) slash.contact(contact.hit.point());
+                    else livingHit(slash, player, entity, contact.hit.point(), sweep);
                     if (settlement == Settlement.ORDINARY) SlashFission.scatter(slash,
                             entity.getBoundingBox().getCenter(), SlashPotential.ENTITY_COST);
                     return Applied.HIT;
@@ -133,126 +143,140 @@ final class SlashCollision {
         return Applied.PASS;
     }
 
+    private static void livingHit(SlashEntity slash, ServerPlayer caster, Entity target, Vec3 point, SlashGeometry.Sweep sweep) {
+        SlashHitParticle.emit(slash, caster, target.getId(), point, sweep);
+        SlashSounds.livingContact(slash, caster, point);
+    }
+
     record Cut(int part, Vec3 point, double proportion) {}
     record Parts(double[] fractions, boolean[] accepted, boolean[] consumed, boolean[] stopped, Cut cut) {}
-    private record PartContact(int part, Contact contact) {}
+
+    /** A zero rate is instantaneous formation; other fronts share elapsed simulation time. */
+    record Timing(TravelStep travel, double start, double rate) {
+        double at(double fraction) { return rate == 0 ? start : start + travel.spentAt(fraction) / rate; }
+        double before(double time, double limit) {
+            if (at(0) >= time) return 0;
+            if (at(limit) <= time) return limit;
+            double work = Math.max(0, (time - start) * rate);
+            if (start + work / rate > time) work = Math.max(0, Math.nextDown(work));
+            return travel.fractionForWork(work, limit);
+        }
+    }
 
     /** Collect first, then settle globally in time order. Unchecked parts wait, never move through gaps. */
-    static Parts resolveParts(SlashEntity slash, ServerPlayer player, List<SlashGeometry.Sweep> sweeps, Budget budget,
-                              List<DoubleUnaryOperator> timeline) {
-        return collect(slash, player, sweeps, budget, false, timeline, null,
+    static Parts resolveParts(SlashEntity slash, ServerPlayer player, List<SlashQueries.Coverage> sweeps, Budget budget,
+                              List<Timing> timeline) {
+        return resolveMany(slash, player, sweeps, budget, timeline, null,
                 slash.fission() ? Settlement.SECTION : Settlement.ORDINARY);
     }
 
-    static Parts resolveFragments(SlashEntity slash, ServerPlayer player, List<SlashGeometry.Sweep> sweeps,
+    static Parts resolveFragments(SlashEntity slash, ServerPlayer player, List<SlashQueries.Coverage> sweeps,
                                   Budget budget, double[] costs) {
         if (costs.length != sweeps.size()) throw new IllegalArgumentException("Fragment cost count");
-        return collect(slash, player, sweeps, budget, false, null, costs, Settlement.FRAGMENT);
+        return resolveMany(slash, player, sweeps, budget, null, costs, Settlement.FRAGMENT);
     }
 
-    private static Parts collect(SlashEntity slash, ServerPlayer player, List<SlashGeometry.Sweep> sweeps,
-                                 Budget budget, boolean linked, List<DoubleUnaryOperator> timeline, double[] fragmentCosts,
-                                 Settlement settlement) {
-        ServerLevel level = player.serverLevel();
-        double[] limits = new double[sweeps.size()]; boolean[] accepted = new boolean[sweeps.size()];
-        boolean[] consumed = new boolean[sweeps.size()];
-        boolean[] stopped = new boolean[sweeps.size()];
-        List<PartContact> all = new ArrayList<>();
-        // Cache only within collection, before the first callback or world mutation.
+    /** For one sweep, a negative result means its work budget was insufficient. */
+    private static double collect(SlashEntity slash, ServerPlayer player, SlashQueries.Coverage geometry, Budget budget,
+                                  Map<BlockPos, List<AABB>> shapes, int part, Timing timing, boolean fragment,
+                                  List<Contact> contacts) {
+        var sweep = geometry.sweep();
+        double field = budget.space.segmentEntry(sweep.from(), sweep.to(), sweep.blade(),
+                sweep.halfBefore(), sweep.halfAfter(), sweep.padding());
+        if (field <= 0) return 0;
+        var cover = geometry.boxes();
+        if (cover.isEmpty() || cover.size() > budget.queries) return -1;
+        budget.queries -= cover.size();
+        Set<BlockPos> cells = new LinkedHashSet<>();
+        List<BlockPos> freshCells = new ArrayList<>();
+        if (!slash.passesBlocks()) {
+            int visits = geometry.countCellsUntilOver(budget.radialVisits);
+            if (visits > budget.radialVisits) return -1;
+            budget.radialVisits -= visits;
+            for (AABB box : cover) for (BlockPos pos : SlashQueries.cells(box)) {
+                BlockPos key = pos.immutable();
+                if (!cells.add(key) || budget.radialCells.contains(key)) continue;
+                freshCells.add(key);
+                if (freshCells.size() > budget.cells) return -1;
+            }
+        }
+        if (budget.intersections <= 0) return -1;
+        List<Contact> local = new ArrayList<>();
+        for (BlockPos pos : cells) {
+            if (slash.hitBlocks.contains(pos.asLong())) continue;
+            var boxes = shapes == null ? SlashBlockPassage.boxes(slash, player, pos)
+                    : shapes.computeIfAbsent(pos, key -> SlashBlockPassage.boxes(slash, player, key));
+            if (boxes.size() > MAX_SHAPES) return 0;
+            SlashGeometry.Contact first = null;
+            for (AABB box : boxes) {
+                if (--budget.intersections < 0) return -1;
+                var hit = sweep.contact(box.move(pos));
+                if (hit != null && (first == null || hit.fraction() < first.fraction())) first = hit;
+            }
+            if (first != null) local.add(new Contact(part, timing, first, pos, null));
+        }
+        Set<Entity> entities = new LinkedHashSet<>();
+        for (AABB box : cover) {
+            List<Entity> found = new ArrayList<>();
+            player.serverLevel().getEntities(EntityTypeTest.forClass(Entity.class), box,
+                    e -> target(e, player) && (fragment || !slash.hitEntities.contains(identity(e))) && !entities.contains(e),
+                    found, SlashEntity.MAX_TARGETS + 1 - entities.size());
+            entities.addAll(found);
+            if (entities.size() > SlashEntity.MAX_TARGETS) return -1;
+        }
+        Set<UUID> freshTargets = new HashSet<>();
+        for (Entity entity : entities) if (!budget.radialTargets.contains(entity.getUUID())) freshTargets.add(entity.getUUID());
+        if (freshTargets.size() > budget.targets) return -1;
+        for (Entity entity : entities) {
+            if (--budget.intersections < 0) return -1;
+            var hit = sweep.contact(entity.getBoundingBox());
+            if (hit != null) local.add(new Contact(part, timing, hit, null, entity));
+        }
+        budget.radialCells.addAll(freshCells); budget.cells -= freshCells.size();
+        budget.radialTargets.addAll(freshTargets); budget.targets -= freshTargets.size();
+        contacts.addAll(local);
+        return field;
+    }
+
+    private static Parts resolveMany(SlashEntity slash, ServerPlayer player, List<SlashQueries.Coverage> sweeps,
+                                     Budget budget, List<Timing> timeline, double[] fragmentCosts, Settlement settlement) {
+        int count = sweeps.size();
+        double[] limits = new double[count];
+        boolean[] accepted = new boolean[count], consumed = new boolean[count], stopped = new boolean[count];
+        List<Contact> all = new ArrayList<>();
         Map<BlockPos, List<AABB>> shapes = new HashMap<>();
-        parts: for (int n = 0; n < sweeps.size(); n++) {
-            SlashGeometry.Sweep sweep = sweeps.get(n);
-            double field = budget.space.segmentEntry(sweep.from(), sweep.to(), sweep.blade(),
-                    sweep.halfBefore(), sweep.halfAfter(), sweep.padding());
-            if (field <= 0) { accepted[n] = true; stopped[n] = true; continue; }
-            List<AABB> cover = SlashQueries.cover(sweep);
-            if (cover.isEmpty()) break;
-            if (cover.size() > budget.queries) break;
-            budget.queries -= cover.size();
-            Set<BlockPos> cells = new LinkedHashSet<>(); Set<BlockPos> freshCells = new HashSet<>();
-            if (!slash.passesBlocks()) {
-                double visits = cover.stream().mapToDouble(SlashQueries::volume).sum();
-                if (visits > budget.radialVisits) break;
-                budget.radialVisits -= (int) visits;
-                for (AABB box : cover) for (BlockPos pos : SlashQueries.cells(box)) {
-                    BlockPos key = pos.immutable(); cells.add(key);
-                    if (!budget.radialCells.contains(key)) freshCells.add(key);
-                    if (freshCells.size() > budget.cells) break parts;
-                }
-            }
-            if (freshCells.size() > budget.cells || budget.intersections <= 0) break;
-            List<Contact> local = new ArrayList<>(); boolean overflow = false;
-            for (BlockPos pos : cells) {
-                if (slash.hitBlocks.contains(pos.asLong())) continue;
-                var boxes = shapes.computeIfAbsent(pos, key -> SlashBlockPassage.boxes(slash, player, key));
-                if (boxes.size() > MAX_SHAPES) { accepted[n] = true; stopped[n] = true; continue parts; }
-                SlashGeometry.Contact first = null;
-                for (AABB box : boxes) {
-                    if (--budget.intersections < 0) { overflow = true; break; }
-                    var hit = sweep.contact(box.move(pos));
-                    if (hit != null && (first == null || hit.fraction() < first.fraction())) first = hit;
-                }
-                if (overflow) break;
-                if (first != null) local.add(new Contact(first, pos, null));
-            }
-            if (overflow) break;
-            // Thin-piece entity queries avoid scanning the empty centre of a large circular wave.
-            Set<Entity> entities = new LinkedHashSet<>();
-            for (AABB box : cover) {
-                List<Entity> found = new ArrayList<>();
-                level.getEntities(EntityTypeTest.forClass(Entity.class), box,
-                        e -> target(e, player) && (fragmentCosts != null || !slash.hitEntities.contains(identity(e))) && !entities.contains(e),
-                        found, SlashEntity.MAX_TARGETS + 1 - entities.size());
-                entities.addAll(found);
-                if (entities.size() > SlashEntity.MAX_TARGETS) break parts;
-            }
-            Set<UUID> freshTargets = new HashSet<>();
-            for (Entity e : entities) if (!budget.radialTargets.contains(e.getUUID())) freshTargets.add(e.getUUID());
-            if (freshTargets.size() > budget.targets) break;
-            for (Entity e : entities) {
-                if (--budget.intersections < 0) { overflow = true; break; }
-                var hit = sweep.contact(e.getBoundingBox());
-                if (hit != null) local.add(new Contact(hit, null, e));
-            }
-            if (overflow) break;
-            budget.radialCells.addAll(freshCells); budget.cells -= freshCells.size();
-            budget.radialTargets.addAll(freshTargets); budget.targets -= freshTargets.size();
-            accepted[n] = true; limits[n] = field; stopped[n] = field < 1;
-            for (Contact contact : local) all.add(new PartContact(n, contact));
+        for (int part = 0; part < count; part++) {
+            double limit = collect(slash, player, sweeps.get(part), budget, shapes, part,
+                    timeline == null ? null : timeline.get(part), fragmentCosts != null, all);
+            if (limit < 0) break;
+            limits[part] = limit;
+            accepted[part] = true;
+            stopped[part] = limit < 1;
         }
-        // A linear stroke is one body. No side effects until all its pieces have been checked.
-        if (linked) {
-            for (boolean ready : accepted) if (!ready) return new Parts(limits, accepted, consumed, stopped, null);
-            double earliest = Arrays.stream(limits).min().orElse(0);
-            Arrays.fill(limits, earliest);
-            if (earliest < 1) Arrays.fill(stopped, true);
-        }
-        all.sort(Comparator.comparingDouble((PartContact p) -> time(timeline, p.part, p.contact.hit.fraction()))
-                .thenComparingInt(p -> p.contact.block == null ? 1 : 0).thenComparingInt(PartContact::part));
-        for (PartContact hit : all) {
-            int n = hit.part; double t = hit.contact.hit.fraction();
+        all.sort(ORDER);
+        for (Contact hit : all) {
+            int n = hit.part; double t = hit.hit.fraction();
             if (consumed[n] || limits[n] < 1 && t >= limits[n]) continue;
-            if (slash.isRemoved() || !player.isAlive() || player.level() != slash.level() || slash.potential().remaining() <= 0) {
-                stopAt(limits, timeline, time(timeline, n, t));
+            if (interrupted(slash, player)) {
+                stopAt(limits, timeline, hit.time);
                 Arrays.fill(stopped, true);
                 break;
             }
-            Applied applied = apply(slash, player, hit.contact, fragmentCosts == null ? 0 : fragmentCosts[n], settlement);
+            Applied applied = apply(slash, player, hit, sweeps.get(n).sweep(), fragmentCosts == null ? 0 : fragmentCosts[n], settlement);
             Outcome outcome = applied.outcome();
             if (applied.cut() > 0) {
                 double[] priorLimits = limits.clone();
-                stopAt(limits, timeline, time(timeline, n, t));
+                stopAt(limits, timeline, hit.time);
                 // A cut is a re-collection boundary, not a wall. Preserve only stops already reached.
                 for (int i = 0; i < limits.length; i++) if (limits[i] < priorLimits[i] - 1.0E-10) stopped[i] = false;
-                return new Parts(limits, accepted, consumed, stopped, new Cut(n, hit.contact.hit.point(), applied.cut()));
+                return new Parts(limits, accepted, consumed, stopped, new Cut(n, hit.hit.point(), applied.cut()));
             }
             if (fragmentCosts != null && outcome == Outcome.HIT) consumed[n] = true;
             if (outcome == Outcome.BLOCKED || consumed[n]) {
-                if (linked) { Arrays.fill(limits, t); Arrays.fill(stopped, true); }
-                else { limits[n] = t; stopped[n] = true; }
+                limits[n] = t; stopped[n] = true;
             }
             if (slash.potential().remaining() <= 0 || fragmentCosts == null && slash.fragments() != null) {
-                stopAt(limits, timeline, time(timeline, n, t));
+                stopAt(limits, timeline, hit.time);
                 Arrays.fill(stopped, true);
                 break;
             }
@@ -260,23 +284,11 @@ final class SlashCollision {
         return new Parts(limits, accepted, consumed, stopped, null);
     }
 
-    private static double time(List<DoubleUnaryOperator> timeline, int part, double fraction) {
-        return timeline == null ? fraction : timeline.get(part).applyAsDouble(fraction);
-    }
-
     /** Convert a shared event time back into each independently quoted movement prefix. */
-    private static void stopAt(double[] limits, List<DoubleUnaryOperator> timeline, double time) {
+    private static void stopAt(double[] limits, List<Timing> timeline, double time) {
         for (int i = 0; i < limits.length; i++) {
             if (timeline == null) { limits[i] = Math.min(limits[i], time); continue; }
-            var clock = timeline.get(i);
-            if (clock.applyAsDouble(0) >= time) { limits[i] = 0; continue; }
-            if (clock.applyAsDouble(limits[i]) <= time) continue;
-            double low = 0, high = limits[i];
-            for (int j = 0; j < 40; j++) {
-                double middle = (low + high) * .5;
-                if (clock.applyAsDouble(middle) <= time) low = middle; else high = middle;
-            }
-            limits[i] = low;
+            limits[i] = timeline.get(i).before(time, limits[i]);
         }
     }
 

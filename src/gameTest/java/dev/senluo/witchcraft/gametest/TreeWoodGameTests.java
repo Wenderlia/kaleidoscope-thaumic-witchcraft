@@ -9,11 +9,204 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
 import dev.senluo.witchcraft.ritual.TreeBond;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class TreeWoodGameTests {
+    // Observe traversal identity without instrumenting the production loop.
+    private static Set<?> publishedPaths(TreeLogic trees, BlockPos origin) {
+        try {
+            var field = TreeLogic.class.getDeclaredField("livePaths");
+            field.setAccessible(true);
+            return (Set<?>) ((Map<?,?>) field.get(trees)).get(origin);
+        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+    }
+
+    @GameTest(batch="regrowthGiant", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=240)
+    public static void giantLeavesRegrowAsTheyAreSheared(GameTestHelper h) {
+        var level = h.getLevel();
+        BlockPos origin = h.absolutePos(new BlockPos(19,6,19));
+        var layout = GiantTreeShape.layout(Direction.NORTH.get3DDataValue());
+        for (var entry : layout.entrySet()) level.setBlock(origin.offset(entry.getKey()),entry.getValue().state(),3);
+        level.setBlock(origin.below(),Blocks.FARMLAND.defaultBlockState(),3);
+        level.setBlock(origin,TemporalContent.CORE.get().defaultBlockState(),3);
+        var core = (LivingEntity)level.getBlockEntity(origin);
+        core.tissue.rootStage=4; core.tissue.tree=true; core.tissue.giant=true;
+        core.tissue.treeFacing=Direction.NORTH.get3DDataValue();
+        core.tissue.setCoreQuantity(1_000_000L*Tissue.TU);
+        core.changed();
+        TemporalWorld.get(level).add(core);
+        BlockPos loose = origin.offset(14,3,14);
+        level.setBlock(loose,TemporalContent.TIME_LOG.get().defaultBlockState(),3);
+        h.runAfterDelay(140,()->{
+            var leaves = layout.keySet().stream().map(origin::offset)
+                    .filter(p -> level.getBlockState(p).is(TemporalContent.TIME_LEAVES.get()))
+                    .filter(p -> Arrays.stream(Direction.values()).anyMatch(d -> level.getBlockState(p.relative(d)).is(TreeWood.LOGS)))
+                    .sorted(Comparator.comparingInt((BlockPos p) -> p.getY()).reversed().thenComparingLong(BlockPos::asLong))
+                    .limit(70).toList();
+            h.assertTrue(leaves.size()==70,"The mature crown supplies supported leaves for a batch harvest");
+            var player = DevelopmentGameTests.player(h,core);
+            player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            player.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(Items.SHEARS));
+            Set<?> graph = publishedPaths(TemporalWorld.get(level).trees, origin);
+            h.assertTrue(graph != null && !graph.contains(loose), "The detached wood was already observed outside the tree");
+            player.setPos(loose.getX()+0.5,loose.getY(),loose.getZ()+1.5);
+            h.assertTrue(player.gameMode.destroyBlock(loose) && graph == publishedPaths(TemporalWorld.get(level).trees,origin),
+                    "Mining disconnected wood must reuse the published tree without a synchronous rebuild");
+            var sequence=h.startSequence();
+            for (var leaf : leaves.subList(0,12)) {
+                sequence.thenExecute(()->{
+                    player.setPos(leaf.getX()+0.5,leaf.getY(),leaf.getZ()+1.5);
+                    h.assertTrue(player.gameMode.destroyBlock(leaf) && level.getBlockState(leaf).isAir(),"Shearing removes the remembered leaf");
+                }).thenExecuteAfter(1,()->{
+                    var regrown = level.getBlockState(leaf);
+                    h.assertTrue(regrown.is(TemporalContent.TIME_LEAVES.get()) && regrown.getValue(TreeLeavesBlock.GREAT_TREE),
+                            "Every harvest regrows a mature leaf on the following native tick");
+                });
+            }
+            sequence.thenExecute(()->{
+                for (BlockPos leaf:leaves) h.assertTrue(level.removeBlock(leaf,false),"The batch removes every leaf");
+            }).thenExecuteAfter(1,()->h.assertTrue(leaves.stream().filter(p->level.getBlockState(p).is(TemporalContent.TIME_LEAVES.get())).count()<=16,
+                    "Batch recovery cannot overrun the world's repair budget"))
+                    .thenWaitUntil(()->h.assertTrue(leaves.stream().allMatch(p->level.getBlockState(p).is(TemporalContent.TIME_LEAVES.get())),
+                            "Every eligible leaf wakes after more than one slice of cuts")).thenSucceed();
+        });
+    }
+
+    @GameTest(batch="regrowthBridge", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
+    public static void twoBridgeCutsCannotAuthorizeFloatingRepairs(GameTestHelper h) {
+        var core = TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var level=h.getLevel();
+        var trees=TemporalWorld.get(level).trees;
+        var origin=core.getBlockPos();
+        var log=TreeShapeSpace.state(Direction.Axis.X);
+        for (int x=1;x<=7;x++) level.setBlock(origin.east(x),log,3);
+        var bridge=origin.east(4);
+        var parallel=bridge.south();
+        var tip=origin.east(7);
+        level.setBlock(parallel,log,3);
+        core.tissue.setCoreQuantity(1000*Tissue.TU);
+        trees.tick(core);
+        for (int i=0;i<12;i++) trees.flush();
+        h.assertTrue(core.tissue.shapeSpace.has(tip.subtract(origin).asLong()),"The far branch has a restoration target");
+        long balance=core.tissue.coreQuantity();
+        level.setBlock(bridge,Blocks.STONE.defaultBlockState(),3);
+        level.removeBlock(tip,false);
+        trees.flush();
+        h.assertTrue(level.getBlockState(tip)==log && core.tissue.coreQuantity()==balance-TreeBalance.LOG_REPAIR,
+                "One surviving route permits one paid repair");
+        level.removeBlock(bridge,false);
+        for(int i=0;i<4;i++) trees.flush();
+        balance=core.tissue.coreQuantity();
+        level.setBlock(parallel,Blocks.STONE.defaultBlockState(),3);
+        level.setBlock(bridge,Blocks.STONE.defaultBlockState(),3);
+        level.removeBlock(tip,false);
+        for(int i=0;i<12;i++) trees.flush();
+        h.assertTrue(level.getBlockState(tip).isAir() && core.tissue.coreQuantity()==balance,
+                "Cutting both bridges together leaves the detached branch unpaid");
+        level.removeBlock(bridge,false);
+        for(int i=0;i<12;i++) trees.flush();
+        h.assertTrue(level.getBlockState(bridge)==log && level.getBlockState(tip)==log
+                && core.tissue.coreQuantity()==balance-2*TreeBalance.LOG_REPAIR,
+                "An opening first repairs the bridge, then wakes and pays for the far branch");
+        h.succeed();
+    }
+
+    @GameTest(batch="regrowthFairness", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
+    public static void fiveTreesShareOneConnectionBudget(GameTestHelper h) {
+        var level=h.getLevel();
+        var world=TemporalWorld.get(level);
+        var trees=world.trees;
+        var leaves=new ArrayList<BlockPos>();
+        for (int i=0;i<5;i++) {
+            BlockPos origin=h.absolutePos(new BlockPos(4+7*(i%3),4,4+7*(i/3)));
+            level.setBlock(origin.below(),Blocks.FARMLAND.defaultBlockState(),3);
+            level.setBlock(origin,TemporalContent.CORE.get().defaultBlockState(),3);
+            var core=(LivingEntity)level.getBlockEntity(origin);
+            core.tissue.rootStage=4; core.tissue.tree=true; core.tissue.setCoreQuantity(1000*Tissue.TU);
+            core.changed(); world.add(core);
+            TreeGameTests.crown(h,core);
+            trees.tick(core);
+            leaves.add(origin.offset(1,3,0));
+        }
+        for (int i=0;i<64;i++) trees.flush();
+        for (var leaf:leaves) level.removeBlock(leaf,false);
+        trees.flush();
+        long first=leaves.stream().filter(p->level.getBlockState(p).is(TemporalContent.TIME_LEAVES.get())).count();
+        h.assertTrue(first>0 && first<=4,"A round serves at most four affected trees");
+        for (int i=0;i<4;i++) trees.flush();
+        h.assertTrue(leaves.stream().allMatch(p->level.getBlockState(p).is(TemporalContent.TIME_LEAVES.get())),
+                "Rotation eventually serves every tree");
+        h.succeed();
+    }
+
+    @GameTest(batch="regrowthDoor", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
+    public static void regrowthPaysForBothDoorHalvesTogether(GameTestHelper h) {
+        var core=TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var level=h.getLevel();
+        var trees=TemporalWorld.get(level).trees;
+        var lower=core.getBlockPos().east().above();
+        var upper=lower.above();
+        var door=YearsWoodContent.DOOR.get().defaultBlockState();
+        var half=net.minecraft.world.level.block.DoorBlock.HALF;
+        var upperHalf=net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER;
+        level.setBlock(lower.below(),Blocks.STONE.defaultBlockState(),3);
+        level.setBlock(lower,door,18);
+        level.setBlock(upper,door.setValue(half,upperHalf),18);
+        trees.tick(core);
+        for (int i=0;i<12;i++) trees.flush();
+        h.assertTrue(core.tissue.shapeSpace.has(lower.subtract(core.getBlockPos()).asLong())
+                && core.tissue.shapeSpace.has(upper.subtract(core.getBlockPos()).asLong()),"Both connected halves were grafted");
+        core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
+        level.removeBlock(lower,false);
+        if (!level.getBlockState(upper).isAir()) level.removeBlock(upper,false);
+        level.removeBlock(lower.below(),false);
+        for (int i=0;i<4;i++) trees.flush();
+        var colony = TemporalWorld.get(level).colony(core);
+        h.assertTrue(FruitFeeding.reserve(colony)==0, "A door without its floor leaves all funds available");
+        level.setBlock(lower.below(),Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(FruitFeeding.reserve(colony)==2*TreeBalance.LOG_REPAIR, "Two missing halves are one door quote");
+        var floor = lower.below();
+        var chunk = level.getChunkAt(floor);
+        chunk.setBlockState(floor, TemporalContent.TIME_LOG.get().defaultBlockState(), false);
+        h.assertTrue(FruitFeeding.reserve(colony)==2*TreeBalance.LOG_REPAIR, "A solid wood floor still supports both halves");
+        chunk.setBlockState(floor, Blocks.AIR.defaultBlockState(), false);
+        h.assertTrue(FruitFeeding.reserve(colony)==0, "Direct chunk removal of the floor releases the cached door quote");
+        level.setBlock(floor,Blocks.STONE.defaultBlockState(),3);
+        trees.flush();
+        h.assertTrue(level.getBlockState(lower).isAir() && level.getBlockState(upper).isAir()
+                && core.tissue.coreQuantity()==TreeBalance.LOG_REPAIR,"A half-funded door waits without spending");
+        core.tissue.setCoreQuantity(2*TreeBalance.LOG_REPAIR);
+        trees.tick(core);
+        for (int i=0;i<4;i++) trees.flush();
+        h.assertTrue(level.getBlockState(lower).is(door.getBlock()) && level.getBlockState(upper).is(door.getBlock())
+                && level.getBlockState(upper).getValue(half)==upperHalf && core.tissue.coreQuantity()==0,
+                "A restored pair charges its two missing halves once");
+        level.setBlock(upper,Blocks.AIR.defaultBlockState(),18);
+        for (int i=0;i<4;i++) trees.flush();
+        h.assertTrue(level.getBlockState(lower).is(door.getBlock()) && FruitFeeding.reserve(colony)==TreeBalance.LOG_REPAIR,
+                "A surviving lower half reserves only its missing upper half");
+        core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
+        trees.tick(core);
+        trees.flush();
+        h.assertTrue(level.getBlockState(upper).is(door.getBlock()) && core.tissue.coreQuantity()==0,
+                "Completing one half costs exactly one repair");
+        level.removeBlock(core.getBlockPos(),false);
+        h.succeed();
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
     public static void overlappingClaimsSurviveIndexReloadUntilCoreRemoval(GameTestHelper h) {
         var first = TreeGameTests.plant(h, true);
@@ -151,6 +344,45 @@ public final class TreeWoodGameTests {
         h.succeed();
     }
 
+    @GameTest(batch="regrowthGraft", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=80)
+    public static void sameTickGraftAndDirectChunkRemovalPreserveTheBranch(GameTestHelper h) {
+        var level = h.getLevel();
+        var core = TreeGameTests.plant(h,true);
+        TreeGameTests.crown(h,core);
+        var trees = TemporalWorld.get(level).trees;
+        for (int i=0; i<12; i++) trees.flush();
+        BlockPos origin = core.getBlockPos(), bridge = origin.east().above(), tip = bridge.east();
+        var log = TreeShapeSpace.state(Direction.Axis.X);
+        level.setBlock(bridge,log,3);
+        level.setBlock(tip,log,3);
+        var player = DevelopmentGameTests.player(h,core);
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        player.setPos(bridge.getX()+0.5,bridge.getY(),bridge.getZ()+1.5);
+        h.assertTrue(player.gameMode.destroyBlock(bridge) && core.tissue.shapeSpace.has(tip.subtract(origin).asLong()),
+                "Harvesting the new bridge in the placement tick captures its far end");
+        level.getChunkAt(tip).setBlockState(tip,Blocks.AIR.defaultBlockState(),false);
+        core.tissue.setCoreQuantity(2*TreeBalance.LOG_REPAIR);
+        for (int i=0; i<24; i++) trees.flush();
+        h.assertTrue(level.getBlockState(bridge).equals(log) && level.getBlockState(tip).equals(log)
+                && core.tissue.coreQuantity()==0, "Normal and direct chunk removals each restore and charge once");
+
+        var snapshots = level.capturedBlockSnapshots;
+        int prior = snapshots.size();
+        level.captureBlockSnapshots = true;
+        try { level.setBlock(tip,Blocks.AIR.defaultBlockState(),3); }
+        finally { level.captureBlockSnapshots = false; }
+        level.restoringBlockSnapshots = true;
+        try {
+            for (int i=snapshots.size()-1; i>=prior; i--) snapshots.remove(i).restore();
+        } finally { level.restoringBlockSnapshots = false; }
+        core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
+        for (int i=0; i<12; i++) trees.flush();
+        h.assertTrue(level.getBlockState(tip).equals(log) && core.tissue.coreQuantity()==TreeBalance.LOG_REPAIR
+                && trees.restorationReserve(core)==0, "A reverted removal leaves no bill");
+        level.removeBlock(origin,false);
+        h.succeed();
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=60)
     public static void woodMemoryRespectsStageBoundsAndSaveValidation(GameTestHelper h) {
         Tissue t = new Tissue(); t.tree = true; t.rootStage = 4;
@@ -200,6 +432,63 @@ public final class TreeWoodGameTests {
         h.succeed();
     }
 
+    @GameTest(batch="matureLeafPlacement", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=220)
+    public static void matureCoreLightsPlayerPlacedGraft(GameTestHelper h) {
+        var core = TreeGameTests.plant(h, true);
+        var level = h.getLevel();
+        var trees = TemporalWorld.get(level).trees;
+        core.tissue.giant = true;
+        trees.tick(core);
+        BlockPos origin = core.getBlockPos(), branch = origin.east(2), graft = branch.east();
+        BlockPos loose = origin.west(6);
+        var log = TreeShapeSpace.state(Direction.Axis.X);
+        level.setBlock(origin.east(), log, 3);
+        level.setBlock(branch, log, 3);
+        level.setBlock(loose, TemporalContent.TIME_LEAVES.get().defaultBlockState(), 3);
+        var player = DevelopmentGameTests.player(h, core);
+        var item = new ItemStack(TemporalContent.LEAVES_ITEM.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, item);
+        player.gameMode.useItemOn(player, level, item, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(branch).add(0.5, 0, 0), Direction.EAST, branch, false));
+        h.assertTrue(level.getBlockState(graft).is(TemporalContent.TIME_LEAVES.get()), "BlockItem placed a real leaf");
+        h.succeedWhen(() -> {
+            var state = level.getBlockState(graft);
+            h.assertTrue(core.tissue.shapeSpace.grafted(graft.subtract(origin).asLong()), "The branch joined this core");
+            h.assertTrue(state.getValue(TreeLeavesBlock.GREAT_TREE) && state.getValue(LeavesBlock.PERSISTENT),
+                    "A new graft on a mature tree uses the bright model and stays player-placed");
+            h.assertTrue(!level.getBlockState(loose).getValue(TreeLeavesBlock.GREAT_TREE)
+                    && !core.tissue.shapeSpace.has(loose.subtract(origin).asLong()), "A loose leaf in range stays ordinary");
+        });
+    }
+
+    @GameTest(batch="matureLeafReload", templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=100)
+    public static void matureCoreRepairsOldGraftOnLoad(GameTestHelper h) {
+        var core = TreeGameTests.plant(h, true);
+        var level = h.getLevel();
+        BlockPos offset = new BlockPos(1, 0, 0), pos = core.getBlockPos().offset(offset);
+        var oldLeaf = TemporalContent.TIME_LEAVES.get().defaultBlockState()
+                .setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z).setValue(LeavesBlock.WATERLOGGED, true);
+        level.setBlock(pos, oldLeaf, 3);
+        core.tissue.shapeSpace.remember(core.tissue, offset, oldLeaf);
+        core.tissue.formedTree.add(offset.asLong());
+        var saved = TissueTag.save(core.tissue);
+        // Old saves can already have a completed template while the graft still has its ordinary model.
+        saved.putBoolean("Giant", true);
+        saved.getCompound("WoodMemory").putInt("Phase", 4);
+        core.tissue = TissueTag.load(saved);
+        var trees = TemporalWorld.get(level).trees;
+        trees.register(core);
+        h.succeedWhen(() -> {
+            var state = level.getBlockState(pos);
+            h.assertTrue(state.getValue(TreeLeavesBlock.GREAT_TREE), "Registration repairs the existing world leaf");
+            h.assertTrue(state.getValue(LeavesBlock.PERSISTENT) && state.getValue(LeavesBlock.WATERLOGGED)
+                    && state.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Z, "Repair preserves its placed form");
+            var reloaded = TissueTag.load(TissueTag.save(core.tissue)).shapeSpace;
+            h.assertTrue(reloaded.grafted(offset.asLong()) && reloaded.cells().get(offset.asLong()).getValue(TreeLeavesBlock.GREAT_TREE),
+                    "The corrected graft survives the next save");
+        });
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=80)
     public static void connectedLeafGraftsRepairWithoutBecomingWoodSupply(GameTestHelper h) {
         var core = TreeGameTests.plant(h, true);
@@ -226,10 +515,11 @@ public final class TreeWoodGameTests {
         long reserve = trees.restorationReserve(core);
         h.assertTrue(reserve == 0, "Unknown physical connectivity does not authorize a paid repair reserve");
         for (int i=0; i<64; i++) trees.flush();
+        var regrown = level.getBlockState(tip);
         h.assertTrue(level.getBlockState(first).is(TemporalContent.TIME_LEAVES.get())
-                && level.getBlockState(tip).is(TemporalContent.TIME_LEAVES.get())
-                && level.getBlockState(tip).getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT),
-                "Both remembered grafts regrow even after the leaf bridge is removed");
+                && regrown.is(TemporalContent.TIME_LEAVES.get()) && regrown.getValue(LeavesBlock.PERSISTENT)
+                && !regrown.getValue(TreeLeavesBlock.GREAT_TREE),
+                "Both grafts regrow on the small tree and the tip keeps its ordinary placed form");
         h.succeed();
     }
 }

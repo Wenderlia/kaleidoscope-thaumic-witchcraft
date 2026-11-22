@@ -1,12 +1,16 @@
 package dev.senluo.witchcraft.gametest;
 
+import dev.senluo.witchcraft.brew.AmberFerments;
 import dev.senluo.witchcraft.time.*;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.CreativeModeTab;
@@ -488,12 +492,20 @@ public final class TemporalGameTests {
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft", template = "empty", timeoutTicks = 60)
     public static void ownCreativeTabListsAllOwnItemsAndSupportsSearch(GameTestHelper h) {
-        CreativeModeTab tab=TemporalContent.CREATIVE_TAB.get();
-        tab.buildContents(new CreativeModeTab.ItemDisplayParameters(h.getLevel().enabledFeatures(),true,h.getLevel().registryAccess()));
-        check(h,tab.shouldDisplay() && tab.getDisplayItems().size()==2,"The mod tab must be visible and contain both obtainable materials");
-        check(h,tab.getDisplayItems().stream().anyMatch(s->s.is(TemporalContent.TISSUE.get())),"Tissue must be obtainable in the mod tab");
-        check(h,tab.getDisplayItems().stream().anyMatch(s->s.is(TemporalContent.ROOT_PIECE.get())),"Root segments must be obtainable in the mod tab");
-        check(h,tab.getSearchTabDisplayItems().size()==2,"Both items must also be discoverable through creative search");
+        var tab = TemporalContent.CREATIVE_TAB.get();
+        var world = h.getLevel();
+        tab.buildContents(new CreativeModeTab.ItemDisplayParameters(world.enabledFeatures(), true, world.registryAccess()));
+        check(h, tab.shouldDisplay(), "The mod tab is available");
+        var expected = new ArrayList<Item>(List.of(TemporalContent.TISSUE.get(), TemporalContent.ROOT_PIECE.get(),
+                TemporalContent.FRUIT_ITEM.get(), TemporalContent.LIUJIN_VODKA.get()));
+        for (var entry : AmberFerments.ENTRIES) {
+            expected.add(entry.bucket.get());
+            expected.add(entry.wine.get());
+        }
+        for (var item : expected) {
+            check(h, tab.getDisplayItems().stream().anyMatch(stack -> stack.is(item)), "Creative listing: " + item);
+            check(h, tab.getSearchTabDisplayItems().stream().anyMatch(stack -> stack.is(item)), "Creative search: " + item);
+        }
         h.succeed();
     }
 }

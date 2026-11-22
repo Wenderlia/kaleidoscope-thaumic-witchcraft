@@ -1,5 +1,6 @@
 package dev.senluo.witchcraft.ritual;
 
+import dev.senluo.witchcraft.world.ChunkActivity;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -72,6 +73,8 @@ public final class StructuralRitualStore extends SavedData {
     public record Progress(Phase phase, int elapsed, int committedSteps, boolean available, CompoundTag terms) {
         public Progress { terms = terms.copy(); }
         @Override public CompoundTag terms() { return terms.copy(); }
+        public boolean hasTerm(String key) { return terms.contains(key); }
+        public boolean termEquals(String key, Tag value) { return java.util.Objects.equals(terms.get(key), value); }
     }
     public record TickResult(Phase phase, boolean mayRun, int newlyCommittedStep) {}
     public record Handle(UUID id, RitualCenters.Reference center, Definition definition) {}
@@ -85,6 +88,8 @@ public final class StructuralRitualStore extends SavedData {
         List<RitualCenters.Member> members;
         boolean funded;
         CompoundTag terms, runtime = new CompoundTag();
+        CompoundTag snapshotTerms;
+        Progress snapshot;
         UUID reservation;
         Phase phase = Phase.PREPARING;
         int elapsed, step;
@@ -111,6 +116,7 @@ public final class StructuralRitualStore extends SavedData {
     // Insertion order is the durable start priority, including across unload/restart.
     private final Map<UUID, Session> sessions = new LinkedHashMap<>();
     private final Map<ResourceLocation, LinkedHashSet<UUID>> dimensions = new HashMap<>();
+    private final Map<ResourceLocation, List<Handle>> dimensionSnapshots = new HashMap<>();
     private final Map<Address, LinkedHashSet<UUID>> addresses = new HashMap<>();
     private final Map<MemberChunk, LinkedHashSet<UUID>> memberChunks = new HashMap<>();
     // Derived from authoritative receipts; not serialized and never used as a validity check.
@@ -134,8 +140,8 @@ public final class StructuralRitualStore extends SavedData {
     public java.util.List<Handle> inDimension(ResourceLocation dimension) {
         var ids = dimensions.get(dimension);
         if (!supported() || ids == null) return java.util.List.of();
-        return ids.stream().map(sessions::get)
-                .map(s -> new Handle(s.id, s.center, s.definition)).toList();
+        return dimensionSnapshots.computeIfAbsent(dimension, unused -> ids.stream().map(sessions::get)
+                .map(s -> new Handle(s.id, s.center, s.definition)).toList());
     }
     /** Same spatial origin in durable start order; supply may come from additional reachable pools. */
     public List<Handle> atPlane(ResourceLocation dimension, BlockPos anchor) {
@@ -174,6 +180,7 @@ public final class StructuralRitualStore extends SavedData {
         if (!RitualPoints.quote(level, id, definition.pointCost)) return false;
         if (!terms.contains("SpatialMask") && s.terms.contains("SpatialMask")) terms.putInt("SpatialMask", s.terms.getInt("SpatialMask"));
         s.definition = definition; replaceTerms(s, terms.copy());
+        dimensionSnapshots.remove(s.center.dimension());
         invalidateMembers(id);
         RitualPoints.changed(level, source(s));
         s.lastResearchCheck = Long.MIN_VALUE; s.researchAllowed = false;
@@ -211,24 +218,36 @@ public final class StructuralRitualStore extends SavedData {
         Session s = sessions.get(id);
         if (supported() && s != null && !s.advancing) { s.phase = Phase.ENDED; s.available = false; s.funded = false; pending(s, false); s.permissionRevision++; reserve(s, null); setDirty(); RitualPoints.changed(level, source(s)); }
     }
-    public Optional<UUID> begin(ServerLevel level, Definition definition, RitualCenters.Center observed,
+    public Optional<UUID> begin(ServerLevel level, Definition definition, RitualCandidate candidate,
                                 UUID initiator, CompoundTag terms) {
         checkThread(level);
         java.util.Objects.requireNonNull(initiator); validateTerms(terms);
-        if (!supported() || sessions.size() >= MAX_SESSIONS || !observed.mayPrepare()
-                || !observed.reference().dimension().equals(level.dimension().location())
+        if (!supported() || sessions.size() >= MAX_SESSIONS || !candidate.current(level)
                 || RitualResearch.check(level, initiator, definition.research) != RitualResearch.Result.ALLOWED) return Optional.empty();
-        var plane = terms.contains("Plane", Tag.TAG_LONG) ? RitualPlane.at(level, BlockPos.of(terms.getLong("Plane"))).orElse(null)
-                : RitualPlane.find(level, observed.axis()).orElse(null);
+        var plane = RitualPlane.at(level, candidate.footprint().anchor()).orElse(null);
         if (plane == null) return Optional.empty();
+        candidate = new RitualCandidate(candidate.entity(), plane);
+        var proposed = RitualCenters.compose(level, candidate, definition.kind());
+        if (proposed.isEmpty()) return Optional.empty();
+        var player = level.getServer().getPlayerList().getPlayer(initiator);
+        if (player != null && (!level.mayInteract(player, candidate.position())
+                || proposed.stream().anyMatch(member -> !level.mayInteract(player, member.candidate().position())))) return Optional.empty();
+        if (!RitualPoints.quoteNew(level, plane.anchor(), proposed.getFirst().candidate().axis(), definition.pointCost)
+                || !candidate.current(level) || proposed.stream().anyMatch(member -> !member.candidate().current(level))) return Optional.empty();
+        // Only accepted spatial/point candidates create persistent identities. Binding cannot move the input.
+        var observed = RitualCenters.bind(candidate.entity()).orElse(null);
+        if (observed == null) return Optional.empty();
+        var members = new java.util.ArrayList<RitualCenters.Member>();
+        for (var member : proposed) {
+            var bound = member.bind();
+            if (bound.isEmpty()) return Optional.empty();
+            members.add(bound.get());
+        }
+        if (!candidate.current(level) || proposed.stream().anyMatch(member -> !member.candidate().current(level))) return Optional.empty();
         CompoundTag supplied = terms.copy(); supplied.putLong("Plane", plane.anchor().asLong());
         supplied.putInt("SpatialMask", plane.rings().completeMask());
-        List<RitualCenters.Member> members = RitualCenters.compose(level, new RitualSite(observed, plane), definition.kind());
-        if (members.isEmpty()) return Optional.empty();
-        var player = level.getServer().getPlayerList().getPlayer(initiator);
-        if (player != null && members.stream().anyMatch(m -> !level.mayInteract(player, m.reference().position()))) return Optional.empty();
         Session session = new Session(UUID.randomUUID(), initiator, observed.reference(), definition, supplied);
-        session.members = members;
+        session.members = List.copyOf(members);
         // The unpublished candidate participates in the same quote as existing receipts.
         insert(session);
         RitualPoints.changed(level, plane.anchor());
@@ -241,8 +260,14 @@ public final class StructuralRitualStore extends SavedData {
     }
     public Optional<Progress> progress(UUID id) {
         Session s = sessions.get(id);
-        return s == null || !supported() ? Optional.empty()
-                : Optional.of(new Progress(s.phase, s.elapsed, s.step, s.available, s.terms));
+        if (s == null || !supported()) return Optional.empty();
+        Progress old = s.snapshot;
+        if (old == null || old.phase != s.phase || old.elapsed != s.elapsed || old.committedSteps != s.step
+                || old.available != s.available || s.snapshotTerms != s.terms) {
+            s.snapshot = new Progress(s.phase, s.elapsed, s.step, s.available, s.terms);
+            s.snapshotTerms = s.terms;
+        }
+        return Optional.of(s.snapshot);
     }
     public Phase phase(UUID id) { var s = sessions.get(id); return s == null ? Phase.ENDED : s.phase; }
     /** Null means the one-way legacy import has already finished. */
@@ -263,13 +288,14 @@ public final class StructuralRitualStore extends SavedData {
                 var activity = new LinkedHashMap<BlockPos, Boolean>();
                 for (var member : s.members) {
                     BlockPos pos = new ChunkPos(member.reference().position()).getWorldPosition();
-                    activity.put(pos, level.hasChunkAt(pos) && level.shouldTickBlocksAt(pos));
+                    activity.put(pos, ChunkActivity.active(level, pos));
                 }
                 if (RitualCenters.seeksTarget(s.definition.kind, s.members)) {
                     BlockPos pos = new ChunkPos(source(s)).getWorldPosition();
-                    activity.put(pos, level.hasChunkAt(pos) && level.shouldTickBlocksAt(pos));
+                    activity.put(pos, ChunkActivity.active(level, pos));
                 }
                 var result = observe.get();
+                ChunkActivity.fresh(level);
                 if (revision != s.memberRevision) continue;
                 s.memberActivity = Map.copyOf(activity);
                 if (!activityMatches(level, s)) { invalidateMembers(id); RitualPoints.changed(level, source(s)); continue; }
@@ -281,7 +307,7 @@ public final class StructuralRitualStore extends SavedData {
     }
     private static boolean activityMatches(ServerLevel level, Session s) {
         for (var entry : s.memberActivity.entrySet())
-            if (entry.getValue() != (level.hasChunkAt(entry.getKey()) && level.shouldTickBlocksAt(entry.getKey()))) return false;
+            if (entry.getValue() != ChunkActivity.active(level, entry.getKey())) return false;
         return true;
     }
     private void refreshMemberActivity(ServerLevel level, Session s) {
@@ -296,9 +322,12 @@ public final class StructuralRitualStore extends SavedData {
     void invalidatePermission(UUID id) { var s = sessions.get(id); if (s != null) s.permissionRevision++; }
     public long permissionVersion(ServerLevel level, UUID id) {
         var s = sessions.get(id); if (s == null) return Long.MIN_VALUE;
-        refreshMemberActivity(level, s);
-        RitualPoints.refreshActivity(level, source(s));
-        return s.permissionRevision;
+        ChunkActivity.fresh(level);
+        return ChunkActivity.within(level, () -> {
+            refreshMemberActivity(level, s);
+            RitualPoints.refreshActivity(level, source(s));
+            return s.permissionRevision;
+        });
     }
     void membersChanged(ServerLevel level, BlockPos pos) {
         var ids = addresses.get(new Address(level.dimension().location(), pos));
@@ -343,6 +372,7 @@ public final class StructuralRitualStore extends SavedData {
         // Paid active receipts keep running; unfinished preparations must adopt today's entry requirement.
         if (s.phase == Phase.PREPARING && !s.definition.research.equals(definition.research)) {
             s.definition = definition;
+            dimensionSnapshots.remove(s.center.dimension());
             s.lastResearchCheck = Long.MIN_VALUE; s.researchAllowed = false;
             setDirty();
         }
@@ -383,7 +413,7 @@ public final class StructuralRitualStore extends SavedData {
         long now = level.getGameTime();
         boolean recent = s.lastResearchCheck != Long.MIN_VALUE && now >= s.lastResearchCheck
                 && now - s.lastResearchCheck < 20;
-        // A quote may invoke other listeners. Payment rechecks even in the same tick; adapters share stable snapshots.
+        // A quote may invoke other listeners. Payment reads the effective research again, even in the same tick.
         if (recent && !committing) return s.researchAllowed;
         s.lastResearchCheck = now;
         s.researchAllowed = RitualResearch.check(level, s.initiator, s.definition.research) == RitualResearch.Result.ALLOWED;
@@ -394,6 +424,7 @@ public final class StructuralRitualStore extends SavedData {
         Session s = sessions.get(id);
         if (!supported() || s == null || s.phase != Phase.ENDED || s.advancing) return false;
         reserve(s, null); unindexPlane(s); sessions.remove(id);
+        dimensionSnapshots.remove(s.center.dimension());
         removeIndex(dimensions, s.center.dimension(), id);
         unindexMembers(s);
         removeIndex(columns, column(s), id);
@@ -412,6 +443,7 @@ public final class StructuralRitualStore extends SavedData {
         s.startOrder = nextStartOrder++;
         sessions.put(s.id, s);
         dimensions.computeIfAbsent(s.center.dimension(), ignored -> new LinkedHashSet<>()).add(s.id);
+        dimensionSnapshots.remove(s.center.dimension());
         indexMembers(s);
         columns.computeIfAbsent(column(s), ignored -> new LinkedHashSet<>()).add(s.id);
         indexPlane(s);
@@ -451,7 +483,10 @@ public final class StructuralRitualStore extends SavedData {
     }
     public void completeMemberImport(ServerLevel level, UUID id) {
         Session s = sessions.get(id);
-        if (s != null) { s.terms.remove("ImportMembers"); s.terms.remove("ImportStores"); setDirty(); }
+        if (s != null) {
+            var terms = s.terms.copy(); terms.remove("ImportMembers"); terms.remove("ImportStores");
+            replaceTerms(s, terms); setDirty();
+        }
     }
     public List<RitualCenters.Member> members(UUID id) { var s = sessions.get(id); return s == null ? List.of() : s.members; }
     public void members(ServerLevel level, UUID id, List<RitualCenters.Member> members) {
@@ -510,6 +545,10 @@ public final class StructuralRitualStore extends SavedData {
         if (wasAvailable) { s.permissionRevision++; RitualCenters.revoked(level, new Handle(id, s.center, s.definition)); }
     }
     private RitualPoints.Permission permission(ServerLevel level, UUID id) {
+        ChunkActivity.fresh(level);
+        return ChunkActivity.within(level, () -> observePermission(level, id));
+    }
+    private RitualPoints.Permission observePermission(ServerLevel level, UUID id) {
         Session s = sessions.get(id);
         if (s == null) return RitualPoints.Permission.DENIED;
         RitualPoints.Permission permission = RitualPoints.Permission.DENIED;
@@ -550,7 +589,10 @@ public final class StructuralRitualStore extends SavedData {
         int mask = s.terms.getInt("SpatialMask");
         if (mask == 0) {
             mask = RitualPlane.observe(level, source(s)).completeMask();
-            if (mask != 0) { s.terms.putInt("SpatialMask", mask); setDirty(); }
+            if (mask != 0) {
+                var terms = s.terms.copy(); terms.putInt("SpatialMask", mask);
+                replaceTerms(s, terms); setDirty();
+            }
         }
         return new RitualSite(center, new RitualSite.Footprint(source(s), mask), id);
     }

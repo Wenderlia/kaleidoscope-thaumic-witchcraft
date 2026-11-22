@@ -33,6 +33,8 @@ public final class SuctionTransferStore extends SavedData {
     private record Group(ResourceLocation dimension, Scope scope) {}
     // Derived only; keep quarantined receipts authoritative, without scanning them in unrelated worlds.
     private final Map<Group, LinkedHashMap<Outlet, Receipt>> groups = new java.util.HashMap<>();
+    private final Map<Group, Long> outletVersions = new java.util.HashMap<>();
+    private long outletSequence;
     private CompoundTag preserved;
     public static SuctionTransferStore get(ServerLevel level) {
         if (!level.getServer().isSameThread()) throw new IllegalStateException("Transfers belong to the server thread");
@@ -41,8 +43,11 @@ public final class SuctionTransferStore extends SavedData {
     public boolean supported() { return preserved == null; }
     public boolean holds(Outlet outlet) { return pending.containsKey(outlet); }
     public Receipt receipt(Outlet outlet) { return pending.get(outlet); }
-    /** Empty scopes can skip buffer/receipt walks; no receipt or quarantine is discarded. */
-    public boolean hasInDimension(ResourceLocation dimension, Scope scope) {
+    /** Only outlet membership changes invalidate candidate indexes; amount/uncertainty remain live reads. */
+    public long outletVersion(ResourceLocation dimension, Scope scope) {
+        return outletVersions.getOrDefault(new Group(dimension, scope), 0L);
+    }
+    public boolean hasReceipts(ResourceLocation dimension, Scope scope) {
         return supported() && groups.containsKey(new Group(dimension, scope));
     }
     public List<Receipt> inDimension(ResourceLocation dimension) {
@@ -53,15 +58,20 @@ public final class SuctionTransferStore extends SavedData {
         return !supported() || entries == null ? List.of() : List.copyOf(entries.values());
     }
     private void put(Receipt receipt) {
-        pending.put(receipt.outlet, receipt);
-        groups.computeIfAbsent(new Group(receipt.outlet.dimension, receipt.outlet.scope), key -> new LinkedHashMap<>())
+        Group group = new Group(receipt.outlet.dimension, receipt.outlet.scope);
+        if (pending.put(receipt.outlet, receipt) == null) outletVersions.put(group, ++outletSequence);
+        groups.computeIfAbsent(group, key -> new LinkedHashMap<>())
                 .put(receipt.outlet, receipt);
     }
     private void remove(Outlet outlet) {
-        pending.remove(outlet);
+        if (pending.remove(outlet) == null) return;
         Group key = new Group(outlet.dimension, outlet.scope);
         var entries = groups.get(key);
-        if (entries != null) { entries.remove(outlet); if (entries.isEmpty()) groups.remove(key); }
+        if (entries != null) {
+            entries.remove(outlet);
+            if (entries.isEmpty()) { groups.remove(key); outletVersions.remove(key); }
+            else outletVersions.put(key, ++outletSequence);
+        }
     }
     public Receipt record(Outlet outlet, Direction face, ResourceLocation aspect, int amount) {
         java.util.Objects.requireNonNull(face);

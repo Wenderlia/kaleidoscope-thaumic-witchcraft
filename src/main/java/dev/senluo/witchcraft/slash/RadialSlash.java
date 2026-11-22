@@ -6,6 +6,7 @@ import dev.senluo.witchcraft.slash.drawing.RadialOutline;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,23 +26,41 @@ public final class RadialSlash {
         final int part;
         final double from, to;
         final RadialOutline.Edge edge;
+        final Vec3[] directions;
         double radius, work, clock;
         int activeTicks;
         byte phase, moving;
         double allowance, frameBudget, elapsed;
         boolean visited, waiting;
+        RadialChunkWait blocked;
+
+        void releaseWait() {
+            if (blocked != null) {
+                blocked.release();
+                blocked = null;
+            }
+        }
+
         Front(int part, double from, double to) {
             this.part = part; this.from = from; this.to = to;
             var source = outline.edges().get(part);
             edge = from == 0 && to == 1 ? source : source.slice(from, to);
+            directions = new Vec3[]{direction(edge.first()), direction(edge.middle()), direction(edge.last())};
         }
-        Front child(double first, double last) {
+        void retain(List<Front> survivors, double first, double last) {
+            first = Math.clamp(first, from, to); last = Math.clamp(last, from, to);
+            // Mapping world length back to parameters can round a boundary onto the other endpoint.
+            if (first >= last) return;
+            if (first == from && last == to) { survivors.add(this); return; }
             Front next = new Front(part, first, last);
             next.radius = radius; next.work = work; next.clock = clock;
             next.activeTicks = activeTicks; next.phase = phase; next.moving = moving;
             next.allowance = allowance; next.frameBudget = frameBudget; next.elapsed = elapsed;
             next.visited = visited; next.waiting = waiting;
-            return next;
+            survivors.add(next);
+        }
+        SlashQueries.Coverage coverage(Vec3 center, TravelStep step) {
+            return new SlashQueries.Coverage(edge.sweep(center, radius, radius + step.distance()));
         }
         double length() { return edge.half() * 2 * Math.max(radius, outline.initialRadius()); }
     }
@@ -59,7 +78,7 @@ public final class RadialSlash {
     public void clientTick() { if (view != null) view.tick(); }
     void pause() { for (Front front : fronts) front.moving = 0; }
 
-    private record Step(Front front, TravelStep travel, SlashGeometry.Sweep sweep, boolean entering) {}
+    private record Step(Front front, TravelStep travel, SlashQueries.Coverage sweep, boolean entering) {}
 
     /** Returns whether a live or unloaded front remains. No offline or unloaded progress is invented. */
     boolean tick(SlashEntity slash, ServerPlayer player, SlashShape shape) {
@@ -80,24 +99,19 @@ public final class RadialSlash {
             for (int n = 0; n < fronts.size(); n++) {
                 Front front = fronts.get((start + n) % fronts.size());
                 if (front.phase == ENDED || front.waiting) continue;
-                if (front.activeTicks >= 160 || front.work >= shape.range() - 1.0E-7) { front.phase = ENDED; continue; }
+                if (front.activeTicks >= 160 || front.work >= shape.range() - 1.0E-7) {
+                    front.releaseWait();
+                    front.phase = ENDED;
+                    continue;
+                }
                 boolean entering = front.phase == ENTERING;
                 double remaining = entering ? outline.initialRadius() - front.radius : front.allowance;
                 if (remaining <= 1.0E-8) continue;
-                double cap = remaining;
-                TravelStep quote = null; SlashGeometry.Sweep sweep = null;
-                AabbStatus status = AabbStatus.TOO_LARGE;
-                for (int attempt = 0; attempt < 16; attempt++) {
-                    quote = quote(space, center, front.edge, front.radius, remaining, cap);
-                    sweep = front.edge.sweep(center, front.radius, front.radius + quote.distance());
-                    status = bounds(level, sweep, slash.passesBlocks());
-                    if (status == AabbStatus.READY || cap <= .125) break;
-                    cap *= .5;
+                Step step = probe(level, space, center, front, entering, remaining, slash.passesBlocks());
+                if (step != null) {
+                    if (!front.visited) { front.activeTicks++; front.visited = true; }
+                    steps.add(step);
                 }
-                if (status == AabbStatus.INVALID || status == AabbStatus.TOO_LARGE) { front.phase = ENDED; continue; }
-                if (status == AabbStatus.UNLOADED) { front.waiting = true; continue; }
-                if (!front.visited) { front.activeTicks++; front.visited = true; }
-                steps.add(new Step(front, quote, sweep, entering));
             }
             if (steps.isEmpty()) break;
             // Formation happens at time zero. Moving fronts share one chronological horizon.
@@ -105,17 +119,27 @@ public final class RadialSlash {
             else {
                 double duration = steps.stream().mapToDouble(step -> step.travel.work()
                         / Math.max(1.0E-8, step.front.frameBudget)).min().orElse(0);
-                for (int n = 0; n < steps.size(); n++) {
-                    Step step = steps.get(n); Front front = step.front;
-                    TravelStep prefix = prefixWork(step.travel, duration * front.frameBudget);
-                    steps.set(n, new Step(front, prefix, front.edge.sweep(center, front.radius,
-                            front.radius + prefix.distance()), false));
+                for (var it = steps.listIterator(); it.hasNext();) {
+                    Step step = it.next(); Front front = step.front;
+                    TravelStep prefix = step.travel.limitWork(duration * front.frameBudget);
+                    if (prefix == step.travel) continue;
+                    var sweep = step.sweep.forSweep(front.edge.sweep(center, front.radius, front.radius + prefix.distance()));
+                    if (sweep != step.sweep) {
+                        var status = bounds(level, sweep, slash.passesBlocks());
+                        if (status != SweepStatus.PRECISE) {
+                            if (status == SweepStatus.UNLOADED) front.waiting = true; else front.phase = ENDED;
+                            it.remove();
+                            continue;
+                        }
+                    }
+                    it.set(new Step(front, prefix, sweep, false));
                 }
+                if (steps.isEmpty()) break;
             }
-            List<java.util.function.DoubleUnaryOperator> timeline = new ArrayList<>();
+            List<SlashCollision.Timing> timeline = new ArrayList<>();
             for (Step step : steps) {
                 double startTime = step.front.elapsed, rate = Math.max(1.0E-8, step.front.frameBudget);
-                timeline.add(fraction -> step.entering ? 0 : startTime + step.travel.spentAt(fraction) / rate);
+                timeline.add(new SlashCollision.Timing(step.travel, step.entering ? 0 : startTime, step.entering ? 0 : rate));
             }
             var resolution = SlashCollision.resolveParts(slash, player, steps.stream().map(Step::sweep).toList(), budget, timeline);
             boolean advanced = false;
@@ -162,7 +186,12 @@ public final class RadialSlash {
         return fronts.stream().anyMatch(front -> front.phase != ENDED);
     }
 
-    private void end() { for (Front front : fronts) front.phase = ENDED; }
+    void releaseWaits() { for (Front front : fronts) front.releaseWait(); }
+
+    private void end() {
+        releaseWaits();
+        for (Front front : fronts) front.phase = ENDED;
+    }
 
     /** Consume a length quota around the contact. Gaps cost no length and never reconnect. */
     private void trim(Front hit, Vec3 center, Vec3 point, double proportion) {
@@ -187,9 +216,10 @@ public final class RadialSlash {
             double first = Math.max(offset, low), last = Math.min(stop, high);
             if (first >= last) survivors.add(front);
             else {
+                front.releaseWait();
                 double span = front.to - front.from;
-                if (first > offset) survivors.add(front.child(front.from, front.from + span * ((first - offset) / length)));
-                if (last < stop) survivors.add(front.child(front.from + span * ((last - offset) / length), front.to));
+                if (first > offset) front.retain(survivors, front.from, front.from + span * ((first - offset) / length));
+                if (last < stop) front.retain(survivors, front.from + span * ((last - offset) / length), front.to);
             }
             offset = stop;
         }
@@ -198,38 +228,107 @@ public final class RadialSlash {
         topology++; geometry = null;
     }
 
-    private static TravelStep prefixWork(TravelStep step, double work) {
-        if (work >= step.work()) return step;
-        double low = 0, high = 1;
-        for (int i = 0; i < 40; i++) {
-            double middle = (low + high) * .5;
-            if (step.spentAt(middle) <= work) low = middle; else high = middle;
+    private Step probe(ServerLevel level, ProjectileBarrier.FlightSpace space, Vec3 center, Front front,
+                       boolean entering, double remaining, boolean phasing) {
+        if (front.blocked != null) {
+            if (!space.hasFields() && front.blocked.stillBlocked(level, center, remaining, phasing)) {
+                front.waiting = true;
+                return null;
+            }
+            front.releaseWait();
         }
-        return new TravelStep(step.from(), step.direction(), step.distance() * low,
-                step.spentAt(low), step.gap(), step.width());
+        Vec3 direction = front.directions[0];
+        TravelStep first, shortest;
+        try {
+            first = space.quotePoint(center.add(direction.scale(front.radius)), direction, remaining, remaining);
+            shortest = space.hasFields() ? shortestTrack(space, center, front, first, remaining) : first;
+        } catch (IllegalArgumentException invalidQuote) {
+            front.phase = ENDED;
+            return null;
+        }
+        var initial = new Step(front, shortest, front.coverage(center, shortest), entering);
+        var status = bounds(level, initial.sweep(), phasing);
+        if (status == SweepStatus.PRECISE) return initial;
+        return retry(level, center, remaining, phasing, !space.hasFields(), first, initial, status);
     }
 
-    private enum AabbStatus { READY, UNLOADED, INVALID, TOO_LARGE }
-    private static AabbStatus bounds(net.minecraft.server.level.ServerLevel level, SlashGeometry.Sweep sweep, boolean phasing) {
+    private Step retry(ServerLevel level, Vec3 center, double remaining, boolean phasing, boolean emptyField,
+                       TravelStep first, Step initial, SweepStatus status) {
+        Front front = initial.front();
+        var sweep = initial.sweep();
+        RadialChunkWait witnesses = null;
+        boolean canWait = emptyField && RadialChunkWait.supported(level);
+        double cap = remaining;
+        for (int attempts = 1; ; attempts++) {
+            if (status == SweepStatus.UNLOADED && canWait) {
+                Long missing = SlashQueries.missingAfterRejection(level, sweep.boxes());
+                if (missing == null) canWait = false;
+                else if (witnesses == null) witnesses = new RadialChunkWait(level, center, remaining, phasing, missing);
+                else witnesses.record(missing);
+            }
+            if (attempts == 16 || cap <= .125) break;
+            cap *= .5;
+            TravelStep travel;
+            try {
+                travel = quoteAtLimit(first, initial.travel(), remaining, cap);
+            } catch (IllegalArgumentException invalidQuote) {
+                front.phase = ENDED;
+                return null;
+            }
+            sweep = front.coverage(center, travel);
+            status = bounds(level, sweep, phasing);
+            if (status == SweepStatus.PRECISE) return new Step(front, travel, sweep, initial.entering());
+        }
+        if (status == SweepStatus.UNLOADED) {
+            front.waiting = true;
+            if (canWait && witnesses != null) {
+                witnesses.register();
+                front.blocked = witnesses;
+            }
+        } else front.phase = ENDED;
+        return null;
+    }
+
+    private static TravelStep shortestTrack(ProjectileBarrier.FlightSpace space, Vec3 center, Front front,
+                                            TravelStep first, double budget) {
+        TravelStep selected = first;
+        for (int i = 1; i < front.directions.length; i++) {
+            Vec3 direction = front.directions[i];
+            var step = space.quotePoint(center.add(direction.scale(front.radius)), direction, budget, budget);
+            if (step.distance() < selected.distance()) selected = step;
+        }
+        return selected;
+    }
+
+    /** A smaller cap can tie all rays. The original first ray then owns the work receipt. */
+    static TravelStep quoteAtLimit(TravelStep first, TravelStep shortest, double budget, double cap) {
+        if (shortest.distance() < cap) return shortest;
+        if (first.distance() == cap) return first;
+        double gap = first.width() == 0 ? Double.POSITIVE_INFINITY : first.gap();
+        return TravelStep.quote(first.from(), first.direction(), budget, cap, gap, first.width());
+    }
+
+    // Precision is decided per sweep. A statistical front ends after the allowed step reductions.
+    private enum SweepStatus { PRECISE, STATISTICAL, UNLOADED, INVALID }
+    private static SweepStatus bounds(ServerLevel level, SlashQueries.Coverage sweep, boolean phasing) {
         var box = sweep.bounds();
         if (box.minY < level.getMinBuildHeight() || box.maxY >= level.getMaxBuildHeight()
                 || !level.getWorldBorder().isWithinBounds(BlockPos.containing(box.minX, box.minY, box.minZ))
-                || !level.getWorldBorder().isWithinBounds(BlockPos.containing(box.maxX, box.maxY, box.maxZ))) return AabbStatus.INVALID;
-        var cover = SlashQueries.cover(sweep);
-        if (cover.isEmpty() || !phasing && cover.stream().mapToDouble(SlashQueries::volume).sum() > SlashCollision.MAX_CELLS)
-            return AabbStatus.TOO_LARGE;
-        return SlashQueries.loaded(level, cover) ? AabbStatus.READY : AabbStatus.UNLOADED;
+                || !level.getWorldBorder().isWithinBounds(BlockPos.containing(box.maxX, box.maxY, box.maxZ))) return SweepStatus.INVALID;
+        var cover = sweep.boxes();
+        if (cover.isEmpty() || !phasing && sweep.exceedsCellLimit(SlashCollision.MAX_CELLS))
+            return SweepStatus.STATISTICAL;
+        return SlashQueries.loaded(level, cover) ? SweepStatus.PRECISE : SweepStatus.UNLOADED;
     }
 
-    private static TravelStep quote(ProjectileBarrier.FlightSpace space, Vec3 center, RadialOutline.Edge edge,
-                                    double radius, double budget, double maximum) {
-        // The most restricted sampled radial track controls this thin front; full swept shape still clips the boundary.
-        TravelStep selected = null;
-        for (Vec3 direction : List.of(edge.first(), edge.middle().normalize(), edge.last())) {
-            var step = space.quotePoint(center.add(direction.scale(radius)), direction, budget, Math.min(maximum, budget));
-            if (selected == null || step.distance() < selected.distance()) selected = step;
-        }
-        return selected;
+    private static Vec3 direction(Vec3 raw) {
+        if (!finite(raw) || raw.lengthSqr() < 1.0E-12) throw new IllegalArgumentException("Invalid radial direction");
+        return raw.normalize();
+    }
+
+    private static boolean finite(Vec3 value) {
+        return Double.isFinite(value.x) && Double.isFinite(value.y) && Double.isFinite(value.z)
+                && Double.isFinite(value.lengthSqr());
     }
 
     /** Angular intervals only change on a cut; their packet is separate from moving radii. */
@@ -286,6 +385,21 @@ public final class RadialSlash {
             radial.view = previous.view.remap(parents);
         }
         return radial;
+    }
+
+    /** Compare the wire fields with the last published frame before allocating its replacement. */
+    boolean matchesSnapshot(CompoundTag published) {
+        if (!published.contains("Topology", Tag.TAG_INT) || published.getInt("Topology") != topology) return false;
+        int[] radii = published.getIntArray("Radii");
+        byte[] phases = published.getByteArray("Phases"), moving = published.getByteArray("Moving");
+        int count = fronts.size();
+        if (radii.length != count || phases.length != count || moving.length != count) return false;
+        for (int i = 0; i < count; i++) {
+            Front front = fronts.get(i);
+            if (radii[i] != Float.floatToRawIntBits((float) front.radius)
+                    || phases[i] != front.phase || moving[i] != front.moving) return false;
+        }
+        return true;
     }
 
     /** Frequent sync contains only current motion, with a topology receipt against mixed packets. */

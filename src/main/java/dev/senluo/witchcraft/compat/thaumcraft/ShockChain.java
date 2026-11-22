@@ -4,7 +4,7 @@ import dev.senluo.witchcraft.accessory.CastBarrier;
 import dev.senluo.witchcraft.slash.SlashContent;
 import dev.tc4port.thaumcraft.api.focus.*;
 import dev.tc4port.thaumcraft.api.focus.action.FocusGesture;
-import dev.tc4port.thaumcraft.api.wand.WandApi;
+import dev.tc4port.thaumcraft.api.wand.WandCapabilities;
 import dev.tc4port.thaumcraft.api.wand.WandPartApi;
 import dev.tc4port.thaumcraft.api.wand.pipeline.*;
 import java.util.*;
@@ -90,7 +90,8 @@ public final class ShockChain {
     private double parameter(String name) {
         var state = FocusApi.installedState(wand).orElseThrow();
         var upgrades = new HashMap<>(state.upgradeLevels());
-        boolean runes = WandApi.view(wand).flatMap(view -> WandPartApi.rod(view.rod())).filter(rod -> rod.runes()).isPresent();
+        var tool = wand.getCapability(WandCapabilities.TOOL);
+        boolean runes = tool != null && tool.view().flatMap(view -> WandPartApi.rod(view.rod())).filter(rod -> rod.runes()).isPresent();
         upgrades.put(POTENCY, state.level(POTENCY) + (runes ? 1 : 0));
         return FocusApi.parameter(wand, state.focusId(), upgrades, name);
     }

@@ -8,9 +8,14 @@ import dev.senluo.witchcraft.compat.thaumcraft.SteamRituals;
 import dev.senluo.witchcraft.mixin.time.FurnaceAccess;
 import dev.senluo.witchcraft.mixin.time.CampfireAccess;
 import dev.tc4port.thaumcraft.api.aspect.*;
+import dev.tc4port.thaumcraft.api.machine.CrucibleApi;
 import dev.tc4port.thaumcraft.block.entity.CrucibleBlockEntity;
+import dev.tc4port.thaumcraft.block.entity.ThaumatoriumBlockEntity;
 import dev.tc4port.thaumcraft.block.entity.AlchemyFurnaceBlockEntity;
+import dev.tc4port.thaumcraft.block.InfernalFurnaceBlock;
+import dev.tc4port.thaumcraft.block.entity.InfernalFurnaceBlockEntity;
 import dev.tc4port.thaumcraft.block.entity.ArcaneAlembicBlockEntity;
+import dev.tc4port.thaumcraft.block.entity.WardedJarBlockEntity;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,6 +33,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -192,6 +198,43 @@ public final class SteamRitualGameTests {
             level.setBlock(at.above(), RitualContent.CHALK_SURFACE.get().defaultBlockState(), 3);
         }
     }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=25)
+    public static void alchemyMachinesUseTheRegisteredHeatSource(GameTestHelper h) {
+        var level = h.getLevel();
+        var campfire = Blocks.CAMPFIRE.defaultBlockState();
+        var lava = Blocks.LAVA.defaultBlockState();
+        record HeatCase(BlockState state, boolean heats) {}
+        var cases = List.of(new HeatCase(campfire, true), new HeatCase(campfire.setValue(CampfireBlock.LIT, false), false),
+                new HeatCase(lava, true), new HeatCase(lava.setValue(LiquidBlock.LEVEL, 3), true),
+                new HeatCase(lava.setValue(LiquidBlock.LEVEL, 8), true));
+        var crucible = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:crucible"));
+        var tower = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:thaumatorium"));
+        var cap = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:thaumatorium_top"));
+        for (int i = 0; i < cases.size(); i++) {
+            var sample = cases.get(i);
+            var heat = h.absolutePos(new BlockPos(2 + 2 * (i % 3), 2, 3 + 2 * (i / 3)));
+            var vessel = heat.above();
+            var body = vessel.above();
+            level.setBlock(heat, sample.state(), Block.UPDATE_CLIENTS);
+            level.setBlock(vessel, crucible.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(body, tower.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(body.above(), cap.defaultBlockState(), Block.UPDATE_CLIENTS);
+            var pot = (CrucibleBlockEntity) level.getBlockEntity(vessel);
+            var machine = (ThaumatoriumBlockEntity) level.getBlockEntity(body);
+            pot.fillWater(1000);
+            CrucibleBlockEntity.serverTick(level, vessel, level.getBlockState(vessel), pot);
+            ThaumatoriumBlockEntity.serverTick(level, body, level.getBlockState(body), machine);
+            boolean source = CrucibleApi.isHeatSource(level, heat);
+            boolean warmed = pot.heat() > 0;
+            h.assertTrue(!machine.isRemoved() && source == warmed && source == machine.heated(),
+                    "Crucible and assembled tower must agree with the public heat query for " + sample.state());
+            h.assertTrue(source == sample.heats(), "Heat state " + sample.state() + " fluid="
+                    + BuiltInRegistries.FLUID.getKey(level.getFluidState(heat).getType())
+                    + " api=" + source + " crucible=" + warmed + " tower=" + machine.heated());
+        }
+        h.succeed();
+    }
+
     private static CrucibleBlockEntity pot(GameTestHelper h) {
         var level=h.getLevel(); BlockPos pos=h.absolutePos(new BlockPos(8,3,8));
         level.setBlock(pos.below(), Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
@@ -202,8 +245,11 @@ public final class SteamRitualGameTests {
         return pot;
     }
     private static UUID prepare(GameTestHelper h, CrucibleBlockEntity pot) {
+        return prepare(h, pot, "RITUAL_TRANSPIRATION");
+    }
+    private static UUID prepare(GameTestHelper h, CrucibleBlockEntity pot, String research) {
         var stack=new ItemStack(RitualContent.TAGLOCK.get(),2);
-        var player=researchedPlayer(h,"steam-test","STRUCTURAL_RITUALS","RITUAL_TRANSPIRATION");
+        var player=researchedPlayer(h,"steam-test","STRUCTURAL_RITUALS",research);
         stack.set(RitualContent.TAGLOCK_SAMPLE.get(),new TaglockSample(1,player.getUUID(),ResourceLocation.withDefaultNamespace("player"),"steam-test",true));
         var sample=drop(h.getLevel(),pot.getBlockPos().above(),stack);
         int before=pot.totalAspects(), plants=pot.aspectAmount(AspectId.parse("herba"));
@@ -212,8 +258,41 @@ public final class SteamRitualGameTests {
                 "Preparation adds exactly one Herba, not the vial's ordinary item aspects");
         h.assertTrue(RitualHerba.marked(pot),"Preparation distinguishes one real Herba unit for presentation");
         h.assertTrue(sample.getItem().getCount()==1,"Only one sample from a stack is consumed"); sample.discard();
-        return StructuralRitualStore.get(h.getLevel()).at(RitualCenters.observe(pot).orElseThrow().reference()).orElseThrow();
+        return StructuralRitualStore.get(h.getLevel()).at(RitualCenters.bind(pot).orElseThrow().reference()).orElseThrow();
     }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=240, batch="suction-competition")
+    public static void suctionSettlesCompetingOutletsInCoordinateOrder(GameTestHelper h) {
+        var level = h.getLevel();
+        var pot = pot(h);
+        var pos = pot.getBlockPos();
+        ring(level, pos.below(), RitualShape.MEDIUM);
+        var ritual = prepare(h, pot, "RITUAL_SUCTION_CHANNEL");
+        drop(level, pos.east(), item("thaumcraft:quicksilver", 1));
+        drop(level, pos.west(), new ItemStack(Items.FEATHER));
+        drop(level, pos.north(), item("thaumcraft:silverwood_log", 1));
+        drop(level, pos.south(), new ItemStack(Items.GOLD_INGOT));
+        pot.attemptSmelt(drop(level, pos, item("thaumcraft:essentia_tube", 1)));
+
+        var jarPos = pos.above(2);
+        var latePos = jarPos.east(3);
+        var firstPos = jarPos.west(3);
+        var alembic = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:arcane_alembic")).defaultBlockState();
+        level.setBlock(latePos, alembic, 3);
+        level.setBlock(firstPos, alembic, 3);
+        level.setBlock(jarPos, BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:warded_jar")).defaultBlockState(), 3);
+        var first = (ArcaneAlembicBlockEntity)level.getBlockEntity(firstPos);
+        var late = (ArcaneAlembicBlockEntity)level.getBlockEntity(latePos);
+        var jar = (WardedJarBlockEntity)level.getBlockEntity(jarPos);
+        first.add(A, 1);
+        late.add(A, 1);
+        jar.addToContainer(A, jar.essentiaCapacity() - 1);
+        h.succeedWhen(() -> {
+            h.assertTrue(StructuralRitualStore.get(level).running(level, ritual), "Suction must activate through its paid recipe");
+            h.assertTrue(jar.amount() == jar.essentiaCapacity(), "The last free unit must reach the jar");
+            h.assertTrue(first.amount() == 0 && late.amount() == 1, "The first source by position supplies the last unit, regardless of creation order");
+        });
+    }
+
     static FakePlayer researchedPlayer(GameTestHelper h, String name, String... research) {
         var player=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),name));
         var knowledge=dev.tc4port.thaumcraft.data.PlayerKnowledgeData.initial(h.getLevel().random);
@@ -234,7 +313,7 @@ public final class SteamRitualGameTests {
         stack.set(RitualContent.TAGLOCK_SAMPLE.get(),new TaglockSample(1,player.getUUID(),
                 ResourceLocation.withDefaultNamespace("player"),"locked-ritual",true));
         var sample=drop(level,pot.getBlockPos().above(),stack);
-        var store=StructuralRitualStore.get(level);var center=RitualCenters.observe(pot).orElseThrow().reference();
+        var store=StructuralRitualStore.get(level);var center=RitualCenters.bind(pot).orElseThrow().reference();
         int before=pot.totalAspects();
         pot.attemptSmelt(sample);
         h.assertTrue(sample.isAlive()&&sample.getItem().getCount()==2&&pot.totalAspects()==before,
@@ -273,7 +352,7 @@ public final class SteamRitualGameTests {
             level.removeBlock(pot.getBlockPos(),false);h.succeed();
         });
     }
-    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=40,batch="steam-materials")
+    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=240,batch="steam-materials")
     public static void steamAdmissionKeepsTriggerAndBouncesOverflow(GameTestHelper h) {
         var pot=pot(h); var level=h.getLevel();
         var trigger=drop(level,pot.getBlockPos().above(),item("thaumcraft:nitor",1));
@@ -288,20 +367,30 @@ public final class SteamRitualGameTests {
         int cost=AspectQueryApi.item(coal).amounts().values().stream().mapToInt(Integer::intValue).sum();
         h.assertTrue(cost>0,"Native coal aspects exist");
         pot.addAspects(Map.of(A,capacity-cost*2-pot.totalAspects()));
-        var fuel=drop(level,pot.getBlockPos().above(),coal); pot.attemptSmelt(fuel);
-        h.assertTrue(fuel.getItem().getCount()==3&&pot.totalAspects()==capacity,"Two complete units fit; three are bounced");
-        h.assertTrue(fuel.getDeltaMovement().y>0,"Rejected material is visibly ejected");
-        pot.attemptSmelt(fuel);
-        h.assertTrue(fuel.getItem().getCount()==3&&pot.totalAspects()==capacity,"Repeated collisions cannot overfill"); fuel.discard();
-        var overflow = new dev.tc4port.thaumcraft.api.event.CrucibleProcessEvent.Overflow(
-                level,pot.getBlockPos(),pot.totalAspects(),pot.heat(),1,0.25,5);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(overflow);
-        h.assertTrue(overflow.isCanceled() && overflow.capacity()==SteamRituals.stableCapacity(pot,1),
-                "A lower capacity after preparation preserves contents without automatic flux");
-        var contents=Map.copyOf(pot.aspects());
-        for(int i=0;i<150;i++) CrucibleBlockEntity.serverTick(level,pot.getBlockPos(),pot.getBlockState(),pot);
-        h.assertTrue(pot.aspects().equals(contents),"Prepared contents do not decompose during boiling");
-        level.removeBlock(pot.getBlockPos(),false); h.succeed();
+        var early = drop(level, pot.getBlockPos().above(), coal.copy());
+        pot.attemptSmelt(early);
+        h.assertTrue(pot.stableCapacity() < capacity && early.getItem().getCount() == 5
+                && pot.totalAspects() == capacity - 2 * cost, "Intake observes TC's published capacity before the first check");
+        early.discard();
+        h.startSequence().thenWaitUntil(() -> h.assertTrue(pot.stableCapacity() == capacity,
+                "The native overflow check publishes the listeners' combined capacity"))
+                .thenExecute(() -> {
+                    var fuel = drop(level, pot.getBlockPos().above(), coal.copy());
+                    pot.attemptSmelt(fuel);
+                    h.assertTrue(fuel.getItem().getCount()==3&&pot.totalAspects()==capacity,"Two complete units fit; three are bounced");
+                    h.assertTrue(fuel.getDeltaMovement().y>0,"Rejected material is visibly ejected");
+                    pot.attemptSmelt(fuel);
+                    h.assertTrue(fuel.getItem().getCount()==3&&pot.totalAspects()==capacity,"Repeated collisions cannot overfill"); fuel.discard();
+                    var overflow = new dev.tc4port.thaumcraft.api.event.CrucibleProcessEvent.Overflow(
+                            level,pot.getBlockPos(),pot.totalAspects(),pot.heat(),1,0.25,5);
+                    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(overflow);
+                    h.assertTrue(overflow.isCanceled() && overflow.capacity()==SteamRituals.stableCapacity(pot,1),
+                            "A lower capacity after preparation preserves contents without automatic flux");
+                    var contents=Map.copyOf(pot.aspects());
+                    for(int i=0;i<150;i++) CrucibleBlockEntity.serverTick(level,pot.getBlockPos(),pot.getBlockState(),pot);
+                    h.assertTrue(pot.aspects().equals(contents),"Prepared contents do not decompose during boiling");
+                    level.removeBlock(pot.getBlockPos(), false);
+                }).thenSucceed();
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=180,batch="steam-sequence")
     public static void steamSequencePauseRepairAndReplacement(GameTestHelper h) {
@@ -366,7 +455,7 @@ public final class SteamRitualGameTests {
         var mercury=drop(level,pos.south(),item("thaumcraft:quicksilver",1));
         var trigger=drop(level,pos,item("thaumcraft:nitor",1));pot.attemptSmelt(trigger);
         var bound=store.progress(id).orElseThrow().terms();
-        h.assertTrue(bound.getInt("Format")==3&&bound.getInt("EnergyGroups")==2&&pot.aspectAmount(P)==65,
+        h.assertTrue(bound.getBoolean("Armed")&&bound.getInt("EnergyGroups")==2&&pot.aspectAmount(P)==65,
                 "Reservation quotes two 32-point groups without early payment");
         // Intervening extraction must pause the final payment, not silently lower the quoted rate.
         h.runAtTickTime(65,()->dev.tc4port.thaumcraft.api.machine.CrucibleApi.removeAspect(level,pos,P,34));
@@ -433,7 +522,7 @@ public final class SteamRitualGameTests {
         var load=StructuralRitualStore.class.getDeclaredMethod("load",CompoundTag.class,net.minecraft.core.HolderLookup.Provider.class);load.setAccessible(true);
         var restored=(StructuralRitualStore)load.invoke(null,saved,level.registryAccess());
         h.assertTrue(restored.progress(id).orElseThrow().elapsed()==0&&!restored.progress(id).orElseThrow().available(),"Reload never grants offline work or trusts cached structure");
-        var ref=RitualCenters.observe(pot).orElseThrow().reference();
+        var ref=RitualCenters.bind(pot).orElseThrow().reference();
         var paused=restored.advance(level,id,StructuralRitualStore.STEAM,StructuralRitualStore.Presence.UNLOADED,RitualShape.Match.UNLOADED,(t,d)->{throw new AssertionError("Unloaded payment");});
         h.assertTrue(!paused.mayRun()&&restored.progress(id).orElseThrow().elapsed()==0,"Unloaded ritual stays paused");
         h.assertTrue(RitualShape.SMALL.marks().size()==16&&RitualShape.MEDIUM.marks().size()==28&&RitualShape.LARGE.marks().size()==40,"Witchery circle sizes");
@@ -531,61 +620,105 @@ public final class SteamRitualGameTests {
         } finally { SteamWork.fields(level).remove(field); level.removeBlock(pos,false); }
         h.succeed();
     }
-    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=40,batch="steam-work")
-    public static void steamNativeWorkAdvancesFuelAndDistillation(GameTestHelper h) throws Exception {
-        var level=h.getLevel(); BlockPos pos=h.absolutePos(new BlockPos(8,3,8));
-        var fields=SteamWork.fields(level); UUID one=UUID.randomUUID(),two=UUID.randomUUID();
-        fields.put(new RitualFields.Field(one,pos,4,2)); // One powered field, not two baseline fields.
-        level.setBlock(pos,Blocks.FURNACE.defaultBlockState(),3); var furnace=(FurnaceBlockEntity)level.getBlockEntity(pos);
-        furnace.setItem(0,new ItemStack(Items.RAW_IRON,8)); furnace.setItem(1,new ItemStack(Items.COAL,2));
-        Runnable run=()->AbstractFurnaceBlockEntity.serverTick(level,pos,level.getBlockState(pos),furnace);run.run();
-        var a=(FurnaceAccess)furnace; int fuel=a.senluo$litTime(),cook=a.senluo$cookingProgress();
-        SteamWork.afterNative(level,ticker(furnace,run),furnace,run);
-        h.assertTrue(a.senluo$litTime()==fuel-3&&a.senluo$cookingProgress()==cook+3,"4x adds three native fuel and progress steps");
-        level.setBlock(pos,BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:alchemical_furnace")).defaultBlockState(),3);
-        var alchemy=(AlchemyFurnaceBlockEntity)level.getBlockEntity(pos);alchemy.setItem(0,new ItemStack(Items.COAL,8));alchemy.setItem(1,new ItemStack(Items.COAL,2));
-        Runnable distill=()->AlchemyFurnaceBlockEntity.serverTick(level,pos,level.getBlockState(pos),alchemy);distill.run();
-        int burn=alchemy.burnTime(),progress=alchemy.cookTime();
-        var count=AlchemyFurnaceBlockEntity.class.getDeclaredField("count");count.setAccessible(true);int transport=count.getInt(alchemy);
-        SteamWork.afterNative(level,ticker(alchemy,distill),alchemy,distill);
-        h.assertTrue(alchemy.burnTime()==burn-3&&alchemy.cookTime()==progress+3,"Distillation also charges native fuel");
-        h.assertTrue(count.getInt(alchemy)==transport+3,"4x advances the furnace-owned distillation clock too");
-        level.setBlock(pos,Blocks.CAMPFIRE.defaultBlockState(),3);var camp=(CampfireBlockEntity)level.getBlockEntity(pos);
-        camp.placeFood(null,new ItemStack(Items.BEEF),600);Runnable cooking=()->CampfireBlockEntity.cookTick(level,pos,level.getBlockState(pos),camp);cooking.run();
-        SteamWork.afterNative(level,ticker(camp,cooking),camp,cooking);
-        h.assertTrue(((CampfireAccess)camp).senluo$progress()[0]==4,"Campfire cooking uses the same spatial scheduler");
-        fields.remove(one);fields.remove(two);level.removeBlock(pos,false);h.succeed();
+    private static void withActiveSteam(GameTestHelper h, int energy, java.util.function.Consumer<BlockPos> check) {
+        var pot = pot(h);
+        var level = h.getLevel();
+        var pos = pot.getBlockPos();
+        var session = prepare(h, pot);
+        pot.addAspects(Map.of(V, 4, O, 4));
+        if (energy > 0) pot.addAspects(Map.of(P, energy));
+        drop(level, pos.east(), new ItemStack(Items.COAL));
+        drop(level, pos.west(), item("thaumcraft:silverwood_log", 1));
+        var mercury = drop(level, pos.south(), item("thaumcraft:quicksilver", 1));
+        pot.attemptSmelt(drop(level, pos, item("thaumcraft:nitor", 1)));
+        h.runAtTickTime(110, () -> {
+            var target = pos.east();
+            h.assertTrue(StructuralRitualStore.get(level).running(level, session)
+                    && SteamWork.doublings(level, Vec3.atCenterOf(target)) == 1 + energy / SteamCharge.ENERGY_PER_GROUP,
+                    "Only a paid and permitted steam field can accelerate this machine");
+            try {
+                check.accept(target);
+                h.succeed();
+            } finally {
+                mercury.discard();
+                level.removeBlock(pos, false);
+                level.removeBlock(target, false);
+            }
+        });
     }
-    @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=40,batch="steam-work")
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=145, batch="steam-work")
+    public static void steamNativeWorkAdvancesFuelAndDistillation(GameTestHelper h) {
+        var level = h.getLevel();
+        withActiveSteam(h, SteamCharge.ENERGY_PER_GROUP, pos -> {
+            level.setBlock(pos,Blocks.FURNACE.defaultBlockState(),3); var furnace=(FurnaceBlockEntity)level.getBlockEntity(pos);
+            furnace.setItem(0,new ItemStack(Items.RAW_IRON,8)); furnace.setItem(1,new ItemStack(Items.COAL,2));
+            Runnable run=()->AbstractFurnaceBlockEntity.serverTick(level,pos,level.getBlockState(pos),furnace);run.run();
+            var a=(FurnaceAccess)furnace; int fuel=a.senluo$litTime(),cook=a.senluo$cookingProgress();
+            SteamWork.afterNative(level,ticker(furnace,run),furnace,run);
+            h.assertTrue(a.senluo$litTime()==fuel-3&&a.senluo$cookingProgress()==cook+3,"4x adds three native fuel and progress steps");
+            level.setBlock(pos,BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:alchemical_furnace")).defaultBlockState(),3);
+            var alchemy=(AlchemyFurnaceBlockEntity)level.getBlockEntity(pos);alchemy.setItem(0,new ItemStack(Items.COAL,8));alchemy.setItem(1,new ItemStack(Items.COAL,2));
+            Runnable distill=()->AlchemyFurnaceBlockEntity.serverTick(level,pos,level.getBlockState(pos),alchemy);distill.run();
+            int burn=alchemy.burnTime(),progress=alchemy.cookTime();
+            SteamWork.afterNative(level,ticker(alchemy,distill),alchemy,distill);
+            h.assertTrue(alchemy.burnTime()==burn-3&&alchemy.cookTime()==progress+3,"Distillation also charges native fuel");
+            level.setBlock(pos,Blocks.CAMPFIRE.defaultBlockState(),3);var camp=(CampfireBlockEntity)level.getBlockEntity(pos);
+            camp.placeFood(null,new ItemStack(Items.BEEF),600);Runnable cooking=()->CampfireBlockEntity.cookTick(level,pos,level.getBlockState(pos),camp);cooking.run();
+            SteamWork.afterNative(level,ticker(camp,cooking),camp,cooking);
+            h.assertTrue(((CampfireAccess)camp).senluo$progress()[0]==4,"Campfire cooking uses the same spatial scheduler");
+        });
+    }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=145, batch="steam-infernal")
+    public static void steamInfernalFurnaceAdvancesNativeBoostAndWorkTogether(GameTestHelper h) {
+        var level = h.getLevel();
+        withActiveSteam(h, SteamCharge.ENERGY_PER_GROUP, pos -> {
+            var block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:infernal_furnace"));
+            level.setBlock(pos, block.defaultBlockState().setValue(InfernalFurnaceBlock.PART, InfernalFurnaceBlock.CORE_PART), 3);
+            var furnace = (InfernalFurnaceBlockEntity)level.getBlockEntity(pos);
+            h.assertTrue(furnace.addDroppedStack(new ItemStack(Items.RAW_IRON, 2)), "Native queue accepts smeltable input");
+            furnace.addSpeedyTime(16);
+            var aspect = furnace.reserveAspect();
+            Runnable tick = () -> InfernalFurnaceBlockEntity.serverTick(
+                    level, pos, furnace.getBlockState(), furnace);
+            tick.run();
+            int cook = furnace.cookTime(), reserve = furnace.speedyTime();
+            h.assertTrue(cook > 3 && reserve == 16 && furnace.item(0).getCount() == 2,
+                    "Starting native cooking preserves the paid reserve and queued input");
+            SteamWork.afterNative(level, ticker(furnace, tick), furnace, tick);
+            h.assertTrue(furnace.cookTime() == cook - 3 && furnace.speedyTime() == reserve - 3
+                    && furnace.reserveAspect().equals(aspect) && furnace.item(0).getCount() == 2,
+                    "Three additional native steps advance the recipe and consume its own boost exactly once per step");
+        });
+    }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty", timeoutTicks=145, batch="steam-work")
     public static void steamDrainsAllFiveAlembicsAfterFuelEnds(GameTestHelper h) {
-        var level=h.getLevel(); BlockPos pos=h.absolutePos(new BlockPos(8,3,8));
-        UUID field=UUID.randomUUID();
-        // Only the furnace is inside: the native distillation stack is one process.
-        SteamWork.fields(level).put(new RitualFields.Field(field,pos,1));
-        level.setBlock(pos,BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:alchemical_furnace")).defaultBlockState(),3);
-        var furnace=(AlchemyFurnaceBlockEntity)level.getBlockEntity(pos);
-        String[] keys={"aer","terra","ignis","aqua","ordo","perditio"};
-        var contents=new ListTag();
-        for(int i=0;i<keys.length;i++) {
-            var entry=new CompoundTag();entry.putString("key",keys[i]);entry.putInt("amount",2);contents.add(entry);
-            level.setBlock(pos.above(i+1),BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:arcane_alembic")).defaultBlockState(),3);
-            var alembic=(ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(i+1));
-            alembic.add(AspectId.parse(keys[i]),1);
-        }
-        var saved=furnace.saveWithoutMetadata(level.registryAccess());saved.put("Aspects",contents);
-        furnace.loadWithComponents(saved,level.registryAccess());
-        Runnable nativeTick=()->AlchemyFurnaceBlockEntity.serverTick(level,pos,furnace.getBlockState(),furnace);
-        for(int i=0;i<20;i++) {
-            nativeTick.run();SteamWork.afterNative(level,ticker(furnace,nativeTick),furnace,nativeTick);
-        }
-        for(int i=0;i<5;i++) h.assertTrue(((ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(i+1))).amount()==2,
-                "Each of five occupied layers receives one unit in 20 real ticks at 2x");
-        h.assertTrue(((ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(6))).amount()==1,
-                "Native five-layer boundary remains intact");
-        h.assertTrue(!furnace.isBurning()&&furnace.vis()==7,"Fuel-free residual distillation conserves all aspects");
-        SteamWork.fields(level).remove(field);
-        for(int i=6;i>=0;i--) level.removeBlock(pos.above(i),false);
-        h.succeed();
+        var level = h.getLevel();
+        withActiveSteam(h, 0, pos -> {
+            level.setBlock(pos,BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:alchemical_furnace")).defaultBlockState(),3);
+            var furnace=(AlchemyFurnaceBlockEntity)level.getBlockEntity(pos);
+            String[] keys={"aer","terra","ignis","aqua","ordo","perditio"};
+            var contents=new ListTag();
+            for(int i=0;i<keys.length;i++) {
+                var entry=new CompoundTag();entry.putString("key",keys[i]);entry.putInt("amount",2);contents.add(entry);
+                level.setBlock(pos.above(i+1),BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:arcane_alembic")).defaultBlockState(),3);
+                var alembic=(ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(i+1));
+                alembic.add(AspectId.parse(keys[i]),1);
+            }
+            var saved=furnace.saveWithoutMetadata(level.registryAccess());saved.put("Aspects",contents);
+            furnace.loadWithComponents(saved,level.registryAccess());
+            furnace.changedAndSync();
+            h.assertTrue(furnace.vis() == 12, "All six real residual stocks are present");
+            Runnable nativeTick=()->AlchemyFurnaceBlockEntity.serverTick(level,pos,furnace.getBlockState(),furnace);
+            for(int i=0;i<20;i++) {
+                nativeTick.run();SteamWork.afterNative(level,ticker(furnace,nativeTick),furnace,nativeTick);
+            }
+            for(int i=0;i<5;i++) h.assertTrue(((ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(i+1))).amount()==2,
+                    "Each of five occupied layers receives one unit in 20 work opportunities at 2x");
+            h.assertTrue(((ArcaneAlembicBlockEntity)level.getBlockEntity(pos.above(6))).amount()==1,
+                    "Native five-layer boundary remains intact");
+            h.assertTrue(!furnace.isBurning()&&furnace.vis()==7,"Fuel-free residual distillation conserves all aspects");
+            for (int i=6; i>0; i--) level.removeBlock(pos.above(i),false);
+        });
     }
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=40,batch="steam-fire")
     public static void steamCombustionKeepsOtherEntityTimeNative(GameTestHelper h) {

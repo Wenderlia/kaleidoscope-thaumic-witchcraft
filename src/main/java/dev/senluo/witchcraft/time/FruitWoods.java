@@ -37,8 +37,14 @@ public final class FruitWoods {
                 .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
                         state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS));
     }
+    /** Ordinary logs carry every grade. Coloured channels carry only their own grade. */
+    static int channelGrade(BlockState state) {
+        if (!state.is(TreeWood.LOGS)) return -1;
+        return state.getBlock() instanceof FruitWoodBlock wood ? wood.fruit() : 0;
+    }
     public static boolean permits(BlockState state, int grade) {
-        return state.is(TreeWood.LOGS) && (!(state.getBlock() instanceof FruitWoodBlock wood) || wood.fruit() == grade);
+        int channel = channelGrade(state);
+        return channel == 0 || channel > 0 && channel == grade;
     }
     public static BlockState channel(BlockState state, int grade) {
         if (grade > 4 || !state.is(TemporalContent.TIME_LOG.get())) return state;

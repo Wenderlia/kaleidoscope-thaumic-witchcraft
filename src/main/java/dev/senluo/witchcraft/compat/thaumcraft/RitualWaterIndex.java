@@ -3,6 +3,7 @@ package dev.senluo.witchcraft.compat.thaumcraft;
 import dev.senluo.witchcraft.ritual.RitualWater;
 import dev.senluo.witchcraft.ritual.WaterReceivers;
 import dev.tc4port.thaumcraft.api.ThaumcraftContent;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -21,16 +22,33 @@ final class RitualWaterIndex {
         boolean dirty = true;
     }
     private final Map<Long, Bucket> chunks = new HashMap<>();
+    // Unchecked chunks and known crucibles, including ordinary crucibles with no active ritual.
+    private final LongOpenHashSet centerChunks = new LongOpenHashSet();
+
+    private Bucket bucket(long key) {
+        return chunks.computeIfAbsent(key, missing -> {
+            centerChunks.add(key);
+            return new Bucket();
+        });
+    }
+
     static RitualWaterIndex get(ServerLevel level) { return LEVELS.computeIfAbsent(level, ignored -> new RitualWaterIndex()); }
     static void load(ChunkEvent.Load event) {
         if (event.getLevel() instanceof ServerLevel level && event.getChunk() instanceof LevelChunk chunk) {
-            Bucket bucket = new Bucket(); get(level).chunks.put(chunk.getPos().toLong(), bucket);
-            entities(chunk, bucket, level.getGameTime());
+            var index = get(level);
+            Bucket bucket = new Bucket();
+            index.chunks.put(chunk.getPos().toLong(), bucket);
+            index.entities(chunk, bucket, level.getGameTime());
         }
     }
     static void unload(ChunkEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level && LEVELS.containsKey(level))
-            LEVELS.get(level).chunks.remove(event.getChunk().getPos().toLong());
+        if (event.getLevel() instanceof ServerLevel level) {
+            var index = LEVELS.get(level);
+            if (index == null) return;
+            long key = event.getChunk().getPos().toLong();
+            index.chunks.remove(key);
+            index.centerChunks.remove(key);
+        }
     }
     static void unload(LevelEvent.Unload event) {
         if (event.getLevel() instanceof ServerLevel level) { LEVELS.remove(level); RitualWaterSupply.unload(level); }
@@ -40,26 +58,47 @@ final class RitualWaterIndex {
     }
     static void changed(ServerLevel level, BlockPos pos, boolean entityChanged, boolean receiverChanged) {
         var index = get(level);
-        var bucket = index.chunks.computeIfAbsent(ChunkPos.asLong(pos), ignored -> new Bucket());
-        if (entityChanged) bucket.checked = Long.MIN_VALUE;
+        long key = ChunkPos.asLong(pos);
+        var bucket = index.bucket(key);
+        if (entityChanged) {
+            bucket.checked = Long.MIN_VALUE;
+            index.centerChunks.add(key);
+        }
         if (receiverChanged && !bucket.dirty) {
             var receivers = new HashSet<>(bucket.receivers);
             if (WaterReceivers.candidate(level.getBlockState(pos))) receivers.add(pos.immutable()); else receivers.remove(pos);
             bucket.receivers = receivers;
         }
     }
-    private static void entities(LevelChunk chunk, Bucket bucket, long now) {
+    private void entities(LevelChunk chunk, Bucket bucket, long now) {
         Set<BlockPos> centers = new HashSet<>(), entities = new HashSet<>();
-        for (var be : chunk.getBlockEntities().values()) if (!be.isRemoved()) {
-            entities.add(be.getBlockPos().immutable());
-            if (be.getType() == ThaumcraftContent.blockEntity("crucible")) centers.add(be.getBlockPos().immutable());
+        var live = chunk.getBlockEntities();
+        for (var be : live.values()) if (!be.isRemoved()) {
+            BlockPos pos = be.getBlockPos().immutable();
+            entities.add(pos);
+            if (be.getType() == ThaumcraftContent.blockEntity("crucible")) centers.add(pos);
         }
-        bucket.centers = centers; bucket.entities = entities; bucket.checked = now;
+        // Packed entities can become live without a block change. Check them on load or invalidation.
+        boolean pendingCenter = false;
+        if (bucket.checked == Long.MIN_VALUE) {
+            for (BlockPos pos : chunk.getBlockEntitiesPos()) {
+                if (!live.containsKey(pos) && ThaumcraftContent.blockEntity("crucible").isValid(chunk.getBlockState(pos))) {
+                    pendingCenter = true;
+                    break;
+                }
+            }
+        }
+        bucket.centers = centers;
+        bucket.entities = entities;
+        bucket.checked = pendingCenter ? Long.MIN_VALUE : now;
+        long key = chunk.getPos().toLong();
+        if (pendingCenter || !centers.isEmpty()) centerChunks.add(key);
+        else centerChunks.remove(key);
     }
     private Bucket refresh(ServerLevel level, long key, boolean receivers) {
         LevelChunk chunk = level.getChunkSource().getChunkNow(ChunkPos.getX(key), ChunkPos.getZ(key));
         if (chunk == null) return null;
-        Bucket bucket = chunks.computeIfAbsent(key, ignored -> new Bucket());
+        Bucket bucket = bucket(key);
         long now = level.getGameTime();
         if (bucket.checked == Long.MIN_VALUE || now < bucket.checked || now - bucket.checked >= 40)
             entities(chunk, bucket, now);
@@ -80,10 +119,8 @@ final class RitualWaterIndex {
     }
     List<BlockPos> centers(ServerLevel level) {
         var result = new ArrayList<BlockPos>();
-        for (long key : List.copyOf(chunks.keySet())) {
-            Bucket bucket = chunks.get(key);
-            // Refresh BE positions, not block palettes. No world-volume scan for finding anchors.
-            if (bucket.checked == Long.MIN_VALUE || !bucket.centers.isEmpty()) bucket = refresh(level, key, false);
+        for (long key : centerChunks.toLongArray()) {
+            Bucket bucket = refresh(level, key, false);
             if (bucket != null) for (var pos : bucket.centers) if (level.shouldTickBlocksAt(pos)) result.add(pos);
         }
         result.sort(BlockPos::compareTo); return result;

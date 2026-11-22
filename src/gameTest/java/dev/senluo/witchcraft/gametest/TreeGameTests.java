@@ -84,80 +84,102 @@ public final class TreeGameTests {
             h.assertTrue(source!=null,"Fixture needs a free source node");
             h.getLevel().setBlock(core.getBlockPos().offset(source),FruitWoods.FAMILIES.get(grade-1).node().get().defaultBlockState(),3);
         }
-        trees.tick(core);
-        for(int i=0;i<40;i++) trees.flush();
+        // Connection discovery publishes node facts during flush; the next tick queues their fruit search.
+        for(int i=0;i<40;i++) { trees.tick(core); trees.flush(); }
         BlockPos expected=source;
         return trees.fruits(core).stream().filter(f->expected.equals(f.source) && f.targetGrade==grade)
                 .findFirst().orElseThrow(()->new AssertionError("No live fruit for current node "+expected+" grade "+grade));
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=80)
-    public static void treeEntryPaysOnceWaitsForSpaceAndPreservesTissue(GameTestHelper h) {
-        LivingEntity crop=plant(h,false);crop.tissue.setCoreQuantity(100*Tissue.TU);
-        Tissue.Side side=side(1);crop.tissue.sides.add(side);
-        Tissue saved=crop.tissue; var world=TemporalWorld.get(h.getLevel());
-        var player=DevelopmentGameTests.player(h,crop);ItemStack meal=new ItemStack(Items.BONE_MEAL,2);
-        DevelopmentGameTests.use(h,crop,player,meal);
-        long remaining=saved.stored();
-        h.assertTrue(saved.treeGrowing && remaining==100*Tissue.TU && meal.getCount()==2,"Bone meal starts one paid tree clock without consuming the item");
-        DevelopmentGameTests.use(h,crop,player,meal);
-        h.assertTrue(saved.stored()==remaining,"Repeated interaction must not pay the entry fee twice");
-        saved.treeTicks=TreeBalance.ENTRY_TICKS;
-        BlockPos obstacle=crop.getBlockPos().above(3).east();
-        h.getLevel().setBlock(obstacle,Blocks.STONE.defaultBlockState(),3);
-        h.assertTrue(TissueItem.read(TissueItem.stack(saved)).treeTicks==TreeBalance.ENTRY_TICKS,"Waiting progress survives item serialization");
-        h.assertTrue(world.trees.form(crop),"One obstacle must not prevent the rest of the tree from growing");
-        h.assertTrue(h.getLevel().getBlockState(obstacle).is(Blocks.STONE),"Tree formation preserves the obstacle");
-        LivingEntity core=(LivingEntity)h.getLevel().getBlockEntity(crop.getBlockPos());
-        h.assertTrue(core.tree() && core.tissue==saved && saved.tree && saved.sides.getFirst()==side && saved.stored()==remaining,
-                "Transforming preserves the organism and sides without granting TU or charging repair fees");
-        h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,new AABB(core.getBlockPos()).inflate(2)).isEmpty(),"Transforming must not drop a duplicate tissue");
+    public static void naturalTreeWaitsForSpaceAndPreservesTissue(GameTestHelper h) {
+        LivingEntity crop = plant(h, false);
+        var level = h.getLevel();
+        var trees = TemporalWorld.get(level).trees;
+        var saved = crop.tissue;
+        saved.setCoreQuantity(100 * Tissue.TU);
+        Tissue.Side attached = side(1);
+        saved.sides.add(attached);
+        level.setBlock(crop.getBlockPos().below(), Blocks.DIRT.defaultBlockState(), 3);
+        saved.naturalTicks = TreeBalance.ENTRY_TICKS - 1;
+        h.assertFalse(trees.begin(crop), "An immature woody crop must wait for natural age");
+        DevelopmentTime.advanceStructure(crop, 1);
+        h.assertTrue(trees.begin(crop) && trees.begin(crop) && saved.stored() == 100 * Tissue.TU,
+                "Natural age starts one transition without charging the organism");
+        BlockPos obstacle = crop.getBlockPos().above(3).east();
+        level.setBlock(obstacle, Blocks.STONE.defaultBlockState(), 3);
+        h.assertFalse(trees.form(crop), "First formation waits until its footprint is clear");
+        h.assertTrue(level.getBlockState(obstacle).is(Blocks.STONE)
+                && TissueItem.read(TissueItem.stack(saved)).treeTicks == TreeBalance.ENTRY_TICKS,
+                "The occupied block and waiting progress survive");
+        level.removeBlock(obstacle, false);
+        h.assertTrue(trees.form(crop), "Removing the obstruction permits the same transition");
+        LivingEntity core = (LivingEntity) level.getBlockEntity(crop.getBlockPos());
+        h.assertTrue(core.tree() && core.tissue == saved && saved.sides.contains(attached)
+                && saved.stored() == 100 * Tissue.TU, "Formation keeps the organism, side and balance");
+        h.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(core.getBlockPos()).inflate(2)).isEmpty(),
+                "Transforming must not drop a second tissue");
         h.succeed();
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=80)
     public static void treeSkipsSealedRoomsAndRegrowsThroughOpenings(GameTestHelper h) {
-        LivingEntity crop=plant(h,false);
-        crop.tissue.treeGrowing=true;crop.tissue.treeTicks=TreeBalance.ENTRY_TICKS;
-        crop.tissue.setCoreQuantity(1000*Tissue.TU);
-        BlockPos origin=crop.getBlockPos(),room=origin.offset(1,3,0);
-        for(Direction direction:Direction.values())h.getLevel().setBlock(room.relative(direction),Blocks.STONE.defaultBlockState(),3);
-        var trees=TemporalWorld.get(h.getLevel()).trees;
-        h.assertTrue(trees.form(crop),"Exposed parts grow around a sealed structure");
-        LivingEntity core=(LivingEntity)h.getLevel().getBlockEntity(origin);
-        h.assertTrue(h.getLevel().getBlockState(room).isAir(),"Formation must leave the sealed cavity empty");
-        long balance=core.tissue.stored();
-        for(int i=0;i<5;i++)trees.flush();
-        h.assertTrue(h.getLevel().getBlockState(room).isAir() && core.tissue.stored()==balance,
-                "Repair also skips enclosed air, without charging for it");
-        h.getLevel().removeBlock(room.east(),false);
-        trees.tick(core);
-        for(int i=0;i<5;i++)trees.flush();
-        h.assertTrue(h.getLevel().getBlockState(room).is(TemporalContent.TIME_LEAVES.get()),
-                "An opening connected to the exterior allows the previously enclosed cell to grow");
-        h.assertTrue(core.tissue.stored()==balance-2*TreeBalance.LEAF_REPAIR,"Only the two restored leaf cells cost TU");
-        h.succeed();
+        LivingEntity core = plant(h, true);
+        crown(h, core);
+        core.tissue.setCoreQuantity(1000 * Tissue.TU);
+        var level = h.getLevel();
+        BlockPos room = core.getBlockPos().offset(1,3,0);
+        h.assertTrue(level.getBlockState(room).is(TemporalContent.TIME_LEAVES.get()), "Use a natural leaf");
+        long balance = core.tissue.stored();
+        h.startSequence()
+                .thenExecuteAfter(4, () -> {
+                    for (Direction face : Direction.values()) level.setBlock(room.relative(face), Blocks.STONE.defaultBlockState(), 3);
+                    level.removeBlock(room, false);
+                })
+                .thenExecuteAfter(4, () -> {
+                    h.assertTrue(level.getBlockState(room).isAir() && core.tissue.stored() == balance,
+                            "A closed room stays empty and costs nothing");
+                    level.removeBlock(room.west(), false);
+                })
+                .thenWaitUntil(() -> {
+                    h.assertTrue(level.getBlockState(room).is(TemporalContent.TIME_LEAVES.get())
+                            && level.getBlockState(room.west()).is(TreeWood.LOGS), "Reopening admits the log and leaf");
+                    h.assertTrue(core.tissue.stored() == balance - TreeBalance.LOG_REPAIR - TreeBalance.LEAF_REPAIR,
+                            "Only the restored log and leaf are charged");
+                }).thenSucceed();
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=80)
     public static void amberFruitResumesOnlyItsReturnedCore(GameTestHelper h) {
-        LivingEntity core=plant(h,true);FruitEntity fruit=fruit(h,core,side(4));
-        fruit.grade=1;
-        Tissue preserved=core.tissue;BlockPos pos=core.getBlockPos();
-        h.getLevel().removeBlock(pos,false);
-        h.assertTrue(fruit.orphaned,"Core loss suspends the ripe fruit");
-        h.getLevel().setBlock(pos,TemporalContent.CORE.get().defaultBlockState(),3);
-        LivingEntity other=(LivingEntity)h.getLevel().getBlockEntity(pos);
-        other.tissue.sides.add(side(4));
-        { FruitEntity.tick(fruit); TemporalWorld.get(h.getLevel()).development.flush(); TemporalWorld.get(h.getLevel()).production.flush(List.of()); }
-        h.assertTrue(fruit.orphaned && fruit.limit()==0,"An unrelated core must not inherit the fruit");
-        other.tissue=preserved;other.changed();
-        { FruitEntity.tick(fruit); TemporalWorld.get(h.getLevel()).development.flush(); TemporalWorld.get(h.getLevel()).production.flush(List.of()); }
-        TemporalWorld.get(h.getLevel()).trees.tick(other);
-        for(int i=0;i<40;i++)TemporalWorld.get(h.getLevel()).trees.flush();
-        h.assertTrue(!fruit.orphaned && fruit.limit()==1 && fruit.grade==1 && fruit.core()==other
-                && fruit.ticks==0 && fruit.invested==0,"Returning the original core restores its own ripe fixed-quality fruit");
-        h.succeed();
+        LivingEntity core = plant(h, true);
+        FruitEntity fruit = fruit(h, core, side(4));
+        fruit.grade = 1;
+        var level = h.getLevel();
+        var player = DevelopmentGameTests.player(h, core);
+        BlockPos pos = core.getBlockPos();
+        level.destroyBlock(pos, true, player);
+        var drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2),
+                item -> item.getItem().is(TemporalContent.CORE_ITEM.get()));
+        h.assertTrue(drops.size() == 1 && fruit.orphaned, "Mining drops the original core and suspends its ripe fruit");
+        ItemStack original = drops.getFirst().getItem().copy();
+        drops.getFirst().discard();
+        level.setBlock(pos, TemporalContent.CORE.get().defaultBlockState(), 3);
+        h.startSequence()
+                .thenExecuteAfter(3, () -> {
+                    h.assertTrue(fruit.orphaned && fruit.limit() == 0, "A different core cannot take over");
+                    level.removeBlock(pos, false);
+                    player.setItemInHand(InteractionHand.MAIN_HAND, original);
+                    player.gameMode.useItemOn(player, level, original, InteractionHand.MAIN_HAND,
+                            new BlockHitResult(Vec3.atCenterOf(pos.below()), Direction.UP, pos.below(), false));
+                    h.assertTrue(original.isEmpty(), "The original core item was replanted");
+                })
+                .thenWaitUntil(() -> {
+                    h.assertTrue(level.getBlockEntity(fruit.getBlockPos()) == fruit && !fruit.orphaned
+                            && fruit.core() != null && fruit.core() == level.getBlockEntity(pos),
+                            "The original fruit recognizes its replanted core");
+                    h.assertTrue(fruit.limit() == 1 && fruit.grade == 1 && fruit.ticks == 0 && fruit.invested == 0,
+                            "The same ripe fruit recovers its authorized node and its settled account");
+                }).thenSucceed();
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=80)
@@ -182,26 +204,40 @@ public final class TreeGameTests {
                 new BlockHitResult(Vec3.atCenterOf(pos.below()),Direction.UP,pos.below(),false));
         h.assertTrue(item.isEmpty() && h.getLevel().getBlockEntity(pos) instanceof LivingEntity,"A core can be replanted on dirt");
         LivingEntity replanted=(LivingEntity)h.getLevel().getBlockEntity(pos);
-        for(int i=0;i<5;i++)TemporalWorld.get(h.getLevel()).trees.flush();
-        h.assertTrue(replanted.tissue.stored()==total-TreeBalance.LEAF_REPAIR && h.getLevel().getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get()),
-                "Only the missing leaf costs TU after replanting; existing wood and the entry fee are not charged");
-        h.succeed();
+        h.succeedWhen(() -> {
+            h.assertTrue(h.getLevel().getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get()),
+                    "The replanted core regrows its missing leaf through the native server tick");
+            h.assertTrue(replanted.tissue.stored() == total - TreeBalance.LEAF_REPAIR,
+                    "Only the missing leaf costs TU after replanting; existing wood and the entry fee are not charged");
+        });
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=80)
     public static void treeMaterialsRepairOnceAndWaitForBudgetOrSpace(GameTestHelper h) {
-        LivingEntity core=plant(h,true);crown(h,core);core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
-        var trees=TemporalWorld.get(h.getLevel()).trees;BlockPos log=core.getBlockPos().above();
-        h.getLevel().destroyBlock(log,true);trees.flush();
-        h.assertTrue(core.tissue.stored()==0 && h.getLevel().getBlockState(log).is(TemporalContent.TIME_LOG.get()),"A broken log regenerates for one repair fee");
-        trees.flush();h.assertTrue(core.tissue.stored()==0,"An already restored log must not be charged again");
-        h.getLevel().destroyBlock(log,true);trees.flush();
-        h.assertTrue(h.getLevel().getBlockState(log).isAir(),"No stock means no free regeneration");
-        core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);h.getLevel().setBlock(log,Blocks.STONE.defaultBlockState(),3);trees.tick(core);trees.flush();
-        h.assertTrue(core.tissue.stored()==TreeBalance.LOG_REPAIR && h.getLevel().getBlockState(log).is(Blocks.STONE),"Regeneration cannot replace player blocks or charge for a failed placement");
-        h.getLevel().removeBlock(log,false);trees.tick(core);trees.flush();
-        h.assertTrue(core.tissue.stored()==0 && h.getLevel().getBlockState(log).is(TemporalContent.TIME_LOG.get()),"Cleared space and restored stock resume regeneration");
-        h.succeed();
+        LivingEntity core = plant(h, true);
+        crown(h, core);
+        var level = h.getLevel();
+        BlockPos log = core.getBlockPos().above();
+        core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
+        h.startSequence()
+                .thenExecuteAfter(4, () -> level.destroyBlock(log, true))
+                .thenWaitUntil(() -> h.assertTrue(level.getBlockState(log).is(TemporalContent.TIME_LOG.get())
+                        && core.tissue.stored() == 0, "The first restored log costs exactly one repair"))
+                .thenExecute(() -> level.destroyBlock(log, true))
+                .thenExecuteAfter(3, () -> {
+                    h.assertTrue(level.getBlockState(log).isAir() && core.tissue.stored() == 0,
+                            "A second repair waits for stock");
+                    core.tissue.setCoreQuantity(TreeBalance.LOG_REPAIR);
+                    level.setBlock(log, Blocks.STONE.defaultBlockState(), 3);
+                })
+                .thenExecuteAfter(3, () -> {
+                    h.assertTrue(level.getBlockState(log).is(Blocks.STONE) && core.tissue.stored() == TreeBalance.LOG_REPAIR,
+                            "An obstruction is preserved without charging for a failed repair");
+                    level.removeBlock(log, false);
+                })
+                .thenWaitUntil(() -> h.assertTrue(level.getBlockState(log).is(TemporalContent.TIME_LOG.get())
+                        && core.tissue.stored() == 0, "Cleared space and restored stock resume regeneration"))
+                .thenSucceed();
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=60)
@@ -274,7 +310,7 @@ public final class TreeGameTests {
         h.assertTrue(fruit.ticks==100 && fruit.invested==TreeBalance.FRUIT_FEE[1] && fruit.limit()==0,
                 "Losing the nurturing node pauses the fixed site and retains paid work");
         h.getLevel().setBlock(node,FruitWoods.FAMILIES.getFirst().node().get().defaultBlockState(),3);
-        trees.tick(core);for(int i=0;i<40;i++)trees.flush();
+        for(int i=0;i<40;i++){trees.tick(core);trees.flush();}
         fruit.advanceDevelopment(1);TemporalWorld.get(h.getLevel()).production.flush(List.of());
         h.assertTrue(fruit.ticks==101 && fruit.limit()==1,
                 "Returning the same node restores its existing fruit instead of creating another");
@@ -301,14 +337,15 @@ public final class TreeGameTests {
         core.tissue=TissueItem.read(TissueItem.stack(core.tissue));trees.register(core);fruit.checkSupport();
         h.assertTrue(trees.plannedLeaf(core,leaf)==TreeLogic.LeafSupport.PRESENT && !fruit.isRemoved(),
                 "The recorded support survives plan reconstruction while its real leaf is still missing");
-        h.getLevel().removeBlock(leaf,false);core.tissue.setCoreQuantity(1000*Tissue.TU);trees.tick(core);
-        for(int i=0;i<40;i++)trees.flush();
-        h.assertTrue(h.getLevel().getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get())
-                && h.getLevel().getBlockEntity(pos)==fruit && fruit.limit()==1,
-                "Regeneration restores the same fruit's real support and feeding eligibility");
-        h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,new AABB(pos).inflate(1),
-                e->e.getItem().is(TemporalContent.FRUIT_ITEM.get())).isEmpty(),"Temporary damage must not settle a fruit");
-        h.succeed();
+        h.getLevel().removeBlock(leaf,false);core.tissue.setCoreQuantity(1000*Tissue.TU);
+        // Leaf distance and the nurturing scheduler advance on native ticks.
+        h.succeedWhen(()->{
+            h.assertTrue(h.getLevel().getBlockState(leaf).is(TemporalContent.TIME_LEAVES.get()),"The missing fruit support regrows");
+            h.assertTrue(h.getLevel().getBlockEntity(pos)==fruit && fruit.limit()==1,
+                    "The original attached fruit regains its feeding route");
+            h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,new AABB(pos).inflate(1),
+                    e->e.getItem().is(TemporalContent.FRUIT_ITEM.get())).isEmpty(),"Temporary damage must not settle a fruit");
+        });
     }
 
     private static void pruneFruitLeaf(GameTestHelper h,LivingEntity core,FruitEntity fruit) {
@@ -324,6 +361,7 @@ public final class TreeGameTests {
     public static void prunedLeafSettlesItsFruitOnlyAfterRemovalCommits(GameTestHelper h) {
         LivingEntity core=plant(h,true);FruitEntity fruit=nodeFruit(h,core,1);
         BlockPos pos=fruit.getBlockPos();pruneFruitLeaf(h,core,fruit);
+        FruitEntity.tick(fruit);
         h.assertTrue(h.getLevel().getBlockState(pos).isAir() && fruit.isRemoved(),
                 "The post-removal pruning commit clears a juvenile even though its core is alive");
         h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,new AABB(pos).inflate(1),

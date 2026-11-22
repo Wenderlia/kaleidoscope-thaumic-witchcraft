@@ -14,7 +14,7 @@ public final class FrostModuleItem extends ReservoirPluginItem {
     public FrostModuleItem(Properties properties){super(properties,FrostModuleItem::supply);}
     @Override public Phase phase(){return Phase.BEFORE_PLAYER;}
     @Override public boolean canToggle(){return true;}
-    public static int remaining(ItemStack module){return Math.clamp(ReservoirData.read(module).getInt(BALANCE),0,TICKS_PER_ESSENTIA);}
+    public static int remaining(ItemStack module){return Math.clamp(ReservoirData.view(module).integer(BALANCE),0,TICKS_PER_ESSENTIA);}
     private static void supply(ServerPlayer player,ItemStack bag,int slot,ItemStack module){
         if(!FrostAbilities.acceptsModule(player))return;
         int ticks=remaining(module),fuelCell=-1;

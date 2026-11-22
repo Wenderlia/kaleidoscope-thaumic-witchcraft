@@ -4,12 +4,13 @@ import dev.senluo.witchcraft.KaleidoscopeWitchcraft;
 import dev.tc4port.thaumcraft.api.ThaumcraftContent;
 import dev.tc4port.thaumcraft.api.aspect.AspectApi;
 import dev.tc4port.thaumcraft.api.aspect.VisAction;
-import dev.tc4port.thaumcraft.api.aspect.VisChannel;
+import dev.tc4port.thaumcraft.api.aspect.AspectId;
+import dev.tc4port.thaumcraft.api.vis.VisTypes;
 import dev.tc4port.thaumcraft.api.node.NodeApi;
 import dev.tc4port.thaumcraft.api.node.VisCapabilities;
 import dev.tc4port.thaumcraft.api.node.VisSource;
 import java.math.BigInteger;
-import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +30,8 @@ public final class NodeOutput implements VisSource {
             "energized_output", () -> AttachmentType.<NodeOutput>builder(holder -> new NodeOutput((BlockEntity) holder)).build());
     private final BlockEntity node;
     private final VisSource nativeSource;
-    private Map<VisChannel, BigInteger> reserve = Map.of();
+    private Map<AspectId, BigInteger> reserve = Map.of();
+    private List<AspectId> types = List.of();
     private long nodeGeneration, aspectGeneration;
 
     private NodeOutput(BlockEntity node) {
@@ -47,12 +49,17 @@ public final class NodeOutput implements VisSource {
     }
 
     static void clear(BlockEntity node) {
-        if (node.hasData(OUTPUT)) node.getData(OUTPUT).reserve = Map.of();
+        if (node.hasData(OUTPUT)) {
+            NodeOutput output = node.getData(OUTPUT);
+            output.reserve = Map.of();
+            output.types = List.of();
+        }
     }
 
-    static void publish(BlockEntity node, EnumMap<VisChannel, BigInteger> extra) {
+    static void publish(BlockEntity node, List<AspectId> types, Map<AspectId, BigInteger> extra) {
         NodeOutput output = node.getData(OUTPUT);
         output.reserve = extra;
+        output.types = types;
         output.nodeGeneration = NodeApi.registry().generation();
         output.aspectGeneration = AspectApi.registry().generation();
     }
@@ -61,13 +68,13 @@ public final class NodeOutput implements VisSource {
     @Override public BlockPos networkEndpoint() { return nativeSource.networkEndpoint(); }
     @Override public Object simulationIdentity() { return nativeSource.simulationIdentity(); }
 
-    @Override public int takeVis(VisChannel channel, int amount, VisAction action, int reserved) {
+    @Override public int takeVis(AspectId channel, int amount, VisAction action, int reserved) {
         if (reserve.isEmpty()) return nativeSource.takeVis(channel, amount, action, reserved);
         if (channel == null || action == null || amount <= 0 || reserved < 0 || !canSupplyVis()
                 || !(node.getLevel() instanceof ServerLevel level) || !level.getServer().isSameThread()) return 0;
         BigInteger extra = reserve.get(channel);
         if (extra == null || nodeGeneration != NodeApi.registry().generation()
-                || aspectGeneration != AspectApi.registry().generation())
+                || aspectGeneration != AspectApi.registry().generation() || !types.equals(VisTypes.block(node)))
             return nativeSource.takeVis(channel, amount, action, reserved);
         if (action == VisAction.SIMULATE) {
             int nativeBalance = nativeSource.takeVis(channel, Integer.MAX_VALUE, action, 0);

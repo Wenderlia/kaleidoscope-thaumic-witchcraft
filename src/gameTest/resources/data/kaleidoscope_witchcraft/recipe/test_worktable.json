@@ -1,0 +1,27 @@
+{
+  "type": "thaumcraft:arcane_shapeless",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "thaumcraft"
+    }
+  ],
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": [
+        "minecraft:oak_log",
+        "minecraft:milk_bucket"
+      ],
+      "components": {
+        "minecraft:custom_model_data": 20777
+      }
+    }
+  ],
+  "result": {
+    "id": "minecraft:amethyst_shard"
+  },
+  "vis": {
+    "ordo": 1
+  }
+}

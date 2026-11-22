@@ -76,7 +76,7 @@ public final class SlashFragments {
     public void clientTick() { if (view != null) view.tick(); }
     void pause() { Arrays.fill(moving, (byte)0); }
     boolean cuts(double hardness) { return Double.isFinite(hardness) && hardness >= 0 && hardness <= cuttingPower * 3; }
-    private record Step(int index, TravelStep travel, SlashGeometry.Sweep sweep) {}
+    private record Step(int index, TravelStep travel, SlashQueries.Coverage sweep) {}
 
     boolean tick(SlashEntity slash, ServerPlayer player) {
         pause();
@@ -92,13 +92,13 @@ public final class SlashFragments {
             if (count[i] == 0 || activeTicks[i] >= 160 || work[i] >= range - 1.0E-7) { phase[i] = 2; continue; }
             Vec3 from = origin.add(directions[i].scale(radius[i]));
             double allowance = Math.min(speed, range - work[i]), cap = allowance;
-            TravelStep travel = null; SlashGeometry.Sweep sweep = null;
+            TravelStep travel = null; SlashQueries.Coverage sweep = null;
             boolean ready = false;
             for (int attempt = 0; attempt < 16; attempt++) {
                 travel = space.quotePoint(from, directions[i], allowance, cap);
-                sweep = new SlashGeometry.Sweep(from, travel.to(), blade(i), HALF_LENGTH, HALF_LENGTH);
-                var cover = SlashQueries.cover(sweep);
-                if (!cover.isEmpty() && cover.stream().mapToDouble(SlashQueries::volume).sum() <= SlashCollision.MAX_CELLS) {
+                sweep = new SlashQueries.Coverage(new SlashGeometry.Sweep(from, travel.to(), blade(i), HALF_LENGTH, HALF_LENGTH));
+                var cover = sweep.boxes();
+                if (!cover.isEmpty() && !sweep.exceedsCellLimit(SlashCollision.MAX_CELLS)) {
                     if (!SlashQueries.loaded(level, cover)) break; // Pause without loading chunks.
                     var box = sweep.bounds();
                     if (box.minY < level.getMinBuildHeight() || box.maxY >= level.getMaxBuildHeight()

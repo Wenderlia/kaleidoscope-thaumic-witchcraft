@@ -46,6 +46,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     final Set<Long> hitBlocks = new HashSet<>();
     private UUID casterId;
     private boolean armed;
+    private SlashVisibility pendingAudience = SlashVisibility.EVERYONE;
     private boolean restrained;
     private boolean destructive, penetrating, fission;
     private double criticalBase;
@@ -94,23 +95,28 @@ public final class SlashEntity extends Projectile implements TravelDriven {
                         SlashShape shape, BezierSpeed speed, Vec3 origin) {
         casterId = player.getUUID(); setOwner(player);
         entityData.set(CASTER, Optional.of(casterId));
-        entityData.set(VISIBILITY, SlashVisibility.EVERYONE.wireId());
         setPos(player.getEyePosition());
         var launch = new CompoundTag();
         putVector(launch, "Origin", origin);
         entityData.set(LAUNCH_ORIGIN, launch);
         setPos(SlashLaunch.position(this, player, origin));
-        this.shape = shape; this.speed = speed; initialSpeed = null;
-        entityData.set(SIZE, new Vector3f((float) shape.range(), (float) shape.initialLength(), (float) shape.finalLength()));
         entityData.set(HAND_RELEASE, true);
         entityData.set(FORWARD, pose.direction().toVector3f());
         entityData.set(ROLL, pose.roll());
         entityData.set(BLADE, SlashGeometry.blade(pose.direction(), pose.roll()).toVector3f());
         routeOrigin = position(); path = MotionPath.line(pose.direction());
-        travel = 0; spentTravel = 0; motionTicks = 0;
+        configureFlight(initial, multiplier, bonus, tool, shape, speed);
+    }
+
+    /** Reprice the pending blade without changing its admitted position or audience. */
+    public void configureFlight(double initial, double multiplier, double bonus, ItemStack tool,
+                                SlashShape shape, BezierSpeed speed) {
+        if (armed) throw new IllegalStateException("Cannot change an emitted slash");
+        this.shape = shape; this.speed = speed;
+        initialSpeed = null; criticalBase = 0;
+        visual(SlashVisual.NORMAL);
+        entityData.set(SIZE, new Vector3f((float) shape.range(), (float) shape.initialLength(), (float) shape.finalLength()));
         potential = new SlashPotential(initial, initial);
-        criticalBase = 0;
-        entityData.set(VISUAL, SlashVisual.NORMAL.wireId());
         damageMultiplier = multiplier; damageBonus = bonus; this.tool = tool;
         setDeltaMovement(forward().scale(speed.at(0)));
     }
@@ -141,7 +147,17 @@ public final class SlashEntity extends Projectile implements TravelDriven {
                 : null;
         setDeltaMovement(path.direction(0).scale((initialSpeed == null ? speed : initialSpeed).at(0)));
     }
-    public void arm() { armed = true; }
+    public boolean pendingAtOrigin(ServerLevel world) {
+        return !armed && level() == world && isAddedToLevel() && !isRemoved() && onRoute(routeOrigin);
+    }
+
+    private boolean onRoute(Vec3 expected) { return position().distanceToSqr(expected) <= 1.0E-4; }
+
+    public void arm() {
+        if (armed) return;
+        armed = true;
+        entityData.set(VISIBILITY, pendingAudience.wireId());
+    }
     /** The paid cast owns its weapon snapshot; swapping/removing a focus cannot change a flying blade. */
     public void weapon(ItemStack stack) {
         if (armed) throw new IllegalStateException("Cannot change an emitted slash weapon");
@@ -152,7 +168,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     /** Set the audience on the server before arming; all blade styles and contact flashes share it. */
     public void visibility(SlashVisibility value) {
         if (level().isClientSide || armed) throw new IllegalStateException("Cannot change an emitted slash audience");
-        entityData.set(VISIBILITY, Objects.requireNonNull(value).wireId());
+        pendingAudience = Objects.requireNonNull(value);
     }
     public boolean visibleTo(UUID viewer) { return visibility().visibleTo(ownerId(), viewer); }
     private void visual(SlashVisual value) {
@@ -213,10 +229,16 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         return SlashCritical.travel(initialSpeed, speed, from, to);
     }
     public void radial(RadialOutline value) {
+        if (radial != null) radial.releaseWaits();
         radial = new RadialSlash(value); rotation = null;
-        entityData.set(RADIAL, radial.geometry());
-        entityData.set(RADIAL_PROGRESS, radial.snapshot()); entityData.set(HAND_RELEASE, false);
+        publishRadial();
+        entityData.set(HAND_RELEASE, false);
         setDeltaMovement(Vec3.ZERO);
+    }
+    private void publishRadial() {
+        entityData.set(RADIAL, radial.geometry());
+        if (!radial.matchesSnapshot(entityData.get(RADIAL_PROGRESS)))
+            entityData.set(RADIAL_PROGRESS, radial.snapshot());
     }
     public RadialSlash radial() { return radial; }
     /** Preserve the server-authored geometry kind even when a client snapshot is rejected. */
@@ -282,10 +304,9 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         if (OwnershipRitual.frozen(player)) { pauseFlight(); return; }
         if (fragments != null) { advanceFragments(player); return; }
         if (radial != null) {
-            if (position().distanceToSqr(routeOrigin) > 1.0E-4) { finish(position()); return; }
+            if (!onRoute(routeOrigin)) { finish(position()); return; }
             boolean alive = radial.tick(this, player, shape);
-            entityData.set(RADIAL, radial.geometry());
-            entityData.set(RADIAL_PROGRESS, radial.snapshot());
+            publishRadial();
             if (isRemoved()) return;
             setDeltaMovement(Vec3.ZERO);
             if (fragments != null) { advanceFragments(player); return; }
@@ -294,36 +315,42 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         }
         if (flightTicks >= 160 || potential.remaining() <= 0 || spentTravel >= shape.range()) { finish(position()); return; }
         // An external teleport must not pull a saved curve back through its original target.
-        if (position().distanceToSqr(routeOrigin.add(path.at(travel))) > 1.0E-4) { finish(position()); return; }
+        if (!onRoute(routeOrigin.add(path.at(travel)))) { finish(position()); return; }
         double budget = Math.min(flightTravel(motionTicks, motionTicks + 1), shape.range() - spentTravel);
         Vec3 frameStart = position();
         var space = ProjectileBarrier.space(this);
         PathTravel.Plan plan = PathTravel.plan(path, routeOrigin, travel, budget, space);
         double plannedWork = spentTravel;
         int queryBoxes = 0;
+        List<SlashQueries.Coverage> checked = new ArrayList<>(plan.segments().size());
         for (PathTravel.Segment segment : plan.segments()) {
             var step = segment.travel();
             if (!level.getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(step.to()))
                     || level.isOutsideBuildHeight(net.minecraft.core.BlockPos.containing(step.to()))) { finish(position()); return; }
             double before = motionTicks + (plannedWork - spentTravel) / budget;
-            for (var sweep : sweeps(step.from(), step.to(), plannedWork, plannedWork + step.work(),
-                    before, before + step.work() / budget)) {
-                var cover = SlashQueries.cover(sweep);
-                queryBoxes += cover.size();
-                if (cover.isEmpty() || queryBoxes > SlashCollision.MAX_QUERIES) { queryLimit(); finish(position()); return; }
-                if (!SlashQueries.loaded(level, cover)) { setDeltaMovement(Vec3.ZERO); return; }
-            }
+            var geometry = new SlashQueries.Coverage(sweep(step.from(), step.to(), plannedWork, plannedWork + step.work(),
+                    before, before + step.work() / budget));
+            var cover = geometry.boxes();
+            queryBoxes += cover.size();
+            if (cover.isEmpty() || queryBoxes > SlashCollision.MAX_QUERIES) { queryLimit(); finish(position()); return; }
+            if (!SlashQueries.loaded(level, cover)) { setDeltaMovement(Vec3.ZERO); return; }
+            checked.add(geometry);
             plannedWork += step.work();
         }
         flightTicks++;
         double frameTime = motionTicks;
         SlashCollision.Budget collisionBudget = new SlashCollision.Budget(space);
+        var plannedGeometry = checked.iterator();
         for (PathTravel.Segment segment : plan.segments()) {
             var step = segment.travel();
             entityData.set(FORWARD, step.direction().toVector3f());
-            var receipt = ProjectileBarrier.commitTravel(this, step, reachable -> SlashCollision.resolve(this, player,
-                    sweeps(reachable.from(), reachable.to(), spentTravel, spentTravel + reachable.work(),
-                            motionTicks, motionTicks + reachable.work() / budget), collisionBudget));
+            var original = plannedGeometry.next();
+            var receipt = ProjectileBarrier.commitTravel(this, step, reachable -> {
+                var current = original.forSweep(sweep(reachable.from(), reachable.to(), spentTravel, spentTravel + reachable.work(),
+                        motionTicks, motionTicks + reachable.work() / budget));
+                if (current != original && !SlashQueries.loaded(level, current.boxes())) return 0.0;
+                return SlashCollision.resolve(this, player, current, collisionBudget);
+            });
             travel = segment.pathStart() + receipt.distance();
             spentTravel = Math.min(shape.range(), spentTravel + receipt.work());
             motionTicks = Math.min(frameTime + 1, motionTicks + receipt.work() / budget);
@@ -340,7 +367,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     }
     private void pauseFlight() {
         setDeltaMovement(Vec3.ZERO);
-        if (radial != null) { radial.pause(); entityData.set(RADIAL_PROGRESS, radial.snapshot()); }
+        if (radial != null) { radial.pause(); publishRadial(); }
         if (fragments != null) { fragments.pause(); entityData.set(FRAGMENT_PROGRESS, fragments.snapshot()); }
     }
     private void queryLimit() {
@@ -348,12 +375,18 @@ public final class SlashEntity extends Projectile implements TravelDriven {
                 "Slash {} stopped at actual collision query budget (critical={}, phasing={}, work={})",
                 getId(), criticalBase > 0, passesBlocks(), spentTravel);
     }
-    private List<SlashGeometry.Sweep> sweeps(Vec3 from, Vec3 to, double before, double after, double timeBefore, double timeAfter) {
+    private SlashGeometry.Sweep sweep(Vec3 from, Vec3 to, double before, double after, double timeBefore, double timeAfter) {
         double halfBefore = shape.halfLength(before), halfAfter = shape.halfLength(after);
-        return List.of(rotation == null ? new SlashGeometry.Sweep(from, to, blade(), halfBefore, halfAfter)
-                : rotation.sweep(from, to, halfBefore, halfAfter, timeBefore, timeAfter));
+        return rotation == null ? new SlashGeometry.Sweep(from, to, blade(), halfBefore, halfAfter)
+                : rotation.sweep(from, to, halfBefore, halfAfter, timeBefore, timeAfter);
     }
+    @Override public void onRemovedFromLevel() {
+        if (radial != null) radial.releaseWaits();
+        super.onRemovedFromLevel();
+    }
+
     private void finish(Vec3 point) {
+        if (radial != null) radial.releaseWaits();
         ProjectileBarrier.nativeImpact(this);
         setPos(point); setDeltaMovement(Vec3.ZERO); entityData.set(FADING, true);
     }
@@ -430,8 +463,19 @@ public final class SlashEntity extends Projectile implements TravelDriven {
     @Override public double lerpTargetY() { return motionView == null ? getY() : motionView.targetPosition(position()).y; }
     @Override public double lerpTargetZ() { return motionView == null ? getZ() : motionView.targetPosition(position()).z; }
     @Override public AABB getBoundingBoxForCulling() {
+        // Even at the allowed style limits a .35-half-length fragment fits inside the original two-block margin.
         if (fragments != null) return new AABB(fragments.origin(), fragments.origin()).inflate(fragments.maximumRadius() + 2);
-        return getBoundingBox().inflate(radial != null ? radial.maximumRadius() + 2 : entityData.get(SIZE).z * .5 + 2);
+        boolean joined = radial != null;
+        double radius = joined ? radial.maximumRadius() : entityData.get(SIZE).z * .5;
+        double extent = radius + 2;
+        // Criticals cap transverse scale at one; the native frustum's extra .5 covers their thin planar geometry.
+        if (level().isClientSide && visual() == SlashVisual.NORMAL) {
+            var appearance = dev.senluo.witchcraft.client.SlashAppearanceResources.current();
+            double visibleRadius = appearance.cullingRadius(radius, joined);
+            // Straight launches can receive up to two blocks of hand-origin correction; radial carriers stay fixed.
+            extent = Math.max(extent, visibleRadius + (joined ? 0 : 2));
+        }
+        return getBoundingBox().inflate(extent);
     }
     @Override public boolean shouldRenderAtSqrDistance(double distance) {
         if (fragments != null) { double reach = fragments.origin().distanceTo(position()) + fragments.maximumRadius() + 128; return distance < reach * reach; }
@@ -497,6 +541,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
         tag.put("HitEntities", hits); tag.putLongArray("HitBlocks", hitBlocks.stream().mapToLong(Long::longValue).toArray());
     }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
+        if (radial != null) radial.releaseWaits();
         super.readAdditionalSaveData(tag);
         entityData.set(LAUNCH_ORIGIN, tag.getCompound("LaunchOrigin"));
         Vec3 direction = new Vec3(tag.getDouble("ForwardX"), tag.getDouble("ForwardY"), tag.getDouble("ForwardZ"));
@@ -553,7 +598,7 @@ public final class SlashEntity extends Projectile implements TravelDriven {
                 if (!radialData.contains("GeometryVersion", Tag.TAG_INT))
                     throw new IllegalArgumentException("Missing radial geometry version");
                 radial = RadialSlash.load(radialData, shape.range());
-                entityData.set(RADIAL, radial.geometry()); entityData.set(RADIAL_PROGRESS, radial.snapshot());
+                publishRadial();
             } catch (IllegalArgumentException invalid) { armed = false; return; }
         }
         if (tag.contains("Fragments")) {

@@ -33,10 +33,10 @@ public final class SteamWork {
         RitualFields fields = FIELDS.get(level);
         return fields == null ? java.util.Set.of() : fields.ownersAt(Vec3.atCenterOf(pos));
     }
-    public static void observeSources(ServerLevel level, BlockEntity entity) {
+    public static boolean protectsSource(ServerLevel level, BlockEntity entity, java.util.UUID owner) {
         RitualFields fields = FIELDS.get(level);
-        if (fields == null || !fields.near(entity.getBlockPos()) || !WorkSources.steamWork(level, entity)) return;
-        for (var owner : owners(level, entity.getBlockPos())) AccelerationSources.renew(level, entity, owner, 1);
+        return fields != null && fields.near(entity.getBlockPos()) && WorkSources.steamWork(level, entity)
+                && fields.hasOwnerAt(Vec3.atCenterOf(entity.getBlockPos()), owner);
     }
     public static long doublings(ServerLevel level, Vec3 position) {
         RitualFields fields = FIELDS.get(level);

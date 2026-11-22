@@ -17,9 +17,22 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /** Native event/packet adapter. Keeps discovery, click priority and tick scheduling out of storage. */
 public final class ReservoirRuntime {
+    private record Carried(int slot, ItemStack stack) {}
+    private static final Map<ServerPlayer, List<Carried>> INPUTS = new WeakHashMap<>();
+    /** Native inventory discovery only; processing stays after the player's update. */
+    static void carried(ServerPlayer player, ItemStack stack, int slot){
+        var inventory=player.getInventory();
+        if(player.tickCount%5==0 && ReservoirActions.canAct(player) && slot>=0 && slot<inventory.getContainerSize()
+                && inventory.getItem(slot)==stack)
+            INPUTS.computeIfAbsent(player,unused->new ArrayList<>()).add(new Carried(slot,stack));
+    }
     static void register(IEventBus bus){
         bus.addListener(ReservoirRuntime::packets);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH,ReservoirRuntime::beforeTick);
@@ -28,6 +41,10 @@ public final class ReservoirRuntime {
         NeoForge.EVENT_BUS.addListener(ReservoirRuntime::rightClickBlock);
         NeoForge.EVENT_BUS.addListener(ReservoirRuntime::rightClickEntity);
         NeoForge.EVENT_BUS.addListener(ReservoirRuntime::rightClickEntitySpecific);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.TagsUpdatedEvent event) -> ReservoirData.clearViews());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.LevelEvent.Unload event) -> {
+            ReservoirData.clearViews(); INPUTS.clear();
+        });
     }
 
     static boolean useHeld(ServerPlayer player,ItemStack bag,InteractionHand hand,Runnable changed){
@@ -84,6 +101,7 @@ public final class ReservoirRuntime {
 
     private static void beforeTick(PlayerTickEvent.Pre event){
         if(!(event.getEntity() instanceof ServerPlayer player))return;
+        INPUTS.remove(player);
         FrostAbilities.beginFrame(player);
         if(!ReservoirActions.canAct(player))return;
         ItemStack bag=ReservoirEquipment.worn(player);
@@ -91,16 +109,19 @@ public final class ReservoirRuntime {
     }
 
     private static void tick(PlayerTickEvent.Post event){
-        if(!(event.getEntity() instanceof ServerPlayer player) || !ReservoirActions.canAct(player))return;
+        if(!(event.getEntity() instanceof ServerPlayer player))return;
+        var candidates=INPUTS.remove(player);
+        if(!ReservoirActions.canAct(player))return;
         ItemStack bag=ReservoirEquipment.worn(player);
         if(player.tickCount%5==0){
             // The native inventory includes armor/offhand; Curios may return that same real stack.
             var seen=Collections.newSetFromMap(new IdentityHashMap<ItemStack,Boolean>());
             boolean changed=false;
             var inventory=player.getInventory();
-            for(int slot=0;slot<inventory.getContainerSize();slot++){
-                ItemStack carried=inventory.getItem(slot);
-                if(ReservoirContent.isBackpack(carried) && seen.add(carried))changed|=processInput(player,carried);
+            if(candidates!=null)for(var candidate:candidates){
+                ItemStack carried=candidate.stack();
+                if(inventory.getItem(candidate.slot())==carried && ReservoirContent.isBackpack(carried)
+                        && seen.add(carried))changed|=processInput(player,carried);
             }
             if(!bag.isEmpty() && seen.add(bag))changed|=processInput(player,bag);
             if(changed)inventory.setChanged();

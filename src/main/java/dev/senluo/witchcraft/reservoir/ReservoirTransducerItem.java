@@ -4,7 +4,7 @@ package dev.senluo.witchcraft.reservoir;
 public final class ReservoirTransducerItem extends ReservoirPluginItem {
     public enum Grade { STANDARD, VOID }
     public record Rules(int primalMicrovis,int retainedPercent,int ventEvery) {}
-    /** Per device: conversion clock, retry clock and total six-channel overflow capacity. */
+    /** Per device: conversion clock, retry clock and total capacity across the declared aspects. */
     public record Throughput(int sourceTicks,int deliveryTicks,long bufferMicrovis) {}
     private final Grade grade;
     public ReservoirTransducerItem(Properties properties,Grade grade,Handler handler){super(properties,handler);this.grade=grade;}

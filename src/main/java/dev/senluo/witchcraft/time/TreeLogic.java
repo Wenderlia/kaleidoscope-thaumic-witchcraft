@@ -4,7 +4,12 @@ import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import org.joml.Vector3f;
 
 /** Tree-shape lifecycle and bounded world work; the portable shape owns material and provenance. */
@@ -24,17 +29,11 @@ public final class TreeLogic {
     private final Map<BlockPos,Set<BlockPos>> reopenSeeds = new HashMap<>();
     private final Map<BlockPos,Set<BlockPos>> livePaths = new HashMap<>();
     private final Map<BlockPos,Map<BlockPos,BlockState>> graftEdits = new HashMap<>();
-    private final Map<BlockPos,Discovery> discoveries = new HashMap<>();
+    private final Map<BlockPos,TreeDiscovery> discoveries = new HashMap<>();
+    private final Map<BlockPos,LinkedHashSet<BlockPos>> damage = new HashMap<>();
     private final Map<BlockPos,ArrayDeque<BlockPos>> liveFrontiers = new LinkedHashMap<>();
     private record Crown(long revision, List<BlockPos> positions) {}
     private final Map<BlockPos,Crown> crowns = new HashMap<>();
-    private static final class Discovery {
-        final Set<BlockPos> seen = new HashSet<>(), connected = new HashSet<>();
-        final ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        final Map<BlockPos,Integer> nodes = new LinkedHashMap<>();
-        boolean reopening;
-        Discovery(BlockPos origin) { seen.add(origin); connected.add(origin); queue.add(origin); }
-    }
     private boolean writingShape;
     private final Map<net.minecraft.world.entity.player.Player,PruneAttempt> pruning = new WeakHashMap<>();
     public record PruneAttempt(BlockPos part, BlockPos core, UUID identity, long tick) {}
@@ -51,11 +50,14 @@ public final class TreeLogic {
     private final Map<BlockPos,Set<BlockPos>> pending = new HashMap<>();
     private final Map<BlockPos,Map<Long,Set<BlockPos>>> sleeping = new HashMap<>();
     private final LinkedHashSet<BlockPos> repairs = new LinkedHashSet<>();
+    private record Reserve(long tick, long amount, boolean waitingForRoots, boolean matureSoil) {}
+    private final Map<BlockPos,Reserve> reserves = new HashMap<>();
+    private static final Reserve PRICING = new Reserve(0, 0, false, false);
     private static final DustParticleOptions GOLD = new DustParticleOptions(new Vector3f(0.94F, 0.70F, 0.25F), 1.0F);
 
     TreeLogic(ServerLevel level) { this.level = level; this.claims = TreeClaims.get(level); this.nurturing = new FruitNurturing(level, this); }
 
-    private BlockPos ownerAt(BlockPos part) {
+    BlockPos ownerAt(BlockPos part) {
         BlockPos saved = claims.ownerAt(part);
         return saved != null ? saved : owners.get(part);
     }
@@ -82,37 +84,53 @@ public final class TreeLogic {
     }
 
     private boolean claimPart(LivingEntity core, BlockPos part) {
+        BlockPos previous = ownerAt(part);
         if (!claims.claim(core, part)) return false;
-        owners.put(part.immutable(), core.getBlockPos().immutable());
+        BlockPos origin = core.getBlockPos();
+        owners.put(part.immutable(), origin);
+        if (previous == null) nurturing.claimed(part,origin);
         return true;
     }
 
-    private void enqueue(BlockPos core, BlockPos pos) {
+    private void enqueue(BlockPos core, BlockPos pos) { enqueue(core,pos,false); }
+
+    private void enqueue(BlockPos core, BlockPos pos, boolean urgent) {
         BlockPos key = pos.immutable();
-        pending.computeIfAbsent(core, unused -> new LinkedHashSet<>()).add(key);
-        repairs.add(key);
+        if (pending.computeIfAbsent(core, unused -> new LinkedHashSet<>()).add(key)) reserves.remove(core);
+        if (urgent) repairs.addFirst(key);
+        else repairs.add(key);
     }
 
     private void forget(BlockPos core, BlockPos pos) {
         var cells = pending.get(core);
-        if (cells != null) cells.remove(pos);
+        if (cells == null || !cells.remove(pos)) return;
+        reserves.remove(core);
         var buckets = sleeping.get(core);
-        if (buckets != null) for (var bucket : buckets.values()) bucket.remove(pos);
+        if (buckets != null) {
+            buckets.values().removeIf(bucket -> { bucket.remove(pos); return bucket.isEmpty(); });
+            if (buckets.isEmpty()) sleeping.remove(core);
+        }
         repairs.remove(pos);
     }
 
     private void defer(BlockPos core, BlockPos pos, long fee) {
+        if (!pending.getOrDefault(core,Set.of()).contains(pos)) return;
         sleeping.computeIfAbsent(core, unused -> new HashMap<>())
                 .computeIfAbsent(fee, unused -> new LinkedHashSet<>()).add(pos);
     }
 
     // Obstructed/missing-support cells can change eligibility when their surroundings change.
     private static final long GEOMETRY = -1;
+    private static final long OBSERVATION = -2;
     private void wakeGeometry(BlockPos origin) {
+        wakeWaiting(origin, GEOMETRY);
+    }
+    private void wakeWaiting(BlockPos origin, long reason) {
         var buckets = sleeping.get(origin);
         if (buckets == null) return;
-        var cells = buckets.remove(GEOMETRY);
+        var cells = buckets.remove(reason);
         if (cells != null) repairs.addAll(cells);
+        if (buckets.isEmpty()) sleeping.remove(origin);
     }
 
     private void wake(LivingEntity core) {
@@ -120,7 +138,7 @@ public final class TreeLogic {
         if (buckets == null) return;
         long balance = TemporalWorld.get(level).colony(core).spendable();
         buckets.entrySet().removeIf(entry -> {
-            if (!entry.getValue().isEmpty() && (entry.getKey() == GEOMETRY || entry.getKey() > balance)) return false;
+            if (!entry.getValue().isEmpty() && (entry.getKey() < 0 || entry.getKey() > balance)) return false;
             repairs.addAll(entry.getValue()); return true;
         });
         if (buckets.isEmpty()) sleeping.remove(core.getBlockPos());
@@ -132,6 +150,7 @@ public final class TreeLogic {
 
     private void reconcilePlan(LivingEntity core) {
         BlockPos origin = core.getBlockPos();
+        reserves.remove(origin);
         updateShape(core);
         var next = target(core);
         var old = plans.put(origin, next);
@@ -145,40 +164,47 @@ public final class TreeLogic {
         phases.put(origin,phase(core.tissue));
     }
 
-    /** Only currently executable paid repairs in the next native 30 seconds need a reserve. */
+    /** Quotes describe physical work, independent of the available balance. */
     public long restorationReserve(LivingEntity core) {
-        long total = 0;
-        int ready = 0;
-        Map<BlockPos, BlockState> plan = plans.getOrDefault(core.getBlockPos(), Map.of());
-        for (BlockPos pos : List.copyOf(pending.getOrDefault(core.getBlockPos(), Set.of()))) {
-            BlockState expected = plan.get(pos);
-            if (expected == null || expected.is(TemporalContent.FRUIT.get()) || !canRestoreConnected(core,pos)) continue;
-            if (!level.hasChunkAt(pos) || !level.shouldTickBlocksAt(pos)
-                    || !core.getBlockPos().equals(ownerAt(pos))) continue;
-            BlockState state = level.getBlockState(pos);
-            if (state.is(expected.getBlock())) continue;
-            // A live fruit node already fulfils its ordinary-channel restoration plan.
-            if (FruitWoods.nodeGrade(state) != 0 && matchesPlan(state, expected)) continue;
-            if (TreeLeavesBlock.placedByPlayer(state)) continue;
-            boolean chalk = canCoverChalk(core, pos, state);
-            if (expected.is(TemporalContent.TIME_LEAVES.get())
-                    && !expected.getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT)
-                    && !chalk
-                    && TreeLeavesBlock.supportDistance(level, pos) >= net.minecraft.world.level.block.LeavesBlock.DECAY_DISTANCE) continue;
-            boolean formed = core.tissue.formedTree.contains(pos.subtract(core.getBlockPos()).asLong());
-            boolean ownMaterial = formed && (state.is(dev.senluo.witchcraft.time.TreeWood.LOGS) || state.is(TemporalContent.TIME_LEAVES.get()));
-            boolean soil = replaceableRootSoil(core, pos, state, expected);
-            if (!state.isAir() && !ownMaterial && !soil && !chalk) continue;
-            long relative = pos.subtract(core.getBlockPos()).asLong();
-            boolean first = !core.tissue.formedTree.contains(relative)
-                    || expected.is(dev.senluo.witchcraft.time.TreeWood.LOGS) && !core.tissue.formedLogs.contains(relative);
-            if (first && (core.tissue.giantGrowing || core.initialGiantBuild)) continue;
-            if (!exterior(core.getBlockPos()).contains(pos)) continue;
-            total += expected.is(TemporalContent.TIME_LEAVES.get()) ? TreeBalance.LEAF_REPAIR : TreeBalance.LOG_REPAIR;
-            if (chalk && !level.getBlockState(pos.below()).is(dev.senluo.witchcraft.time.TreeWood.LOGS)) total += TreeBalance.LOG_REPAIR;
-            if (++ready >= 16 * 20 * FruitFeeding.RESTORATION_SECONDS) break;
+        BlockPos origin = core.getBlockPos();
+        var cells = pending.get(origin);
+        if (cells == null || cells.isEmpty() || !core.tissue.tree || !core.tissue.supported() || registeredTissues.get(origin) != core.tissue
+                || core.isRemoved() || !simulates(origin)) return 0;
+        long now = level.getGameTime();
+        boolean waitingForRoots = core.tissue.giantGrowing && !core.tissue.readyForGiant();
+        boolean matureSoil = core.tissue.naturalTicks >= TreeBalance.GIANT_TICKS;
+        Reserve cached = reserves.get(origin);
+        if (cached == PRICING) return 0;
+        if (cached != null && now >= cached.tick && now - cached.tick < 20
+                && waitingForRoots == cached.waitingForRoots && matureSoil == cached.matureSoil) return cached.amount;
+
+        reserves.put(origin, PRICING);
+        try {
+            Set<BlockPos> billed = new HashSet<>();
+            var plan = plans.getOrDefault(origin, Map.of());
+            long total = 0;
+            int ready = 0;
+            for (BlockPos pos : List.copyOf(cells)) {
+                if (!origin.equals(ownerAt(pos)) || !simulates(pos)) continue;
+                var step = quote(core, pos, plan.get(pos), level.getBlockState(pos));
+                if (step instanceof Placement work && work.fee > 0 && billed.add(work.pos)) {
+                    if (work.cells() > 16 * 20 * FruitFeeding.RESTORATION_SECONDS - ready) continue;
+                    ready += work.cells();
+                    total += work.fee;
+                    if (ready >= 16 * 20 * FruitFeeding.RESTORATION_SECONDS) break;
+                }
+            }
+            // Chunk callbacks during a world read may invalidate or replace this tree.
+            if (reserves.get(origin) != PRICING || registeredTissues.get(origin) != core.tissue) return 0;
+            reserves.put(origin, new Reserve(now, total, waitingForRoots, matureSoil));
+            return total;
+        } finally {
+            if (reserves.get(origin) == PRICING) reserves.remove(origin);
         }
-        return total;
+    }
+
+    private boolean simulates(BlockPos pos) {
+        return level.hasChunkAt(pos) && level.shouldTickBlocksAt(pos);
     }
 
     public static Map<BlockPos, BlockState> shape(BlockPos origin) {
@@ -216,7 +242,7 @@ public final class TreeLogic {
         if (space.atPhase(stage) || space.calculatingCuts()) return;
         if (space.commit(space.preview(template(core.tissue,stage),stage))) {
             core.setChanged(); markDiscovery(core.getBlockPos());
-            TemporalWorld.get(level).colony(core).reserveTick = Long.MIN_VALUE;
+            nurturing.invalidate(core.getBlockPos());
         }
     }
 
@@ -227,8 +253,26 @@ public final class TreeLogic {
     }
 
     private void markDiscovery(BlockPos origin) {
+        reserves.remove(origin);
         dirtyWood.add(origin.immutable()); discoveries.remove(origin);
-        livePaths.remove(origin); liveFrontiers.remove(origin);
+        damage.remove(origin); livePaths.remove(origin); liveFrontiers.remove(origin);
+    }
+
+    private void materialRemoved(BlockPos origin, BlockPos pos, boolean source) {
+        TreeDiscovery job = discoveries.get(origin);
+        Set<BlockPos> live = livePaths.get(origin);
+        if (live != null) {
+            if (!live.contains(pos)) return;
+            if (source) {
+                markDiscovery(origin);
+                return;
+            }
+        } else if (job == null || !job.seen.contains(pos)) {
+            return;
+        }
+        reserves.remove(origin);
+        damage.computeIfAbsent(origin, unused -> new LinkedHashSet<>()).add(pos.immutable());
+        dirtyWood.add(origin);
     }
 
     private void recordEdit(BlockPos origin, BlockPos pos) {
@@ -244,7 +288,7 @@ public final class TreeLogic {
             rememberPart(core,pos,level.getBlockState(pos),false,true);
     }
 
-    private Set<BlockPos> markWoodAround(BlockPos changed) {
+    Set<BlockPos> treesAround(BlockPos changed) {
         Set<BlockPos> affected = new LinkedHashSet<>();
         int chunkX = changed.getX() >> 4, chunkZ = changed.getZ() >> 4;
         // Both artificial wood and the natural tree envelope fit within neighboring core chunks.
@@ -255,16 +299,7 @@ public final class TreeLogic {
                         || origin.equals(ownerAt(changed)) || naturalLog(core, changed))) affected.add(origin);
             }
         }
-        affected.forEach(this::markDiscovery);
         return affected;
-    }
-
-    private void invalidateFruitAround(BlockPos pos) {
-        int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
-        for (int x = cx - 1; x <= cx + 1; x++) for (int z = cz - 1; z <= cz + 1; z++)
-            for (BlockPos origin : woodCoreChunks.getOrDefault(net.minecraft.world.level.ChunkPos.asLong(x,z), Set.of()))
-                if (Math.abs((long)pos.getX() - origin.getX()) <= 16 && Math.abs((long)pos.getZ() - origin.getZ()) <= 16
-                        && pos.getY() >= origin.getY() - 5 && pos.getY() <= origin.getY() + 24) nurturing.invalidate(origin);
     }
 
     private boolean naturalLog(LivingEntity core, BlockPos pos) {
@@ -291,8 +326,9 @@ public final class TreeLogic {
 
     /** Explicit placement can rejoin an entire discarded component, including its existing far end. */
     public void placedWood(BlockPos pos, net.minecraft.world.entity.LivingEntity placer) {
-        for (BlockPos origin : markWoodAround(pos)) {
+        for (BlockPos origin : treesAround(pos)) {
             if (!(level.getBlockEntity(origin) instanceof LivingEntity core)) continue;
+            markDiscovery(origin);
             // A local ordering barrier: an earlier cut must finish before this edit can reconnect it.
             settleCuts(core);
             recordEdit(origin,pos);
@@ -304,16 +340,25 @@ public final class TreeLogic {
     }
 
     public void beforeWoodRemoval(BlockPos pos) {
-        // Known cells are O(1). A just-placed, not-yet-observed component is captured once before mining.
-        BlockPos owner=ownerAt(pos);
-        if(owner!=null && plans.getOrDefault(owner,Map.of()).containsKey(pos)
-                && !graftEdits.getOrDefault(owner,Map.of()).containsKey(pos)
-                && reopenSeeds.getOrDefault(owner,Set.of()).isEmpty())return;
-        for(BlockPos origin:markWoodAround(pos))
-            if(level.getBlockEntity(origin) instanceof LivingEntity core) {
-                settleCuts(core);
-                observeConnectedWood(core, Integer.MAX_VALUE);
-            }
+        if (level.captureBlockSnapshots || level.restoringBlockSnapshots) return;
+        BlockPos owner = ownerAt(pos);
+        if (owner != null) preserveBeforeRemoval(owner,pos);
+        else for (BlockPos origin : treesAround(pos)) preserveBeforeRemoval(origin,pos);
+    }
+
+    private void preserveBeforeRemoval(BlockPos origin, BlockPos pos) {
+        if (!cores.contains(origin) || !level.hasChunkAt(origin)
+                || !(level.getBlockEntity(origin) instanceof LivingEntity core)) return;
+        var live = livePaths.get(origin);
+        boolean edits = !graftEdits.getOrDefault(origin,Map.of()).isEmpty() || !reopenSeeds.getOrDefault(origin,Set.of()).isEmpty();
+        if (!edits && plans.getOrDefault(origin,Map.of()).containsKey(pos)) return;
+        if (!edits && live != null) {
+            if (!dirtyWood.contains(origin) && !liveFrontiers.containsKey(origin)
+                    && !core.tissue.shapeSpace.pendingSplit() && !live.contains(pos)) return;
+        }
+        // Retain an in-flight root walk. Start one only when the published evidence is insufficient.
+        if (live != null || !dirtyWood.contains(origin)) markDiscovery(origin);
+        beforeSnapshot(core);
     }
 
     private void rememberWood(LivingEntity core,BlockPos pos,BlockState state) { rememberPart(core,pos,state,false,false); }
@@ -342,44 +387,112 @@ public final class TreeLogic {
         if(state.is(TreeWood.LOGS)&&marks!=null&&marks.supported()&&marks.get(pos)!=null&&marks.get(pos).medium()!=0)
             changed |= core.tissue.shapeSpace.rememberCarving(core.tissue,relative,marks.get(pos).asCarving());
         var plan=plans.get(core.getBlockPos());
-        if(plan!=null)plan.put(pos.immutable(),core.tissue.shapeSpace.cells().get(relative.asLong()));
+        if (plan != null) {
+            BlockState target = core.tissue.shapeSpace.cells().get(relative.asLong());
+            BlockState previous = plan.put(pos.immutable(), target);
+            boolean leaf = target.is(TemporalContent.TIME_LEAVES.get());
+            if ((previous != null && previous.is(TemporalContent.TIME_LEAVES.get())) != leaf)
+                nurturing.invalidate(core.getBlockPos());
+            if (leaf && state.is(target.getBlock()) && !matchesPlan(state, target))
+                enqueue(core.getBlockPos(), pos);
+        }
         var retired=retiredByCore.get(core.getBlockPos());if(retired!=null)retired.remove(pos);
-        if(changed){core.setChanged();TemporalWorld.get(level).colony(core).reserveTick=Long.MIN_VALUE;}
+        if (changed) { core.setChanged(); reserves.remove(core.getBlockPos()); }
     }
 
-    /** Event-driven discovery of all allowed materials, including an entire formerly detached component. */
+    private void touchNeighbours(BlockPos origin, BlockPos part, boolean wake) {
+        var cells = pending.get(origin);
+        if (cells == null || cells.isEmpty()) return;
+        if (cells.contains(part)) reserves.remove(origin);
+        for (BlockPos d : TreeShapeSpace.NEIGHBORS) {
+            BlockPos neighbour = part.offset(d);
+            if (cells.contains(neighbour)) {
+                reserves.remove(origin);
+                if (!wake) return;
+                repairs.add(neighbour);
+            }
+        }
+    }
+
+    private int applyDamage(BlockPos origin, int budget) {
+        var cuts = damage.get(origin);
+        if (cuts == null) return 0;
+        Set<BlockPos> live = livePaths.get(origin);
+        TreeDiscovery job = discoveries.get(origin);
+        int used = 0;
+        while (!cuts.isEmpty() && used < budget) {
+            BlockPos cut = cuts.removeFirst();
+            used++;
+            if (job != null) job.remove(cut);
+            else if (live != null && live.remove(cut) && !TreeShapeSpace.neighboursStayConnected(cut, live::contains)) {
+                // The next root walk will read the actual world, including the rest of this batch.
+                markDiscovery(origin);
+                return used;
+            }
+            touchNeighbours(origin, cut, true);
+        }
+        if (cuts.isEmpty()) damage.remove(origin);
+        return used;
+    }
+
+    /** Edits, branch retraction and discovery share this tree's single traversal allowance. */
     private int observeConnectedWood(LivingEntity core, int budget) {
         BlockPos origin=core.getBlockPos();
         if(core.tissue.shapeSpace.calculatingCuts() || !dirtyWood.contains(origin))return 0;
+        reserves.remove(origin);
         commitCuts(core);
-        Discovery job = discoveries.computeIfAbsent(origin, Discovery::new);
-        int used = 0;
-        while(!job.queue.isEmpty() && used < budget) {
-            BlockPos p=job.queue.removeFirst(); used++;
+        int used = applyDamage(origin, budget);
+        if (damage.containsKey(origin)) return used;
+        if (livePaths.containsKey(origin)) {
+            dirtyWood.remove(origin);
+            wakeWaiting(origin, OBSERVATION);
+            return used;
+        }
+        TreeDiscovery job = discoveries.computeIfAbsent(origin, TreeDiscovery::new);
+        var missing = pending.getOrDefault(origin, Set.of());
+        while (used < budget && (job.trimming() || !job.frontier.isEmpty())) {
+            used++;
+            if (job.trimming()) {
+                job.trimOne();
+                if (!job.trimming()) wakeGeometry(origin);
+                continue;
+            }
+            BlockPos p = job.frontier.removeFirst();
             for(BlockPos d:TreeShapeSpace.NEIGHBORS){
-                BlockPos n=p.offset(d),relative=n.subtract(origin);
-                if(!TreeShapeSpace.contains(core.tissue,relative)||!job.seen.add(n)||!level.hasChunkAt(n)||!mayUse(core,n))continue;
+                BlockPos n=p.offset(d);
+                if (missing.contains(n)) repairs.add(n);
+                if(!TreeShapeSpace.containsAt(core.tissue,origin,n)||!job.seen.add(n)||!level.hasChunkAt(n)||!mayUse(core,n))continue;
                 BlockState state=level.getBlockState(n);
                 boolean edit = TreeShapeSpace.sameForm(state,graftEdits.getOrDefault(origin,Map.of()).get(n));
                 boolean seed = edit && reopenSeeds.getOrDefault(origin,Set.of()).contains(n);
-                if(!TreeShapeSpace.material(state)||core.tissue.shapeSpace.pruned(relative.asLong())&&!job.reopening&&!seed)continue;
+                if (!TreeShapeSpace.material(state)) continue;
+                BlockPos relative = n.subtract(origin);
+                if (core.tissue.shapeSpace.pruned(relative.asLong()) && !job.reopening && !seed) continue;
                 if (seed && !job.reopening) {
                     // Revisit skipped boundaries once a real, authorized bridge has reached the core.
                     job.reopening = true; job.seen.clear(); job.seen.addAll(job.connected); job.seen.add(n);
-                    job.queue.clear(); job.queue.addAll(job.connected);
+                    job.frontier.clear(); job.frontier.addAll(job.connected);
                 }
                 rememberPart(core,n,state,job.reopening,edit);
+                if (discoveries.get(origin) != job) return used;
+                if (damage.containsKey(origin)) {
+                    // A world read or block callback changed an observed connection mid-step.
+                    if (!job.connected.contains(n)) job.seen.remove(n);
+                    job.frontier.add(p);
+                    return used;
+                }
                 if(!core.tissue.shapeSpace.has(relative.asLong()))continue;
-                job.connected.add(n);job.queue.addLast(n);
+                job.connect(n,p);
                 int grade=FruitWoods.nodeGrade(state);if(grade>0)job.nodes.put(relative,grade);
             }
             if (discoveries.get(origin) != job) return used;
+            if (damage.containsKey(origin)) { job.frontier.add(p); return used; }
         }
-        if (job.queue.isEmpty()) {
+        if (!job.trimming() && job.frontier.isEmpty()) {
             discoveries.remove(origin); dirtyWood.remove(origin); reopenSeeds.remove(origin); graftEdits.remove(origin);
             livePaths.put(origin,job.connected);
             nurturing.observed(core,job.nodes);
-            invalidateExterior(origin); wakeGeometry(origin);
+            invalidateExterior(origin); wakeGeometry(origin); wakeWaiting(origin, OBSERVATION);
         }
         return used;
     }
@@ -393,7 +506,9 @@ public final class TreeLogic {
         if (level.captureBlockSnapshots || level.restoringBlockSnapshots
                 || registeredTissues.get(core.getBlockPos()) != core.tissue) return;
         settleCuts(core);
-        if (dirtyWood.contains(core.getBlockPos())) observeConnectedWood(core,Integer.MAX_VALUE);
+        while (dirtyWood.contains(core.getBlockPos()) && registeredTissues.get(core.getBlockPos()) == core.tissue) {
+            if (observeConnectedWood(core, Integer.MAX_VALUE) == 0) return;
+        }
     }
 
     private void advanceCuts(){
@@ -437,7 +552,7 @@ public final class TreeLogic {
             owners.remove(pos,origin);forget(origin,pos);
         }
         cutTrees.remove(origin);markDiscovery(origin);invalidateExterior(origin);nurturing.invalidate(origin);
-        core.setChanged();TemporalWorld.get(level).colony(core).reserveTick=Long.MIN_VALUE;
+        core.setChanged();
         // Fruit entities already check the committed leaf target on every native tick.
         // Reuse that callback; a save barrier must not remove world blocks during serialization.
     }
@@ -447,8 +562,10 @@ public final class TreeLogic {
         BlockPos origin = core.getBlockPos();
         var queue = liveFrontiers.get(origin); var result = livePaths.get(origin);
         if (queue == null || result == null || dirtyWood.contains(origin)) return 0;
+        reserves.remove(origin);
         var plan = plans.getOrDefault(origin,Map.of()); int used = 0;
         while(!queue.isEmpty() && used < budget){BlockPos p=queue.removeFirst(); used++;
+            if (!result.contains(p)) continue;
             for(BlockPos d:TreeShapeSpace.NEIGHBORS){BlockPos n=p.offset(d);
                 if (!plan.containsKey(n)) continue;
                 if (pending.getOrDefault(origin,Set.of()).contains(n)) repairs.add(n);
@@ -460,10 +577,41 @@ public final class TreeLogic {
         return used;
     }
     private boolean canRestoreConnected(LivingEntity core,BlockPos pos){
-        if(core.tissue.shapeSpace.calculatingCuts() || dirtyWood.contains(core.getBlockPos()))return false;
-        Set<BlockPos> live=livePaths.getOrDefault(core.getBlockPos(),Set.of());
-        for(BlockPos d:TreeShapeSpace.NEIGHBORS)if(live.contains(pos.offset(d)))return true;
+        BlockPos origin = core.getBlockPos();
+        if (core.tissue.shapeSpace.calculatingCuts() || damage.containsKey(origin)) return false;
+        Set<BlockPos> live = livePaths.get(origin);
+        TreeDiscovery job = discoveries.get(origin);
+        if (live == null && job == null) return false;
+        var neighbour = new BlockPos.MutableBlockPos();
+        for (BlockPos d : TreeShapeSpace.NEIGHBORS) {
+            neighbour.set(pos.getX()+d.getX(), pos.getY()+d.getY(), pos.getZ()+d.getZ());
+            if (live != null ? live.contains(neighbour) : job.proven(neighbour)) return true;
+        }
         return false;
+    }
+
+    private void restoredConnection(BlockPos origin, BlockPos part) {
+        if (!origin.equals(ownerAt(part))) return;
+        reserves.remove(origin);
+        TreeDiscovery job = discoveries.get(origin);
+        if (job != null) job.revisit(part);
+        else {
+            Set<BlockPos> live = livePaths.get(origin);
+            if (live != null && !live.contains(part)) {
+                for (BlockPos d : TreeShapeSpace.NEIGHBORS) {
+                    BlockPos neighbour = part.offset(d);
+                    if (!live.contains(neighbour)) continue;
+                    var frontier = liveFrontiers.computeIfAbsent(origin, unused -> new ArrayDeque<>());
+                    if (damage.containsKey(origin)) frontier.add(neighbour);
+                    else {
+                        live.add(part);
+                        frontier.add(part);
+                        break;
+                    }
+                }
+            }
+        }
+        touchNeighbours(origin, part, true);
     }
 
     private Set<BlockPos> exterior(BlockPos origin) {
@@ -489,12 +637,16 @@ public final class TreeLogic {
     }
 
     private void invalidateExterior(BlockPos origin) {
+        reserves.remove(origin);
         geometryRevision++;
         exteriorCache.remove(new ExteriorKey(origin, false));
         exteriorCache.remove(new ExteriorKey(origin, true));
     }
     private Set<BlockPos> giantExterior(LivingEntity core) {
         return exterior(core.getBlockPos(), core, true);
+    }
+    private static boolean exteriorOpen(BlockState state, boolean owned) {
+        return state.isAir() || state.is(TemporalContent.FRUIT.get()) || owned && TreeShapeSpace.material(state);
     }
     private Set<BlockPos> calculateExterior(BlockPos origin, LivingEntity core, boolean giant) {
         int radius = (giant ? TreeShapeSpace.GIANT_RADIUS : TreeShapeSpace.TREE_RADIUS) + 1;
@@ -508,8 +660,7 @@ public final class TreeLogic {
             if (!level.isInWorldBounds(pos) || !level.hasChunkAt(pos)) continue;
             BlockState state=level.getBlockState(pos);
             boolean own=origin.equals(ownerAt(pos));
-            open[i]=state.isAir() || state.is(TemporalContent.FRUIT.get())
-                    || own && TreeShapeSpace.material(state)
+            open[i]=exteriorOpen(state,own)
                     || giant && (pos.getY() <= origin.getY() && TreeGrowthMaterial.substrate(state)
                         || canCoverChalk(core, pos, state));
             if (open[i] && (x==0 || x==width-1 || y==0 || y==height-1 || z==0 || z==width-1)) {
@@ -541,66 +692,98 @@ public final class TreeLogic {
                 markDiscovery(origin); invalidateExterior(origin); wakeGeometry(origin); nurturing.invalidate(origin);
             }
     }
-    public void geometryChanged(BlockPos pos,BlockState old,BlockState state) {
-        // In-flight computations have no cache entry yet; they must also observe invalidation.
-        if (!old.equals(state)) geometryRevision++;
-        boolean leafChange = (old.is(TemporalContent.TIME_LEAVES.get()) || state.is(TemporalContent.TIME_LEAVES.get()))
-                && (old.getBlock() != state.getBlock()
-                    || old.getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT)
-                        != state.getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT)
-                    || old.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)
-                        != state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS));
-        boolean axisChange = old.hasProperty(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)
-                && state.hasProperty(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)
-                && old.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)
-                    != state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS);
-        // Native distance ticks and visual GREAT_TREE updates do not require a component rebuild.
-        if (!writingShape && !nurturing.staining(pos) && (!old.is(state.getBlock()) || leafChange || axisChange)
-                && (TreeShapeSpace.material(old) || TreeShapeSpace.material(state))) {
-            Set<BlockPos> affected = markWoodAround(pos);
-            if (TreeShapeSpace.material(state) || level.restoringBlockSnapshots) for (BlockPos origin : affected)
-                recordEdit(origin,pos);
+    public void geometryChanged(BlockPos pos, BlockState old, BlockState state) {
+        if (old == state || cores.isEmpty() && exteriorCache.isEmpty()) return;
+        // LevelChunk dispatches our block's removal after replacing the section state.
+        boolean removedWoodOrLeaf = !old.is(state.getBlock())
+                && (old.getBlock() instanceof TreePartBlock || old.getBlock() instanceof TreeLeavesBlock);
+        boolean nativeRemoval = removedWoodOrLeaf && !level.captureBlockSnapshots && !level.restoringBlockSnapshots;
+        if (!nativeRemoval) geometryRevision++;
+        updateConnections(pos,old,state,nativeRemoval);
+        BlockPos owner = ownerAt(pos);
+        updateRecordedForm(owner,pos,old,state,removedWoodOrLeaf && !nativeRemoval);
+        if (!nativeRemoval) {
+            nurturing.blockChanged(pos,old,state);
+            updateSurroundings(owner,pos,old,state);
         }
-        if (!nurturing.staining(pos) && (!old.is(state.getBlock()) || leafChange)
-                && !old.is(TemporalContent.FRUIT.get()) && !state.is(TemporalContent.FRUIT.get())) invalidateFruitAround(pos);
-        if (!writingShape && !old.equals(state) && !sleeping.isEmpty()) {
+    }
+
+    private void updateConnections(BlockPos pos, BlockState old, BlockState state, boolean nativeRemoval) {
+        if (!old.is(state.getBlock()) && TreeShapeSpace.material(old) && !TreeShapeSpace.material(state)
+                && !level.captureBlockSnapshots && !level.restoringBlockSnapshots) {
+            if (!nativeRemoval) lostMaterial(pos,old);
+            return;
+        }
+        if (writingShape || nurturing.staining(pos) || !TreeShapeSpace.material(old) && !TreeShapeSpace.material(state)) return;
+        if (old.is(state.getBlock())) {
+            boolean axisChanged = old.hasProperty(RotatedPillarBlock.AXIS)
+                    && old.getValue(RotatedPillarBlock.AXIS) != state.getValue(RotatedPillarBlock.AXIS);
+            boolean graftChanged = old.is(TemporalContent.TIME_LEAVES.get())
+                    && old.getValue(LeavesBlock.PERSISTENT) != state.getValue(LeavesBlock.PERSISTENT);
+            if (!axisChanged && !graftChanged) return;
+        }
+        for (BlockPos origin : treesAround(pos)) {
+            markDiscovery(origin);
+            if (TreeShapeSpace.material(state) || level.restoringBlockSnapshots) recordEdit(origin,pos);
+        }
+    }
+
+    private void lostMaterial(BlockPos pos, BlockState old) {
+        boolean source = FruitWoods.nodeGrade(old) != 0;
+        for (BlockPos origin : treesAround(pos)) materialRemoved(origin,pos,source);
+    }
+
+    private boolean rememberForm(LivingEntity core, BlockPos pos, BlockState old, BlockState state) {
+        BlockPos origin = core.getBlockPos(), relative = pos.subtract(origin);
+        var plan = plans.get(origin);
+        if (plan == null || registeredTissues.get(origin) != core.tissue || old == null
+                || !core.tissue.shapeSpace.transform(core.tissue,relative,old,state)) return false;
+        plan.put(pos.immutable(),core.tissue.shapeSpace.cells().get(relative.asLong()));
+        reserves.remove(origin);
+        core.setChanged();
+        return true;
+    }
+
+    private void updateRecordedForm(BlockPos owner, BlockPos pos, BlockState old, BlockState state, boolean urgent) {
+        var plan = plans.get(owner);
+        if (plan == null || !plan.containsKey(pos)) return;
+        boolean staining = nurturing.staining(pos);
+        if ((staining || old.is(state.getBlock()) && state.getBlock() instanceof YearsBuildingEdits.Part)
+                && level.hasChunkAt(owner) && level.getBlockEntity(owner) instanceof LivingEntity core) {
+            if (rememberForm(core,pos,old,state) && staining) { forget(owner,pos); return; }
+        }
+        if (matchesPlan(state,plan.get(pos))) forget(owner,pos);
+        else if (urgent || !repairs.contains(pos) || !pending.getOrDefault(owner,Set.of()).contains(pos)) enqueue(owner,pos,urgent);
+    }
+
+    private void updateSurroundings(BlockPos woodOwner, BlockPos pos, BlockState old, BlockState state) {
+        boolean wakeSleeping = !writingShape && !sleeping.isEmpty();
+        boolean watchesGeometry = !exteriorCache.isEmpty() || !reserves.isEmpty() || wakeSleeping;
+        boolean supportChanged = watchesGeometry && (TreeGrowthMaterial.substrate(old) != TreeGrowthMaterial.substrate(state)
+                || old.is(dev.senluo.witchcraft.ritual.RitualContent.CHALK_SURFACE.get())
+                || state.is(dev.senluo.witchcraft.ritual.RitualContent.CHALK_SURFACE.get()));
+        if (wakeSleeping || !reserves.isEmpty()) {
             int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
             for (int x=cx-2; x<=cx+2; x++) for(int z=cz-2; z<=cz+2; z++)
                 for (BlockPos origin : woodCoreChunks.getOrDefault(net.minecraft.world.level.ChunkPos.asLong(x,z), Set.of()))
                     if (Math.abs((long)pos.getX()-origin.getX())<=17 && Math.abs((long)pos.getZ()-origin.getZ())<=17
-                            && pos.getY()>=origin.getY()-5 && pos.getY()<=origin.getY()+26) wakeGeometry(origin);
+                            && pos.getY()>=origin.getY()-5 && pos.getY()<=origin.getY()+26) {
+                        boolean own = origin.equals(woodOwner);
+                        boolean wake = wakeSleeping && sleeping.containsKey(origin);
+                        if (supportChanged || exteriorOpen(old, own) != exteriorOpen(state, own)) {
+                            reserves.remove(origin);
+                            if (wake) wakeGeometry(origin);
+                        } else if (wake || reserves.containsKey(origin)) touchNeighbours(origin,pos,wake);
+                    }
         }
-        BlockPos woodOwner = ownerAt(pos);
-        var cachedPlan = plans.get(woodOwner);
-        // A door opening or stair/fence neighbour update edits one recorded form, not its connectivity.
-        if (old.is(state.getBlock()) && state.getBlock() instanceof YearsBuildingEdits.Part
-                && woodOwner != null && level.hasChunkAt(woodOwner) && level.getBlockEntity(woodOwner) instanceof LivingEntity core
-                && core.tissue.shapeSpace.transform(core.tissue,pos.subtract(woodOwner),old,state)) {
-            if (cachedPlan != null) cachedPlan.put(pos.immutable(),core.tissue.shapeSpace.cells().get(pos.subtract(woodOwner).asLong()));
-            core.setChanged();
-        }
-        if (cachedPlan != null && cachedPlan.containsKey(pos)) {
-            if (!matchesPlan(state, cachedPlan.get(pos))) enqueue(woodOwner,pos);
-            else forget(woodOwner,pos);
-        }
-        if (nurturing.staining(pos) && woodOwner != null && level.hasChunkAt(woodOwner)
-                && level.getBlockEntity(woodOwner) instanceof LivingEntity core
-                && core.tissue.shapeSpace.transform(core.tissue,pos.subtract(woodOwner),old,state)) {
-            if (cachedPlan != null) cachedPlan.put(pos.immutable(),core.tissue.shapeSpace.cells().get(pos.subtract(woodOwner).asLong()));
-            core.setChanged(); forget(woodOwner,pos);
-        }
-        for(ExteriorKey key:List.copyOf(exteriorCache.keySet())) {
+        if (!exteriorCache.isEmpty()) exteriorCache.keySet().removeIf(key -> {
             BlockPos origin=key.origin();
             if(Math.abs((long)pos.getX()-origin.getX())>TreeShapeSpace.GIANT_RADIUS+1
                     ||Math.abs((long)pos.getZ()-origin.getZ())>TreeShapeSpace.GIANT_RADIUS+1
-                    ||pos.getY()<origin.getY()-4||pos.getY()>origin.getY()+24)continue;
-            boolean own=origin.equals(ownerAt(pos));
-            boolean before=old.isAir()||old.is(TemporalContent.FRUIT.get())||own&&TreeShapeSpace.material(old);
-            boolean after=state.isAir()||state.is(TemporalContent.FRUIT.get())||own&&TreeShapeSpace.material(state);
-            if(before!=after || TreeGrowthMaterial.substrate(old)!=TreeGrowthMaterial.substrate(state)
-                    || old.is(dev.senluo.witchcraft.ritual.RitualContent.CHALK_SURFACE.get())
-                    || state.is(dev.senluo.witchcraft.ritual.RitualContent.CHALK_SURFACE.get())) exteriorCache.remove(key);
-        }
+                    ||pos.getY()<origin.getY()-4||pos.getY()>origin.getY()+24)return false;
+            boolean own=origin.equals(woodOwner);
+            return supportChanged || exteriorOpen(old,own) != exteriorOpen(state,own);
+        });
     }
 
     public void register(LivingEntity core) {
@@ -636,6 +819,7 @@ public final class TreeLogic {
         registeredTissues.remove(core);
         if (!cores.remove(core)) return;
         livePaths.remove(core); liveFrontiers.remove(core); discoveries.remove(core); graftEdits.remove(core);
+        damage.remove(core);
         crowns.remove(core);
         cutTrees.remove(core); reopenSeeds.remove(core); dirtyWood.remove(core); dirtyPlans.remove(core); phases.remove(core); sleeping.remove(core); pending.remove(core);
         long chunk = net.minecraft.world.level.ChunkPos.asLong(core);
@@ -664,10 +848,23 @@ public final class TreeLogic {
         for (int x = cx - 2; x <= cx + 2; x++) for (int z = cz - 2; z <= cz + 2; z++)
             for (BlockPos neighbour : woodCoreChunks.getOrDefault(net.minecraft.world.level.ChunkPos.asLong(x, z), Set.of()))
                 if (Math.abs((long)neighbour.getX() - origin.getX()) <= 2 * TreeShapeSpace.GIANT_RADIUS
-                        && Math.abs((long)neighbour.getZ() - origin.getZ()) <= 2 * TreeShapeSpace.GIANT_RADIUS) { markDiscovery(neighbour); dirtyPlans.add(neighbour); }
+                        && Math.abs((long)neighbour.getZ() - origin.getZ()) <= 2 * TreeShapeSpace.GIANT_RADIUS) { markDiscovery(neighbour); dirtyPlans.add(neighbour); nurturing.invalidate(neighbour); }
     }
 
-    public void removed(BlockPos part) { BlockPos core = ownerAt(part); if (core != null && cores.contains(core)) { enqueue(core,part); repairs.addFirst(part.immutable()); } }
+    /** Also covers direct LevelChunk writes that never enter Level.setBlock. */
+    void removed(BlockPos part, BlockState old) {
+        if (cores.isEmpty() || level.captureBlockSnapshots || level.restoringBlockSnapshots) return;
+        BlockState actual = level.getBlockState(part);
+        if (old.is(actual.getBlock())) return;
+        geometryRevision++;
+        if (TreeShapeSpace.material(old) && !TreeShapeSpace.material(actual)) lostMaterial(part,old);
+        nurturing.blockChanged(part,old,actual);
+        BlockPos owner = ownerAt(part);
+        var plan = plans.get(owner);
+        BlockState expected = plan == null ? null : plan.get(part);
+        if (expected != null && !matchesPlan(actual,expected)) enqueue(owner,part,true);
+        updateSurroundings(owner,part,old,actual);
+    }
 
     /** Capture the owner's intent before normal mining; tool type is irrelevant. */
     public void preparePrune(BlockPos pos, net.minecraft.world.entity.player.Player player) {
@@ -872,183 +1069,246 @@ public final class TreeLogic {
                 ? actual.equals(TreeLeavesBlock.reconcile(actual, planned)) : actual.equals(planned);
     }
 
-    /** Share a sixteen-position native-tick budget between restoration and retiring obsolete tree parts. */
-    public void flush() {
+    private sealed interface RepairStep {}
+    private enum Maintenance implements RepairStep { DONE, RECONCILE, RETIRE, WAIT_SPACE, WAIT_PATH, RETRY }
+    private enum PlacementKind { BLOCK, CHALK, SUPPORT, DOOR }
+    private record Placement(PlacementKind kind, BlockPos pos, BlockState state, long fee) implements RepairStep {
+        int cells() { return kind == PlacementKind.DOOR ? 2 : 1; }
+    }
+
+    private RepairStep quote(LivingEntity core, BlockPos pos, BlockState expected, BlockState current) {
+        BlockPos origin = core.getBlockPos();
+        long relative = pos.subtract(origin).asLong();
+        boolean formed = core.tissue.formedTree.contains(relative);
+        if (core.tissue.shapeSpace.calculatingCuts()) return Maintenance.WAIT_SPACE;
+        if (damage.containsKey(origin) || dirtyWood.contains(origin) && (expected == null || !formed || !current.isAir()))
+            return Maintenance.WAIT_PATH;
+        if (core.tissue.giantGrowing && !core.tissue.readyForGiant() && (!formed || expected == null))
+            return Maintenance.RETRY;
+        if (expected == null) return Maintenance.RETIRE;
+        if (expected.is(TemporalContent.FRUIT.get())) return Maintenance.DONE;
+        if (current.is(expected.getBlock()) || FruitWoods.nodeGrade(current) != 0 && matchesPlan(current, expected))
+            return Maintenance.RECONCILE;
+        if (expected.getBlock() instanceof DoorBlock) return quoteDoor(core, pos, expected);
+        if (TreeLeavesBlock.placedByPlayer(current)) return Maintenance.WAIT_SPACE;
+
+        boolean chalk = canCoverChalk(core, pos, current);
+        boolean ownMaterial = formed && (current.is(TemporalContent.TIME_LEAVES.get()) || current.is(TreeWood.LOGS));
+        if (!current.isAir() && !ownMaterial && !chalk && !replaceableRootSoil(core, pos, current, expected))
+            return Maintenance.WAIT_SPACE;
+        if (expected.getBlock() instanceof YearsBuildingEdits.Part && !expected.canSurvive(level,pos))
+            return Maintenance.WAIT_SPACE;
+        boolean leaf = expected.is(TemporalContent.TIME_LEAVES.get());
+        if (leaf) {
+            int distance = chalk ? 1 : TreeLeavesBlock.supportDistance(level, pos);
+            if (!expected.getValue(LeavesBlock.PERSISTENT) && distance >= LeavesBlock.DECAY_DISTANCE)
+                return Maintenance.WAIT_SPACE;
+            expected = expected.setValue(LeavesBlock.DISTANCE, distance);
+        }
+        if (!canRestoreConnected(core, pos) || !exterior(origin).contains(pos)) return Maintenance.WAIT_SPACE;
+        boolean freeBuild = core.tissue.giantGrowing || core.initialGiantBuild;
+        if (chalk && !level.getBlockState(pos.below()).is(TreeWood.LOGS))
+            return new Placement(PlacementKind.SUPPORT, pos.below(), TemporalContent.TIME_LOG.get().defaultBlockState(),
+                    freeBuild ? 0 : TreeBalance.LOG_REPAIR);
+
+        boolean first = !formed || expected.is(TreeWood.LOGS) && !core.tissue.formedLogs.contains(relative);
+        long fee = freeBuild && first ? 0 : leaf ? TreeBalance.LEAF_REPAIR : TreeBalance.LOG_REPAIR;
+        return new Placement(chalk ? PlacementKind.CHALK : PlacementKind.BLOCK, pos, expected, fee);
+    }
+
+    private RepairStep quoteDoor(LivingEntity core, BlockPos requested, BlockState expected) {
+        BlockPos origin = core.getBlockPos();
+        BlockPos lower = expected.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER ? requested : requested.below();
+        BlockPos upper = lower.above();
+        var plan = plans.getOrDefault(origin, Map.of());
+        BlockState bottom = plan.get(lower), top = plan.get(upper);
+        if (bottom == null || top == null || !bottom.is(expected.getBlock()) || !top.is(expected.getBlock())
+                || bottom.getValue(DoorBlock.HALF) != DoubleBlockHalf.LOWER || top.getValue(DoorBlock.HALF) != DoubleBlockHalf.UPPER
+                || !simulates(lower) || !simulates(upper) || !mayUse(core,lower) || !mayUse(core,upper)
+                || !bottom.canSurvive(level,lower) || !canRestoreConnected(core,lower) && !canRestoreConnected(core,upper))
+            return Maintenance.WAIT_SPACE;
+        BlockState oldBottom = level.getBlockState(lower), oldTop = level.getBlockState(upper);
+        if (!oldBottom.isAir() && !oldBottom.is(bottom.getBlock()) || !oldTop.isAir() && !oldTop.is(top.getBlock()))
+            return Maintenance.WAIT_SPACE;
+        var accessible = exterior(origin);
+        if (!accessible.contains(lower) || !accessible.contains(upper)) return Maintenance.WAIT_SPACE;
+        boolean freeBuild = core.tissue.giantGrowing || core.initialGiantBuild;
+        long fee = 0;
+        if (oldBottom.isAir() && !(freeBuild && !core.tissue.formedTree.contains(lower.subtract(origin).asLong())))
+            fee += TreeBalance.LOG_REPAIR;
+        if (oldTop.isAir() && !(freeBuild && !core.tissue.formedTree.contains(upper.subtract(origin).asLong())))
+            fee += TreeBalance.LOG_REPAIR;
+        return new Placement(PlacementKind.DOOR, lower, bottom, fee);
+    }
+
+    void prepareRepairs() {
         advanceCuts();
         advanceConnections();
+    }
+
+    public void flush() {
+        prepareRepairs();
+        finishRepairs();
+    }
+
+    /** The world advances connectivity before production and commits repairs after fluid work. */
+    void finishRepairs() {
         nurturing.flush();
         pruning.values().removeIf(attempt -> attempt.tick() != level.getGameTime());
-        int count = 0;
-        Map<BlockPos,Set<BlockPos>> accessible=new HashMap<>();
-        while (!repairs.isEmpty() && count++ < 16) {
-            BlockPos part = repairs.removeFirst();
-            BlockPos origin = ownerAt(part);
-            if (origin == null || !cores.contains(origin)) continue;
-            if (!level.hasChunkAt(origin) || !level.hasChunkAt(part) || !level.shouldTickBlocksAt(origin) || !level.shouldTickBlocksAt(part)) {
-                defer(origin,part,0); continue;
-            }
-            if (!(level.getBlockEntity(origin) instanceof LivingEntity core) || !core.tree() || !core.tissue.tree || !core.tissue.supported()) continue;
-            if(core.tissue.shapeSpace.calculatingCuts() || dirtyWood.contains(origin)){defer(origin,part,GEOMETRY);continue;}
-            if (registeredTissues.get(origin) != core.tissue) { register(core); continue; }
-            BlockState expected = plans.getOrDefault(origin,Map.of()).get(part);
-            BlockState current = level.getBlockState(part);
-            long relative=part.subtract(origin).asLong();
-            boolean formed=core.tissue.formedTree.contains(relative);
-            if (core.tissue.giantGrowing && !core.tissue.readyForGiant() && (!formed || expected == null)) { defer(origin,part,0); continue; }
-            if (expected == null) {
-                Set<BlockPos> retired=retiredByCore.getOrDefault(origin,Set.of());
-                if(!retired.contains(part)){forget(origin,part);continue;}
-                if(level.getBlockState(part.below()).is(TemporalContent.FRUIT.get())){defer(origin,part,GEOMETRY);continue;}
-                // Only recorded tree material is retired; leave replacements and other structures intact.
-                if(current.is(dev.senluo.witchcraft.time.TreeWood.LOGS) || current.is(TemporalContent.TIME_LEAVES.get())
-                        && !TreeLeavesBlock.placedByPlayer(current)) {
-                    if(!level.removeBlock(part,false)){defer(origin,part,0);continue;}
+        for (int left = 16; left > 0 && !repairs.isEmpty();) left -= repair(repairs.removeFirst(), left);
+    }
+
+    private int repair(BlockPos part, int budget) {
+        BlockPos origin = ownerAt(part);
+        if (origin == null || !cores.contains(origin)) return 1;
+        if (!simulates(origin) || !simulates(part)) { defer(origin,part,0); return 1; }
+        if (!(level.getBlockEntity(origin) instanceof LivingEntity core) || !core.tree() || !core.tissue.tree || !core.tissue.supported()) return 1;
+        if (registeredTissues.get(origin) != core.tissue) { register(core); return 1; }
+        var expected = plans.getOrDefault(origin,Map.of()).get(part);
+        var current = level.getBlockState(part);
+        long revision = geometryRevision;
+        RepairStep step = quote(core,part,expected,current);
+        if (revision != geometryRevision) { repairs.add(part); return 1; }
+        return switch (step) {
+            case Maintenance action -> {
+                switch (action) {
+                    case DONE -> forget(origin,part);
+                    case RECONCILE -> reconcilePresent(core,part,expected,current);
+                    case RETIRE -> retire(core,part,current);
+                    case WAIT_SPACE -> defer(origin,part,GEOMETRY);
+                    case WAIT_PATH -> defer(origin,part,OBSERVATION);
+                    case RETRY -> defer(origin,part,0);
                 }
-                retired.remove(part);owners.remove(part,origin);forget(origin,part);
-                continue;
+                yield 1;
             }
-            if(expected.is(TemporalContent.FRUIT.get())){forget(origin,part);continue;}
-            if (expected.getBlock() instanceof net.minecraft.world.level.block.DoorBlock && !current.is(expected.getBlock())) {
-                count += restoreDoor(core,part,expected,17-count,accessible)-1;
-                continue;
-            }
-            if (TreeLeavesBlock.placedByPlayer(current) && !current.is(expected.getBlock())) { defer(origin,part,GEOMETRY); continue; }
-            // A live node remains functional. Only restore the ordinary channel after it is gone.
-            if (FruitWoods.nodeGrade(current) != 0 && matchesPlan(current, expected)) {
-                restoreInscription(core, part);
-                forget(origin,part); continue;
-            }
-            if(current.is(expected.getBlock())) {
-                BlockState restored = current.is(TemporalContent.TIME_LEAVES.get())
-                        ? TreeLeavesBlock.reconcile(current, expected) : expected;
-                if(formed&&!matchesPlan(current,restored)) {
-                    boolean before = writingShape; writingShape = true;
-                    try { level.setBlock(part,restored,3); } finally { writingShape = before; }
-                    if (restored.is(TemporalContent.TIME_LEAVES.get())) level.scheduleTick(part, restored.getBlock(), 1);
+            case Placement work -> {
+                if (budget < work.cells()) { repairs.addFirst(part); yield 1; }
+                Colony group = TemporalWorld.get(level).colony(core);
+                long balance = group.spendable();
+                if (registeredTissues.get(origin) != core.tissue || revision != geometryRevision
+                        || !origin.equals(ownerAt(part)) || level.getBlockState(part) != current) {
+                    if (origin.equals(ownerAt(part))) repairs.add(part);
+                    yield 1;
                 }
-                if (expected.is(dev.senluo.witchcraft.time.TreeWood.LOGS)) restoreInscription(core, part);
-                forget(origin,part); continue;
+                if (balance < work.fee) { defer(origin,part,work.fee); yield 1; }
+                if (work.kind == PlacementKind.DOOR) restoreDoor(core,part,work,group);
+                else restorePart(core,part,work,group);
+                yield work.cells();
             }
-            boolean ownMaterial=formed && (current.is(TemporalContent.TIME_LEAVES.get()) || current.is(dev.senluo.witchcraft.time.TreeWood.LOGS));
-            boolean soil = replaceableRootSoil(core, part, current, expected);
-            boolean chalk = canCoverChalk(core, part, current);
-            if(!current.isAir()&&!ownMaterial&&!soil&&!chalk){defer(origin,part,GEOMETRY);continue;}
-            if (expected.getBlock() instanceof YearsBuildingEdits.Part) {
-                expected = net.minecraft.world.level.block.Block.updateFromNeighbourShapes(expected,level,part);
-                if (expected.isAir() || !expected.canSurvive(level,part)) { defer(origin,part,GEOMETRY); continue; }
-            }
-            Colony group = TemporalWorld.get(level).colony(core);
-            if(!canRestoreConnected(core,part)){defer(origin,part,GEOMETRY);continue;}
-            boolean log=expected.is(dev.senluo.witchcraft.time.TreeWood.LOGS);
-            boolean leaf=expected.is(TemporalContent.TIME_LEAVES.get());
-            if (leaf) {
-                int distance = chalk ? 1 : TreeLeavesBlock.supportDistance(level, part);
-                if (!expected.getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT)
-                        && distance >= net.minecraft.world.level.block.LeavesBlock.DECAY_DISTANCE) { defer(origin,part,GEOMETRY); continue; }
-                expected = expected.setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE, distance);
-            }
-            boolean first=!formed || log&&!core.tissue.formedLogs.contains(relative);
-            long fee = (core.tissue.giantGrowing||core.initialGiantBuild)&&first ? 0 : leaf ? TreeBalance.LEAF_REPAIR : TreeBalance.LOG_REPAIR;
-            if (group.spendable() < fee) { defer(origin,part,fee); continue; }
-            if (!accessible.computeIfAbsent(origin,this::exterior).contains(part)) { defer(origin,part,GEOMETRY); continue; }
-            if (chalk) {
-                BlockPos support = part.below();
-                BlockState supportState = level.getBlockState(support);
-                if (!supportState.is(dev.senluo.witchcraft.time.TreeWood.LOGS)) {
-                    long supportFee = core.tissue.giantGrowing || core.initialGiantBuild ? 0 : TreeBalance.LOG_REPAIR;
-                    if (group.spendable() < supportFee) { defer(origin,part,supportFee); continue; }
-                    if (!growPart(support,
-                            TemporalContent.TIME_LOG.get().defaultBlockState())) { defer(origin,part,0); continue; }
-                    if (!group.spend(supportFee)) throw new IllegalStateException("Tree inscription support lost its reserved budget");
-                    rememberWood(core, support, level.getBlockState(support));
-                    // A second block is a second unit of the existing 16-cell budget. Requote next pass.
-                    repairs.addFirst(part);
-                    continue;
-                }
-                rememberWood(core, support, supportState);
-                boolean covered, before = writingShape; writingShape = true;
-                try { covered = dev.senluo.witchcraft.ritual.RitualChalk.coverChalk(level, part, expected); }
-                finally { writingShape = before; }
-                if (!covered) { defer(origin,part,0); continue; }
-            } else if (!growPart(part, expected)) { defer(origin,part,0); continue; }
-            if (expected.getBlock() instanceof YearsBuildingEdits.Part) {
-                BlockState remembered=plans.get(origin).get(part);
-                if (core.tissue.shapeSpace.transform(core.tissue,part.subtract(origin),remembered,level.getBlockState(part)))
-                    plans.get(origin).put(part,core.tissue.shapeSpace.cells().get(relative));
-            }
-            if (TreeSignMemory.supports(expected)) TreeSignMemory.restore(level,part,core.tissue.shapeSpace.sign(relative));
-            if (!group.spend(fee)) throw new IllegalStateException("Tree restoration lost its reserved budget");
-            core.tissue.formedTree.add(relative);core.setChanged();
-            if(log) {
-                core.tissue.formedLogs.add(relative);
-                rememberWood(core, part, expected);
-                restoreInscription(core, part);
-            }
-            Set<BlockPos> live=livePaths.get(origin);
-            if (live != null && live.add(part)) liveFrontiers.computeIfAbsent(origin,p -> new ArrayDeque<>()).add(part);
-            for(BlockPos d:TreeShapeSpace.NEIGHBORS){BlockPos n=part.offset(d);
-                if(pending.getOrDefault(origin,Set.of()).contains(n))repairs.add(n);}
-            forget(origin,part);
-            sparkle(part);
+        };
+    }
+
+    private void retire(LivingEntity core, BlockPos part, BlockState current) {
+        BlockPos origin = core.getBlockPos();
+        Set<BlockPos> retired = retiredByCore.getOrDefault(origin,Set.of());
+        if (retired.contains(part)) {
+            if (level.getBlockState(part.below()).is(TemporalContent.FRUIT.get())) { defer(origin,part,GEOMETRY); return; }
+            if ((current.is(TreeWood.LOGS) || current.is(TemporalContent.TIME_LEAVES.get()) && !TreeLeavesBlock.placedByPlayer(current))
+                    && !level.removeBlock(part,false)) { defer(origin,part,0); return; }
+            retired.remove(part);
+            owners.remove(part,origin);
         }
+        forget(origin,part);
+    }
+
+    private void reconcilePresent(LivingEntity core, BlockPos part, BlockState expected, BlockState current) {
+        BlockPos origin = core.getBlockPos();
+        if (current.is(expected.getBlock())) {
+            var restored = current.is(TemporalContent.TIME_LEAVES.get()) ? TreeLeavesBlock.reconcile(current,expected) : expected;
+            if (core.tissue.formedTree.contains(part.subtract(origin).asLong()) && !matchesPlan(current,restored)) {
+                boolean before = writingShape;
+                writingShape = true;
+                try { level.setBlock(part,restored,3); } finally { writingShape = before; }
+                if (restored.is(TemporalContent.TIME_LEAVES.get())) level.scheduleTick(part,restored.getBlock(),1);
+            }
+        }
+        if (expected.is(TreeWood.LOGS)) restoreInscription(core,part);
+        forget(origin,part);
+    }
+
+    private void restorePart(LivingEntity core, BlockPos requested, Placement work, Colony group) {
+        BlockPos pos = work.pos, origin = core.getBlockPos();
+        long relative = pos.subtract(origin).asLong();
+        BlockState state = work.state;
+        if (state.getBlock() instanceof YearsBuildingEdits.Part) {
+            state = Block.updateFromNeighbourShapes(state,level,pos);
+            if (state.isAir() || !state.canSurvive(level,pos)) { defer(origin,requested,GEOMETRY); return; }
+        }
+        boolean placed;
+        if (work.kind == PlacementKind.CHALK) {
+            rememberWood(core,pos.below(),level.getBlockState(pos.below()));
+            boolean before = writingShape;
+            writingShape = true;
+            try { placed = dev.senluo.witchcraft.ritual.RitualChalk.coverChalk(level,pos,state); }
+            finally { writingShape = before; }
+        } else placed = growPart(pos,state);
+        if (!placed) { defer(origin,requested,0); return; }
+        if (!group.spend(work.fee)) throw new IllegalStateException("Tree restoration lost its reserved budget");
+        if (work.kind == PlacementKind.SUPPORT) {
+            rememberWood(core,pos,level.getBlockState(pos));
+            restoredConnection(origin,pos);
+            repairs.addFirst(requested);
+            return;
+        }
+        if (state.getBlock() instanceof YearsBuildingEdits.Part) {
+            BlockState remembered = plans.getOrDefault(origin,Map.of()).get(pos);
+            rememberForm(core,pos,remembered,level.getBlockState(pos));
+        }
+        if (TreeSignMemory.supports(state)) TreeSignMemory.restore(level,pos,core.tissue.shapeSpace.sign(relative));
+        core.tissue.formedTree.add(relative);
+        core.setChanged();
+        if (state.is(TreeWood.LOGS)) {
+            core.tissue.formedLogs.add(relative);
+            rememberWood(core,pos,state);
+            restoreInscription(core,pos);
+        }
+        restoredConnection(origin,pos);
+        forget(origin,pos);
+        sparkle(pos);
     }
 
     private boolean growPart(BlockPos pos,BlockState state){
         boolean before=writingShape;writingShape=true;
-        try{return TemporalWorld.get(level).growWood(pos,state);}finally{writingShape=before;}
+        try{return TemporalWorld.get(level).growWood(pos,state) && level.getBlockState(pos).is(state.getBlock());}
+        finally{writingShape=before;}
     }
 
-    /** A native door is one placement with two cells; preflight both before either is written. */
-    private int restoreDoor(LivingEntity core, BlockPos requested, BlockState expected, int budget,
-                            Map<BlockPos,Set<BlockPos>> accessible) {
-        var half=net.minecraft.world.level.block.DoorBlock.HALF;
-        var lowerHalf=net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER;
-        BlockPos origin=core.getBlockPos(), lower=expected.getValue(half)==lowerHalf?requested:requested.below(), upper=lower.above();
-        var plan=plans.getOrDefault(origin,Map.of());
-        BlockState bottom=plan.get(lower), top=plan.get(upper);
-        if (bottom==null || top==null || !bottom.is(expected.getBlock()) || !top.is(expected.getBlock())
-                || bottom.getValue(half)!=lowerHalf || top.getValue(half)==lowerHalf
-                || !level.hasChunkAt(lower) || !level.hasChunkAt(upper) || !level.shouldTickBlocksAt(lower) || !level.shouldTickBlocksAt(upper)
-                || !mayUse(core,lower) || !mayUse(core,upper) || !bottom.canSurvive(level,lower)) {
-            defer(origin,requested,GEOMETRY); return 1;
-        }
-        BlockState oldBottom=level.getBlockState(lower), oldTop=level.getBlockState(upper);
-        if ((!oldBottom.isAir() && !oldBottom.is(expected.getBlock())) || (!oldTop.isAir() && !oldTop.is(expected.getBlock()))
-                || !canRestoreConnected(core,lower) && !canRestoreConnected(core,upper)
-                || !accessible.computeIfAbsent(origin,this::exterior).contains(lower) || !accessible.get(origin).contains(upper)) {
-            defer(origin,requested,GEOMETRY); return 1;
-        }
-        if (budget<2) { repairs.addFirst(requested); return 1; }
-        long fee=0;
-        for (BlockPos p : new BlockPos[]{lower,upper}) if (level.getBlockState(p).isAir()
-                && !((core.tissue.giantGrowing||core.initialGiantBuild) && !core.tissue.formedTree.contains(p.subtract(origin).asLong()))) fee+=TreeBalance.LOG_REPAIR;
-        Colony group=TemporalWorld.get(level).colony(core);
-        if (group.spendable()<fee) { defer(origin,requested,fee); return 1; }
-        boolean powered=level.hasNeighborSignal(lower)||level.hasNeighborSignal(upper);
-        bottom=bottom.setValue(net.minecraft.world.level.block.DoorBlock.POWERED,powered);
-        if (powered) bottom=bottom.setValue(net.minecraft.world.level.block.DoorBlock.OPEN,true);
-        top=bottom.setValue(half,net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER);
-        boolean before=writingShape; writingShape=true;
+    /** Suppress the transient half-door. Notify native neighbours only after the pair exists. */
+    private void restoreDoor(LivingEntity core, BlockPos requested, Placement work, Colony group) {
+        BlockPos lower = work.pos, upper = lower.above(), origin = core.getBlockPos();
+        BlockState oldBottom = level.getBlockState(lower), oldTop = level.getBlockState(upper);
+        boolean powered = level.hasNeighborSignal(lower) || level.hasNeighborSignal(upper);
+        BlockState bottom = work.state.setValue(DoorBlock.POWERED,powered);
+        if (powered) bottom = bottom.setValue(DoorBlock.OPEN,true);
+        BlockState top = bottom.setValue(DoorBlock.HALF,DoubleBlockHalf.UPPER);
+        boolean before = writingShape;
+        writingShape = true;
         try {
-            // Known-shape writes suppress the transient one-half state. Native notifications follow the complete pair.
-            level.setBlock(lower,bottom,18); level.setBlock(upper,top,18);
-            if (!level.getBlockState(lower).is(expected.getBlock()) || !level.getBlockState(upper).is(expected.getBlock())) {
-                if (level.getBlockState(lower).is(expected.getBlock())) level.setBlock(lower,oldBottom,18);
-                if (level.getBlockState(upper).is(expected.getBlock())) level.setBlock(upper,oldTop,18);
-                defer(origin,requested,GEOMETRY); return 2;
+            level.setBlock(lower,bottom,18);
+            level.setBlock(upper,top,18);
+            if (!level.getBlockState(lower).is(bottom.getBlock()) || !level.getBlockState(upper).is(top.getBlock())) {
+                if (level.getBlockState(lower).is(bottom.getBlock())) level.setBlock(lower,oldBottom,18);
+                if (level.getBlockState(upper).is(top.getBlock())) level.setBlock(upper,oldTop,18);
+                defer(origin,requested,GEOMETRY);
+                return;
             }
-            bottom.updateNeighbourShapes(level,lower,3); top.updateNeighbourShapes(level,upper,3);
-            level.updateNeighborsAt(lower,bottom.getBlock()); level.updateNeighborsAt(upper,top.getBlock());
-        } finally { writingShape=before; }
-        if (!group.spend(fee)) throw new IllegalStateException("Tree door restoration lost its reserved budget");
-        for (BlockPos p : new BlockPos[]{lower,upper}) {
-            core.tissue.formedTree.add(p.subtract(origin).asLong()); forget(origin,p);
-            Set<BlockPos> live=livePaths.get(origin);
-            if(live!=null && live.add(p)) liveFrontiers.computeIfAbsent(origin,k->new ArrayDeque<>()).add(p);
-            for(BlockPos d:TreeShapeSpace.NEIGHBORS){BlockPos n=p.offset(d);if(pending.getOrDefault(origin,Set.of()).contains(n))repairs.add(n);}
-            sparkle(p);
+            bottom.updateNeighbourShapes(level,lower,3);
+            top.updateNeighbourShapes(level,upper,3);
+            level.updateNeighborsAt(lower,bottom.getBlock());
+            level.updateNeighborsAt(upper,top.getBlock());
+        } finally { writingShape = before; }
+        if (!level.getBlockState(lower).is(bottom.getBlock()) || !level.getBlockState(upper).is(top.getBlock())) {
+            defer(origin,requested,GEOMETRY);
+            return;
         }
-        core.setChanged(); return 2;
+        if (!group.spend(work.fee)) throw new IllegalStateException("Tree door restoration lost its reserved budget");
+        for (BlockPos pos : List.of(lower, upper)) {
+            core.tissue.formedTree.add(pos.subtract(origin).asLong());
+            forget(origin,pos);
+            restoredConnection(origin,pos);
+            sparkle(pos);
+        }
+        core.setChanged();
     }
 
     private boolean replaceableRootSoil(LivingEntity core, BlockPos pos, BlockState state, BlockState expected) {

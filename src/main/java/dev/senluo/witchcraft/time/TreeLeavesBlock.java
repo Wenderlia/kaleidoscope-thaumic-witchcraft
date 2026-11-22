@@ -77,7 +77,7 @@ public final class TreeLeavesBlock extends LeavesBlock {
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moved) {
         super.onRemove(state, level, pos, replacement, moved);
         if (!state.is(replacement.getBlock()) && level instanceof ServerLevel server)
-            TemporalWorld.get(server).trees.removed(pos);
+            TemporalWorld.get(server).trees.removed(pos,state);
     }
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder) {

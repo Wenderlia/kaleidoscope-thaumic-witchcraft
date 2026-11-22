@@ -46,5 +46,29 @@ public record TravelStep(Vec3 from, Vec3 direction, double distance, double work
         return new Receipt(from.add(direction.scale(distance * fraction)), distance * fraction, spentAt(fraction), fraction == 1);
     }
 
+    /** Greatest payable prefix within the caller's limit; field rounding stays conservative. */
+    public double fractionForWork(double requested, double upperFraction) {
+        if (!Double.isFinite(requested) || requested < 0)
+            throw new IllegalArgumentException("Invalid prefix work");
+        if (spentAt(upperFraction) <= requested) return upperFraction;
+        if (distance <= 1.0E-12 || width == 0) {
+            double slope = distance <= 1.0E-12 ? work : distance;
+            double fraction = Math.min(upperFraction, requested / slope);
+            if (spentAt(fraction) > requested) fraction = Math.nextDown(fraction);
+            return Math.max(0, fraction);
+        }
+        double low = 0, high = upperFraction;
+        for (int i = 0; i < 40; i++) {
+            double middle = (low + high) * .5;
+            if (spentAt(middle) <= requested) low = middle; else high = middle;
+        }
+        return low;
+    }
+
+    public TravelStep limitWork(double requested) {
+        double fraction = fractionForWork(requested, 1);
+        return fraction == 1 ? this : new TravelStep(from, direction, distance * fraction, spentAt(fraction), gap, width);
+    }
+
     public record Receipt(Vec3 position, double distance, double work, boolean complete) {}
 }

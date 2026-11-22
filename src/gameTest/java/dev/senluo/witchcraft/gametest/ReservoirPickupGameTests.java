@@ -21,6 +21,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class ReservoirPickupGameTests {
+    private static final net.minecraft.resources.ResourceLocation AER = net.minecraft.resources.ResourceLocation.parse("thaumcraft:aer");
+    private static final net.minecraft.resources.ResourceLocation PERDITIO = net.minecraft.resources.ResourceLocation.parse("thaumcraft:perditio");
     public static final class Listener {
         private final Consumer<BlockEvent.BreakEvent> callback;
         Listener(Consumer<BlockEvent.BreakEvent> callback){this.callback=callback;}
@@ -36,7 +38,7 @@ public final class ReservoirPickupGameTests {
         bag.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,net.minecraft.network.chat.Component.literal("retained-data"));
         ReservoirData.deposit(bag,"aer",17);
         var converter=new ItemStack(ReservoirContent.CONVERTER.get());
-        ReservoirData.credit(converter,new long[]{150,0,0,0,0,75});
+        ReservoirData.credit(converter,java.util.Map.of(AER, 150L, PERDITIO, 75L));
         ReservoirData.slot(bag,ReservoirData.FIRST_PLUGIN_SLOT,converter,level.registryAccess());
         block.setBag(bag);
         var player=new FakePlayer(level,new GameProfile(UUID.randomUUID(),"pickup-test"));
@@ -75,11 +77,11 @@ public final class ReservoirPickupGameTests {
         h.assertTrue(ReservoirData.supported(decoded) && ReservoirData.amount(decoded,0)==17
                 && ReservoirData.aspect(decoded,0).equals("aer"),"Current chamber survives item serialization");
         var converter=ReservoirData.slot(decoded,ReservoirData.FIRST_PLUGIN_SLOT,registries);
-        h.assertTrue(converter.is(ReservoirContent.CONVERTER.get()) && ReservoirData.balance(converter,0)==150
-                && ReservoirData.balance(converter,5)==75,"Removable plugin keeps its independent paid balances");
-        ReservoirData.debit(converter,0,50);
+        h.assertTrue(converter.is(ReservoirContent.CONVERTER.get()) && ReservoirData.balances(converter).getOrDefault(AER, 0L)==150
+                && ReservoirData.balances(converter).getOrDefault(PERDITIO, 0L)==75,"Removable plugin keeps its independent paid balances");
+        ReservoirData.debit(converter,java.util.Map.of(AER, 50L));
         ReservoirData.slot(decoded,ReservoirData.FIRST_PLUGIN_SLOT,converter,registries);
-        h.assertTrue(ReservoirData.balance(ReservoirData.slot(decoded,ReservoirData.FIRST_PLUGIN_SLOT,registries),0)==100
+        h.assertTrue(ReservoirData.balances(ReservoirData.slot(decoded,ReservoirData.FIRST_PLUGIN_SLOT,registries)).getOrDefault(AER, 0L)==100
                 && ReservoirData.amount(decoded,0)==17 && decoded.getHoverName().getString().equals("retained-data"),
                 "Editing the decoded plugin retains chamber stock and unrelated components");
         for(int version:new int[]{0,1,3,99}){

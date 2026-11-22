@@ -10,24 +10,39 @@ import net.minecraft.server.level.ServerLevel;
  */
 public final class ConnectedTreeWood {
     /** A proof belongs to one observed component, not to all wood in the dimension. */
-    public static final class Connection {
+    public static final class Connection implements java.util.function.BooleanSupplier {
         private final boolean connected;
-        private final long tick;
+        private final ServerLevel level;
         private Set<Long> wood, chunks;
+        private Map<Long, Boolean> activity;
+        private Map<LivingEntity, Boolean> cores;
         private boolean valid = true;
-        private Connection(boolean connected, long tick, Set<Long> wood, Set<Long> chunks) {
-            this.connected = connected; this.tick = tick;
+        private Connection(boolean connected, ServerLevel level, Set<Long> wood, Set<Long> chunks,
+                           Map<Long, Boolean> activity, Map<LivingEntity, Boolean> cores) {
+            this.connected = connected; this.level = level;
             this.wood = Set.copyOf(wood); this.chunks = Set.copyOf(chunks);
+            this.activity = Map.copyOf(activity); this.cores = Map.copyOf(cores);
         }
         public boolean connected() { return connected; }
-        public boolean current(long now) { return valid && now >= tick && now - tick < 20; }
+        @Override public boolean getAsBoolean() { return current(); }
+        public boolean current() {
+            if (!valid) return false;
+            for (var entry : activity.entrySet())
+                if (entry.getValue() != dev.senluo.witchcraft.world.ChunkActivity.active(level, entry.getKey())) return false;
+            for (var entry : cores.entrySet()) {
+                LivingEntity core = entry.getKey();
+                if (core.isRemoved() || level.getBlockEntity(core.getBlockPos()) != core
+                        || entry.getValue() != (core.tree() && core.tissue.supported())) return false;
+            }
+            return true;
+        }
     }
     private final Map<Long, Connection> entries = new HashMap<>();
     private final Map<Long, Set<Connection>> watchers = new HashMap<>();
     private final Set<Connection> components = new HashSet<>();
     private static final int MAX_COMPONENT = TreeShapeSpace.MAX_PARTS;
     private static final int MAX_CACHE = MAX_COMPONENT * 2;
-    private static final Connection UNAVAILABLE = new Connection(false, Long.MIN_VALUE, Set.of(), Set.of());
+    private static final Connection UNAVAILABLE = new Connection(false, null, Set.of(), Set.of(), Map.of(), Map.of());
     static { UNAVAILABLE.valid = false; }
 
     ConnectedTreeWood() {}
@@ -39,6 +54,7 @@ public final class ConnectedTreeWood {
         connection.valid = false;
         // Stabilizer scores may still hold the small proof; retired proofs must release geometry.
         connection.wood = Set.of(); connection.chunks = Set.of();
+        connection.activity = Map.of(); connection.cores = Map.of();
     }
     void changed(long chunk) {
         Set<Connection> affected = watchers.get(chunk);
@@ -59,14 +75,14 @@ public final class ConnectedTreeWood {
         return connection(level, origin).connected();
     }
     Connection connection(ServerLevel level, BlockPos origin) {
-        long now = level.getGameTime();
         if (!loaded(level, origin) || !level.getBlockState(origin).is(TreeWood.LOGS))
             return UNAVAILABLE;
         Connection cached = entries.get(origin.asLong());
-        if (cached != null && cached.current(now)) return cached;
+        if (cached != null && cached.current()) return cached;
         if (cached != null) remove(cached);
         Set<Long> wood = new HashSet<>();
         Set<Long> chunks = new HashSet<>();
+        Map<LivingEntity, Boolean> cores = new IdentityHashMap<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         wood.add(origin.asLong());
         chunks.add(net.minecraft.world.level.ChunkPos.asLong(origin));
@@ -81,8 +97,11 @@ public final class ConnectedTreeWood {
                 if (wood.contains(next.asLong()) || !loaded(level, next)) continue;
                 var state = level.getBlockState(next);
                 if (state.is(TemporalContent.CORE.get())) {
-                    if (level.getBlockEntity(next) instanceof LivingEntity core
-                            && !core.isRemoved() && core.tree() && core.tissue.supported()) connected = true;
+                    if (level.getBlockEntity(next) instanceof LivingEntity core && !core.isRemoved()) {
+                        boolean usable = core.tree() && core.tissue.supported();
+                        cores.put(core, usable);
+                        connected |= usable;
+                    }
                 } else if (state.is(dev.senluo.witchcraft.time.TreeWood.LOGS)) {
                     if (wood.size() >= MAX_COMPONENT) continue;
                     wood.add(next.asLong());
@@ -98,7 +117,9 @@ public final class ConnectedTreeWood {
             if (old != null) replaced.add(old);
         }
         replaced.forEach(this::remove);
-        Connection result = new Connection(connected, now, wood, chunks);
+        Map<Long, Boolean> activity = new HashMap<>();
+        for (long chunk : chunks) activity.put(chunk, dev.senluo.witchcraft.world.ChunkActivity.active(level, chunk));
+        Connection result = new Connection(connected, level, wood, chunks, activity, cores);
         if (entries.size() + wood.size() > MAX_CACHE) invalidate();
         components.add(result);
         for (long pos : wood) entries.put(pos, result);
@@ -107,7 +128,6 @@ public final class ConnectedTreeWood {
     }
 
     private static boolean loaded(ServerLevel level, BlockPos pos) {
-        return level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null
-                && level.shouldTickBlocksAt(pos);
+        return dev.senluo.witchcraft.world.ChunkActivity.active(level, pos);
     }
 }

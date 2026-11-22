@@ -19,6 +19,26 @@ public final class ProductionScheduler {
     private final Map<UUID, UUID> leadSlots = new HashMap<>();
     // Fractions reserve existing stock only. They are not balances, income or saved work.
     private final Map<Colony, Map<Key, Long>> reservations = new WeakHashMap<>();
+    private final class Batch {
+        final Colony group;
+        final List<Job> primary = new ArrayList<>();
+        final List<FruitJob> secondary = new ArrayList<>();
+        List<BlockPos> machines;
+        boolean active;
+        Batch(Colony group) { this.group = group; }
+        void clear() { primary.clear(); secondary.clear(); machines = null; active = false; }
+    }
+    // Reuse containers only. Jobs, prices and eligible target quotes live for one flush.
+    private final Map<Colony, Batch> batches = new IdentityHashMap<>();
+    private final List<Batch> order = new ArrayList<>();
+    private final Map<UUID, List<FruitJob>> perTree = new TreeMap<>();
+    private final Set<UUID> producerIds = new HashSet<>();
+    private boolean flushing;
+    private Batch batch(Colony group) {
+        Batch batch = batches.computeIfAbsent(group, Batch::new);
+        if (!batch.active) { batch.active = true; order.add(batch); }
+        return batch;
+    }
     private int cursor;
     private int cropCalls;
     private final CropGrowthFeedback cropFeedback = new CropGrowthFeedback();
@@ -29,9 +49,9 @@ public final class ProductionScheduler {
         if (elapsed > 0) fruitTicks.merge(fruit, elapsed, Math::max);
     }
     // Topology changes invalidate group reservations, not observations owned by unchanged plants.
-    public void invalidate() { reservations.clear(); cropClock.topologyChanged(); }
+    public void invalidate() { batches.clear(); reservations.clear(); cropClock.topologyChanged(); }
     void forget(Colony group) {
-        reservations.remove(group);
+        batches.remove(group); reservations.remove(group);
         for (LivingEntity member : group.members) cropClock.topologyChanged(member.tissue.identity);
     }
     public void cropChanged(BlockPos pos, net.minecraft.world.level.block.state.BlockState before,
@@ -44,62 +64,69 @@ public final class ProductionScheduler {
     public void chunkChanged(long chunk) { cropFeedback.chunkChanged(chunk); cropClock.chunkChanged(chunk); }
 
     public void flush(List<LivingEntity> producers) {
+        // A native callback may offer more work, but cannot reuse the active settlement workspace.
+        if (flushing) return;
+        flushing = true;
         cropCalls = 0;
-        if(producers.isEmpty() && fruitTicks.isEmpty()){
-            leadSlots.clear(); reservations.clear(); cropClock.retainSources(Set.of());
-            return;
-        }
-        cropClock.retainSources(producers.stream().map(source -> source.tissue.identity).collect(java.util.stream.Collectors.toSet()));
-        Map<Colony, List<Job>> primary = new LinkedHashMap<>();
-        Map<Colony, List<FruitJob>> secondary = new IdentityHashMap<>();
-        // All quotes precede execution. Share one discovery per group in this flush only;
-        // native work still rechecks eligibility immediately before each debit/call.
-        Map<Colony, List<BlockPos>> machineOffers = new IdentityHashMap<>();
-        Map<UUID, List<FruitJob>> perTree = new TreeMap<>();
-        for (var entry : fruitTicks.entrySet()) {
-            FruitEntity fruit = entry.getKey();
-            LivingEntity core = fruit.core();
-            if (core == null || fruit.isRemoved() || !fruit.supported() || fruit.grade >= fruit.limit()) continue;
-            Colony group = world.colony(core);
-            if (group.productionMode() != SupplyMode.PAUSED)
-                perTree.computeIfAbsent(core.tissue.identity, unused -> new ArrayList<>()).add(new FruitJob(fruit, entry.getValue(), group));
-        }
-        fruitTicks.clear();
-        leadSlots.keySet().retainAll(perTree.keySet());
-        for (var entry : perTree.entrySet()) {
-            List<FruitJob> jobs = entry.getValue();
-            jobs.sort(Comparator.comparingInt((FruitJob job) -> job.fruit.grade).reversed()
-                    .thenComparing(Comparator.comparingDouble((FruitJob job) -> job.fruit.stageProgress()).reversed())
-                    .thenComparing(job -> job.fruit.sideIdentity));
-            UUID selected = leadSlots.get(entry.getKey());
-            FruitJob lead = jobs.stream().filter(job -> job.fruit.sideIdentity.equals(selected)).findFirst().orElse(jobs.getFirst());
-            leadSlots.put(entry.getKey(), lead.fruit.sideIdentity);
-            primary.computeIfAbsent(lead.group, unused -> new ArrayList<>()).add(lead);
-            for (FruitJob job : jobs) if (job != lead) secondary.computeIfAbsent(job.group, unused -> new ArrayList<>()).add(job);
-        }
-        for (LivingEntity source : producers) {
-            Colony group = world.colony(source);
-            int modeRate = SupplyMode.rate(group.productionMode());
-            if (modeRate == 0) continue;
-            List<Job> jobs = primary.computeIfAbsent(group, unused -> new ArrayList<>());
-            CropJob crops = new CropJob(source, group, modeRate);
-            if (!crops.steps.isEmpty()) jobs.add(crops);
-            if (!source.amber()) {
-                List<BlockPos> targets = machineOffers.computeIfAbsent(group, colony -> world.machines.get(colony).stream()
-                        .filter(pos -> MachineWork.eligible(world.level, pos)).toList());
-                MachineJob machines = new MachineJob(source, group, modeRate, targets);
-                if (!machines.targets.isEmpty()) jobs.add(machines);
+        try {
+            if (producers.isEmpty() && fruitTicks.isEmpty()) {
+                batches.clear(); perTree.clear(); leadSlots.clear(); reservations.clear(); cropClock.retainSources(Set.of());
+                return;
             }
+            for (var source : producers) producerIds.add(source.tissue.identity);
+            cropClock.retainSources(producerIds);
+            for (var entry : fruitTicks.entrySet()) {
+                FruitEntity fruit = entry.getKey();
+                LivingEntity core = fruit.core();
+                if (core == null || fruit.isRemoved() || !fruit.supported() || fruit.grade >= fruit.limit()) continue;
+                Colony group = world.colony(core);
+                if (group.productionMode() != SupplyMode.PAUSED)
+                    perTree.computeIfAbsent(core.tissue.identity, unused -> new ArrayList<>()).add(new FruitJob(fruit, entry.getValue(), group));
+            }
+            fruitTicks.clear();
+            perTree.values().removeIf(List::isEmpty);
+            leadSlots.keySet().retainAll(perTree.keySet());
+            for (var entry : perTree.entrySet()) {
+                List<FruitJob> jobs = entry.getValue();
+                jobs.sort(Comparator.comparingInt((FruitJob job) -> job.fruit.grade).reversed()
+                        .thenComparing(Comparator.comparingDouble((FruitJob job) -> job.fruit.stageProgress()).reversed())
+                        .thenComparing(job -> job.fruit.sideIdentity));
+                UUID selected = leadSlots.get(entry.getKey());
+                FruitJob lead = jobs.stream().filter(job -> job.fruit.sideIdentity.equals(selected)).findFirst().orElse(jobs.getFirst());
+                leadSlots.put(entry.getKey(), lead.fruit.sideIdentity);
+                Batch batch = batch(lead.group);
+                batch.primary.add(lead);
+                for (FruitJob job : jobs) if (job != lead)
+                    batches.computeIfAbsent(job.group, Batch::new).secondary.add(job);
+            }
+            for (LivingEntity source : producers) {
+                Colony group = world.colony(source);
+                int modeRate = SupplyMode.rate(group.productionMode());
+                if (modeRate == 0) continue;
+                Batch batch = batch(group);
+                CropJob crops = new CropJob(source, group, modeRate);
+                if (!crops.steps.isEmpty()) batch.primary.add(crops);
+                if (!source.amber()) {
+                    if (batch.machines == null) batch.machines = world.machines.get(group).stream()
+                            .filter(pos -> MachineWork.eligible(world.level, pos)).toList();
+                    MachineJob machines = new MachineJob(source, group, modeRate, batch.machines);
+                    if (!machines.targets.isEmpty()) batch.primary.add(machines);
+                }
+            }
+            batches.values().removeIf(batch -> !batch.active);
+            reservations.keySet().retainAll(batches.keySet());
+            for (int n = 0; n < order.size(); n++) {
+                Batch batch = order.get(Math.floorMod(cursor + n, order.size()));
+                settle(batch.group, batch.primary, batch.secondary);
+            }
+            cursor = cursor == Integer.MAX_VALUE ? 0 : cursor + 1;
+        } finally {
+            // Topology invalidation may remove a batch during native work; the operation still owns its cleanup.
+            order.forEach(Batch::clear); order.clear();
+            batches.values().forEach(Batch::clear);
+            perTree.values().forEach(List::clear); producerIds.clear();
+            flushing = false;
         }
-        Set<Colony> current = Collections.newSetFromMap(new IdentityHashMap<>());
-        current.addAll(primary.keySet());
-        reservations.keySet().retainAll(current);
-        var groups = new ArrayList<>(primary.entrySet());
-        for (int n = 0; n < groups.size(); n++) {
-            var entry = groups.get(Math.floorMod(cursor + n, groups.size()));
-            settle(entry.getKey(), entry.getValue(), secondary.getOrDefault(entry.getKey(), List.of()));
-        }
-        cursor = cursor == Integer.MAX_VALUE ? 0 : cursor + 1;
     }
 
     private boolean valid(LivingEntity source, Colony group) {

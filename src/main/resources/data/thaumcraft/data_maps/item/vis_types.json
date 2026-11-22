@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": {
+    "kaleidoscope_witchcraft:essentia_transducer": {
+      "types": [
+        "thaumcraft:aer",
+        "thaumcraft:terra",
+        "thaumcraft:ignis",
+        "thaumcraft:aqua",
+        "thaumcraft:ordo",
+        "thaumcraft:perditio"
+      ]
+    },
+    "kaleidoscope_witchcraft:void_essentia_transducer": {
+      "types": [
+        "thaumcraft:aer",
+        "thaumcraft:terra",
+        "thaumcraft:ignis",
+        "thaumcraft:aqua",
+        "thaumcraft:ordo",
+        "thaumcraft:perditio"
+      ]
+    }
+  }
+}

@@ -17,9 +17,8 @@ public final class RitualRingEffects {
         double opacity=RestraintGeometry.opacity(f)*smooth(f.animationTicks()/16);
         if(opacity<.001)return;
         for(int ring=0;ring<3;ring++) {
-            Ring pose=pose(f.layout(),ring,f.animationTicks());
             if(only==Material.RING_MIST)mist(sink,f,ring,opacity);
-            else band(sink,f,pose,only,opacity);
+            else band(sink,f,pose(f.layout(),ring,f.animationTicks()),only,opacity);
         }
     }
 
@@ -36,38 +35,44 @@ public final class RitualRingEffects {
         if(ring.alpha()*opacity<.001)return;
         int segments=Math.clamp((int)Math.ceil(SPAN*ring.radius()/.24),8,MAX_SEGMENTS);
         int layers=material==Material.RING_BODY?SLICES:1;
-        for(int arc=0;arc<4;arc++)for(int layer=0;layer<layers;layer++) {
-            double begin=ring.spin()+arc*TAU/4;
-            V[] previous=edges(f,ring,begin,material,layer);
-            for(int segment=1;segment<=segments;segment++) {
-                double q=segment/(double)segments,before=(segment-1)/(double)segments;
-                V[] next=edges(f,ring,begin+SPAN*q,material,layer);
-                int c0=color(arc,before),c1=color(arc,q);
-                // Body density is strongest at its common core. It is not a lit opaque tube.
-                float strength=(float)(opacity*ring.alpha()*(material==Material.RING_HALO?.24:layer==0?.33:.15));
-                float shade=material==Material.RING_HALO?.82f:1;
-                sink.texturedQuad(material,previous[0],previous[1],next[1],next[0],0,(float)before,1,(float)q,
-                        channel(c0,16)*shade,channel(c0,8)*shade,channel(c0,0)*shade,strength,
-                        channel(c1,16)*shade,channel(c1,8)*shade,channel(c1,0)*shade,strength);
-                previous=next;
-            }
-        }
+        for(int arc=0;arc<4;arc++)for(int layer=0;layer<layers;layer++)
+            strip(sink,f,ring,material,opacity,segments,arc,layer);
     }
-    private static V[] edges(Frame f,Ring ring,double angle,Material material,int layer) {
-        V radial=new V(Math.cos(angle),0,Math.sin(angle));
-        V centre=radial.scale(ring.radius()).add(new V(0,ring.y(),0));
-        V side;
-        if(material==Material.RING_HALO) {
-            V tangent=new V(-Math.sin(angle),0,Math.cos(angle));
-            side=tangent.cross(f.camera().sub(centre)).unit().scale(ring.width()*2.0);
-        } else {
-            // Three intersecting Gaussian slices fill a flattened elliptical light volume.
-            // The cross-section has actual height; every boundary fades instead of closing with a cap.
-            double cross=layer*Math.PI/SLICES;
-            side=radial.scale(Math.cos(cross)*ring.width()*.5)
-                    .add(new V(0,Math.sin(cross)*ring.width()*.19,0));
+
+    private static void strip(Sink sink,Frame f,Ring ring,Material material,double opacity,int segments,int arc,int layer) {
+        boolean halo=material==Material.RING_HALO;
+        double begin=ring.spin()+arc*TAU/4;
+        double cross=layer*Math.PI/SLICES;
+        double sliceWidth=Math.cos(cross)*ring.width()*.5;
+        double sliceHeight=Math.sin(cross)*ring.width()*.19;
+        float strength=(float)(opacity*ring.alpha()*(halo?.24:layer==0?.33:.15));
+        float shade=halo?.82f:1;
+
+        // Adjacent quads share the position, colour and UV of the preceding cross section.
+        V previousInner=null,previousOuter=null;
+        int previousColor=0;
+        float previousV=0;
+        for(int segment=0;segment<=segments;segment++) {
+            double fraction=segment/(double)segments;
+            double angle=begin+SPAN*fraction;
+            V radial=new V(Math.cos(angle),0,Math.sin(angle));
+            V centre=radial.scale(ring.radius()).add(new V(0,ring.y(),0));
+            // Body slices intersect in 3D. The halo faces the camera at this point on the arc.
+            V side=halo
+                    ?new V(-radial.z(),0,radial.x()).cross(f.camera().sub(centre)).unit().scale(ring.width()*2)
+                    :radial.scale(sliceWidth).add(new V(0,sliceHeight,0));
+            V inner=centre.sub(side),outer=centre.add(side);
+            int color=color(arc,fraction);
+            if(segment>0) {
+                sink.texturedQuad(material,previousInner,previousOuter,outer,inner,0,previousV,1,(float)fraction,
+                        channel(previousColor,16)*shade,channel(previousColor,8)*shade,channel(previousColor,0)*shade,strength,
+                        channel(color,16)*shade,channel(color,8)*shade,channel(color,0)*shade,strength);
+            }
+            previousInner=inner;
+            previousOuter=outer;
+            previousColor=color;
+            previousV=(float)fraction;
         }
-        return new V[]{centre.sub(side),centre.add(side)};
     }
 
     private static void mist(Sink sink,Frame f,int ring,double opacity) {

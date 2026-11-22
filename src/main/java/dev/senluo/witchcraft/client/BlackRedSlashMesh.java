@@ -15,19 +15,20 @@ public final class BlackRedSlashMesh {
         return Math.min(1, SlashAppearance.widthScale(length));
     }
 
-    public static double bodyHalfWidth(double length) {
-        return SlashAppearance.BODY.width() * widthScale(length);
+    public static double bodyHalfWidth(SlashAppearance appearance, double length) {
+        return appearance.body().width() * widthScale(length);
     }
 
-    public static void emit(double half, double widthLength, double age, int seed, boolean joined, float opacity, Sink sink) {
+    public static void emit(SlashAppearance appearance, double half, double widthLength, double age, int seed,
+                            boolean joined, float opacity, Sink sink) {
         if (!Double.isFinite(half) || half <= 0 || !Double.isFinite(age) || !Float.isFinite(opacity) || opacity <= 0) return;
         opacity = Math.min(1, opacity);
         // Fixed topology: growth must not change subdivision count and pop the contour.
         int sections = joined ? 1 : 20;
         double scale = widthScale(widthLength);
         if (scale <= 0) return;
-        double width = SlashAppearance.BODY.width() * scale;
-        double halo = SlashAppearance.HALO.width() * scale - width;
+        double width = appearance.body().width() * scale;
+        double halo = appearance.halo().width() * scale - width;
         double lip = halo * .15, near = halo * .45;
         double phase = (seed & 1023) * .006135923;
         // Adjacent bands share boundaries, so layers cannot darken each other or fight for depth.

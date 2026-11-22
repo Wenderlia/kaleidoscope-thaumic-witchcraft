@@ -1,6 +1,7 @@
 package dev.senluo.witchcraft.time;
 
 import java.util.*;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,6 +20,7 @@ public final class TreeShapeSpace {
     public static final int TREE_RADIUS=8, GIANT_RADIUS=16, MAX_PARTS=33*33*29, MAX_ENTRIES=MAX_PARTS-1;
     public static final int MAX_PRUNED=MAX_PARTS;
     static final List<BlockPos> NEIGHBORS = neighbours();
+    private static final int[] NEARBY = neighbourMasks();
     private static final TagKey<Block> PARTS = TagKey.create(Registries.BLOCK,
             ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "tree_shape_parts"));
     private static final Map<Integer,Map<BlockPos,BlockState>> TEMPLATES = new java.util.concurrent.ConcurrentHashMap<>();
@@ -30,13 +32,15 @@ public final class TreeShapeSpace {
     private final Map<Long,dev.senluo.witchcraft.ritual.ChalkMarks.Mark> carvings = new LinkedHashMap<>();
     private final Map<Long,CompoundTag> signs = new LinkedHashMap<>();
     private boolean initialized, splitDirty;
+    // Evidence for this in-memory topology. Saved shapes first establish it through a root walk.
+    private boolean rooted;
     private int templatePhase = -2;
     private long revision;
     private ArrayDeque<BlockPos> cutQueue;
     private Set<Long> cutSeen, cutDisconnected;
     private Iterator<Long> cutCandidates;
     private Candidate preview;
-    record Candidate(long revision, int phase, Map<Long,BlockState> cells) {}
+    record Candidate(long revision, int phase, Map<Long,BlockState> cells, boolean rooted) {}
 
     private static List<BlockPos> neighbours() {
         List<BlockPos> result=new ArrayList<>(26);
@@ -44,14 +48,57 @@ public final class TreeShapeSpace {
             if(x!=0||y!=0||z!=0)result.add(new BlockPos(x,y,z));
         return List.copyOf(result);
     }
+    private static int[] neighbourMasks() {
+        var offsets = NEIGHBORS;
+        int[] masks = new int[offsets.size()];
+        for (int i = 0; i < masks.length; i++) {
+            BlockPos p = offsets.get(i);
+            for (int k = 0; k < masks.length; k++) {
+                BlockPos q = offsets.get(k);
+                if (Math.abs(p.getX() - q.getX()) <= 1 && Math.abs(p.getY() - q.getY()) <= 1
+                        && Math.abs(p.getZ() - q.getZ()) <= 1) masks[i] |= 1 << k;
+            }
+        }
+        return masks;
+    }
+
+    /** Every path through the removed cell can detour if its old neighbours still touch locally. */
+    static boolean neighboursStayConnected(BlockPos removed, Predicate<BlockPos> occupiedAt) {
+        int occupied = 0;
+        var neighbour = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < NEARBY.length; i++) {
+            BlockPos d = NEIGHBORS.get(i);
+            neighbour.set(removed.getX()+d.getX(), removed.getY()+d.getY(), removed.getZ()+d.getZ());
+            if (occupiedAt.test(neighbour)) occupied |= 1 << i;
+        }
+        int next = Integer.lowestOneBit(occupied);
+        int unvisited = occupied ^ next;
+        while (next != 0 && unvisited != 0) {
+            int bit = Integer.lowestOneBit(next);
+            int reached = NEARBY[Integer.numberOfTrailingZeros(bit)] & unvisited;
+            next = (next ^ bit) | reached;
+            unvisited ^= reached;
+        }
+        return unvisited == 0;
+    }
+
     public static boolean material(BlockState state) {
         return state.is(PARTS) && (!state.hasBlockEntity() || state.is(TemporalContent.FRUIT.get()) || TreeSignMemory.supports(state));
     }
     public static boolean contains(Tissue tissue, BlockPos p) { return contains(tissue.giant||tissue.giantGrowing,p); }
     static boolean contains(boolean giant, BlockPos p) {
-        return !p.equals(BlockPos.ZERO) && Math.abs(p.getX())<=(giant?GIANT_RADIUS:TREE_RADIUS)
-                && Math.abs(p.getZ())<=(giant?GIANT_RADIUS:TREE_RADIUS)
-                && p.getY()>=(giant?-4:0) && p.getY()<=(giant?24:6);
+        return contains(giant, p.getX(), p.getY(), p.getZ());
+    }
+
+    static boolean containsAt(Tissue tissue, BlockPos origin, BlockPos pos) {
+        return contains(tissue.giant || tissue.giantGrowing, pos.getX() - origin.getX(),
+                pos.getY() - origin.getY(), pos.getZ() - origin.getZ());
+    }
+
+    private static boolean contains(boolean giant, int x, int y, int z) {
+        int radius = giant ? GIANT_RADIUS : TREE_RADIUS;
+        return (x != 0 || y != 0 || z != 0) && Math.abs(x) <= radius && Math.abs(z) <= radius
+                && y >= (giant ? -4 : 0) && y <= (giant ? 24 : 6);
     }
     public boolean initialized(){return initialized;}
     public void initialize(){if(!initialized){initialized=true;revision++;}}
@@ -92,7 +139,7 @@ public final class TreeShapeSpace {
     Candidate preview(Map<BlockPos,BlockState> template, int phase) {
         if (preview != null && preview.revision() == revision && preview.phase() == phase) return preview;
         Map<Long,BlockState> next = new LinkedHashMap<>(cells);
-        Set<Long> newPositions = new HashSet<>();
+        Set<Long> enclosureCandidates = new HashSet<>();
         if (!coreOnly()) for (var entry : template.entrySet()) {
             long p = entry.getKey().asLong();
             if (excluded.contains(p) || grafts.contains(p)) continue;
@@ -100,27 +147,32 @@ public final class TreeShapeSpace {
             // Nurturing channel colour is a material transformation, not a new natural template.
             if (old != null && old.is(TreeWood.LOGS) && state.is(TreeWood.LOGS))
                 state = FruitWoods.regrowth(old).setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
-            if (phase == 4 && state.is(TemporalContent.TIME_LEAVES.get()))
-                state = state.setValue(TreeLeavesBlock.GREAT_TREE, true);
             next.put(p, state);
-            if (!cells.containsKey(p)) newPositions.add(p);
+            if (old == null && !grafts.isEmpty()) enclosureCandidates.add(p);
         }
-        // Only additions are filtered. An artificial shell never deletes existing interior memory.
-        if (!grafts.isEmpty() && !newPositions.isEmpty()) skipEnclosedAdditions(next, newPositions, phase >= 0);
-        // New natural cells must join the remaining abstract shape; a cut never seeds a floating island.
+        if (!enclosureCandidates.isEmpty()) skipEnclosedAdditions(next, enclosureCandidates, phase >= 0);
+        // Existing cells survive the merge. Only a new position needs a route to the root.
+        boolean connected = next.size() > cells.size() ? retainConnectedAdditions(next) : rooted || cells.isEmpty();
+        // Material and orientation come from the merged shape. All of its leaves take the core's stage.
+        next.replaceAll((p, state) -> state.is(TemporalContent.TIME_LEAVES.get()) ? leafAtStage(state, phase == 4) : state);
+        preview = new Candidate(revision, phase, Collections.unmodifiableMap(next), connected);
+        return preview;
+    }
+
+    private boolean retainConnectedAdditions(Map<Long,BlockState> next) {
         Set<Long> connected = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         queue.add(BlockPos.ZERO);
         while (!queue.isEmpty()) {
             BlockPos p = queue.removeFirst();
             for (BlockPos d : NEIGHBORS) {
-                BlockPos n = p.offset(d);
-                if (next.containsKey(n.asLong()) && connected.add(n.asLong())) queue.addLast(n);
+                long key = BlockPos.asLong(p.getX() + d.getX(), p.getY() + d.getY(), p.getZ() + d.getZ());
+                if (next.containsKey(key) && connected.add(key)) queue.addLast(BlockPos.of(key));
             }
         }
-        next.keySet().removeIf(p -> !cells.containsKey(p) && !connected.contains(p));
-        preview = new Candidate(revision, phase, Collections.unmodifiableMap(next));
-        return preview;
+        if (connected.size() < next.size())
+            next.keySet().removeIf(p -> !cells.containsKey(p) && !connected.contains(p));
+        return connected.size() == next.size();
     }
 
     /** Six-face void reachability is distinct from the shape's 26-neighbour material connection. */
@@ -159,6 +211,7 @@ public final class TreeShapeSpace {
     boolean commit(Candidate candidate) {
         if (candidate.revision() != revision || splitDirty) return false;
         cells.clear(); cells.putAll(candidate.cells());
+        rooted = candidate.rooted();
         signs.keySet().removeIf(p -> !cells.containsKey(p) || !TreeSignMemory.supports(cells.get(p)));
         initialized = true; templatePhase = candidate.phase(); revision++; preview = null;
         return true;
@@ -169,8 +222,12 @@ public final class TreeShapeSpace {
         if(!contains(tissue,p)||!material(state)||excluded.contains(p.asLong())
                 || !cells.containsKey(p.asLong())&&cells.size()>=MAX_ENTRIES)return false;
         // A fruit is a structural route only. Its live entity still owns all investment and growth.
-        BlockState next=normalized(state);
+        BlockState next=normalized(state, tissue.giant);
         BlockState old=cells.put(p.asLong(),next);
+        if (old == null) {
+            rooted = false;
+            if (splitDirty) resetCutSearch();
+        }
         if (!TreeSignMemory.supports(next) || old == null || !old.is(next.getBlock())) signs.remove(p.asLong());
         boolean sourceChanged = grafts.add(p.asLong());
         if(next.equals(old) && !sourceChanged)return false;
@@ -181,25 +238,33 @@ public final class TreeShapeSpace {
     }
     boolean transform(Tissue tissue, BlockPos p, BlockState old, BlockState state) {
         long key = p.asLong();
-        if (!has(key) || !material(state) || !cells.get(key).equals(normalized(old))) return false;
-        BlockState next = normalized(state);
+        if (!has(key) || !material(state) || !cells.get(key).equals(normalized(old, tissue.giant))) return false;
+        BlockState next = normalized(state, tissue.giant);
         if (next.equals(cells.get(key))) return false;
         cells.put(key, next); revision++; return true;
     }
-    private static BlockState normalized(BlockState state) {
-        BlockState next = state.is(TemporalContent.FRUIT.get())
-                ? TemporalContent.FRUIT.get().defaultBlockState() : FruitWoods.regrowth(state);
-        return next.is(TemporalContent.TIME_LEAVES.get())
-                ? next.setValue(LeavesBlock.DISTANCE, LeavesBlock.DECAY_DISTANCE) : YearsBuildingEdits.normalized(next);
+    private static BlockState leafAtStage(BlockState leaf, boolean giant) {
+        return leaf.setValue(LeavesBlock.DISTANCE, LeavesBlock.DECAY_DISTANCE).setValue(TreeLeavesBlock.GREAT_TREE, giant);
+    }
+    private static BlockState normalized(BlockState state, boolean giant) {
+        if (state.is(TemporalContent.TIME_LEAVES.get())) return leafAtStage(state, giant);
+        return state.is(TemporalContent.FRUIT.get()) ? TemporalContent.FRUIT.get().defaultBlockState()
+                : YearsBuildingEdits.normalized(FruitWoods.regrowth(state));
     }
     static boolean sameForm(BlockState actual, BlockState remembered) {
-        return remembered != null && normalized(actual).equals(normalized(remembered));
+        return remembered != null && normalized(actual, false).equals(normalized(remembered, false));
     }
     public boolean rememberLeaf(Tissue tissue,BlockPos p,BlockState s){return remember(tissue,p,s);}
     public boolean prune(Tissue tissue,BlockPos p) {
         long key=p.asLong();
         if(p.equals(BlockPos.ZERO)||!cells.containsKey(key)||excluded.size()>=MAX_PRUNED)return false;
-        exclude(key);splitDirty=true;cutQueue=null;cutCandidates=null;return true;
+        exclude(key);
+        if (rooted && neighboursStayConnected(p, q -> q.equals(BlockPos.ZERO) || cells.containsKey(q.asLong())))
+            return true;
+        rooted = false;
+        splitDirty = true;
+        resetCutSearch();
+        return true;
     }
     private void exclude(long p) {
         cells.remove(p);grafts.remove(p);carvings.remove(p);signs.remove(p);excluded.add(p);removed.add(p);revision++;
@@ -210,25 +275,47 @@ public final class TreeShapeSpace {
     }
     /** A work unit visits one cell (at most 26 neighbours), or classifies one saved cell. */
     int advanceCuts(int budget) {
-        if(!splitDirty)return 0;
-        if(cutQueue==null){cutQueue=new ArrayDeque<>();cutQueue.add(BlockPos.ZERO);cutSeen=new HashSet<>();cutDisconnected=new HashSet<>();}
-        int used=0;
-        while(!cutQueue.isEmpty() && used<budget) {
-            BlockPos p=cutQueue.removeFirst();used++;
-            for(BlockPos d:NEIGHBORS) {
-                BlockPos n=p.offset(d);long key=n.asLong();
-                if(cells.containsKey(key)&&cutSeen.add(key))cutQueue.addLast(n);
+        if (!splitDirty) return 0;
+        if (cutQueue == null) {
+            cutQueue = new ArrayDeque<>();
+            cutQueue.add(BlockPos.ZERO);
+            cutSeen = new HashSet<>();
+        }
+        int used = 0;
+        while (!cutQueue.isEmpty() && used < budget) {
+            BlockPos p = cutQueue.removeFirst();
+            used++;
+            for (BlockPos d : NEIGHBORS) {
+                long key = BlockPos.asLong(p.getX() + d.getX(), p.getY() + d.getY(), p.getZ() + d.getZ());
+                if (cells.containsKey(key) && cutSeen.add(key)) cutQueue.addLast(BlockPos.of(key));
             }
         }
-        if(!cutQueue.isEmpty())return used;
-        if(cutCandidates==null)cutCandidates=cells.keySet().iterator();
-        while(cutCandidates.hasNext() && used<budget){long p=cutCandidates.next();used++;if(!cutSeen.contains(p))cutDisconnected.add(p);}
-        if(!cutCandidates.hasNext()) {
-            // Publish the component removal only after its entire decision has been calculated.
-            for(long p:cutDisconnected)exclude(p);
-            splitDirty=false;cutQueue=null;cutCandidates=null;cutSeen=null;cutDisconnected=null;
+        if (!cutQueue.isEmpty()) return used;
+        // Only shape keys enter cutSeen. A topology edit restarts the walk; the root sentinel is separate.
+        if (cutSeen.size() < cells.size()) {
+            if (cutCandidates == null) {
+                cutCandidates = cells.keySet().iterator();
+                cutDisconnected = new HashSet<>();
+            }
+            while (cutCandidates.hasNext() && used < budget) {
+                long key = cutCandidates.next();
+                if (!cutSeen.contains(key)) cutDisconnected.add(key);
+                used++;
+            }
+            if (cutCandidates.hasNext()) return used;
+            for (long key : cutDisconnected) exclude(key);
         }
+        rooted = true;
+        splitDirty = false;
+        resetCutSearch();
         return used;
+    }
+
+    private void resetCutSearch() {
+        cutQueue = null;
+        cutCandidates = null;
+        cutSeen = null;
+        cutDisconnected = null;
     }
     boolean calculatingCuts(){return splitDirty;}
     Set<Long> takeRemoved(){settleCuts();Set<Long> result=new HashSet<>(removed);removed.clear();return result;}
@@ -329,7 +416,7 @@ public final class TreeShapeSpace {
         return true;
     }
     public void load(CompoundTag tag,Tissue tissue) {
-        cells.clear();grafts.clear();excluded.clear();carvings.clear();signs.clear();removed.clear();preview=null;initialized=false;splitDirty=false;cutQueue=null;cutCandidates=null;cutSeen=null;cutDisconnected=null;templatePhase=-2;revision++;
+        cells.clear();grafts.clear();excluded.clear();carvings.clear();signs.clear();removed.clear();preview=null;initialized=false;splitDirty=false;rooted=false;resetCutSearch();templatePhase=-2;revision++;
         if(!tissue.tree||tag.isEmpty()||!readable(tag))return;
         if(tag.getInt("Version")==6){
             var old=LegacyTreeShape.read(tag,tissue);
@@ -348,7 +435,7 @@ public final class TreeShapeSpace {
         }
         List<BlockState> palette = new ArrayList<>();
         for (var value : tag.getList("Palette",Tag.TAG_COMPOUND))
-            palette.add(normalized(NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(),(CompoundTag)value)));
+            palette.add(normalized(NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(),(CompoundTag)value), tissue.giant));
         long[] positions=tag.getLongArray("Positions"); int[] states=tag.getIntArray("States");
         for (int i=0; i<positions.length; i++) {
             cells.put(positions[i],palette.get(states[i]/2)); if ((states[i]&1)!=0) grafts.add(positions[i]);

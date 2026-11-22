@@ -119,6 +119,33 @@ public final class RitualPoints {
         return column.grants.containsKey(id) ? Permission.ALLOWED : Permission.DENIED;
     }
     /** A new or resized demand may use free capacity and reroute, but cannot evict existing grants. */
+    static boolean quoteNew(ServerLevel level, BlockPos origin, BlockPos recipient, int cost) {
+        if (recipient.getX() != origin.getX() || recipient.getZ() != origin.getZ()) return false;
+        // A rejected first activation has no lifecycle owner for a registered column cache.
+        Column column;
+        if (StructuralRitualStore.get(level).demands(level, origin).isEmpty()) {
+            column = new Column(origin);
+            column.activity = RitualShapeCache.activity(level, column.chunks);
+            column.dirty = false;
+        } else column = resolve(level, origin);
+        if (column.resolving || column.dirty) return false;
+        long revision = column.revision;
+        var capacities = new LinkedHashMap<>(column.capacities);
+        var pools = new ArrayList<Long>();
+        RitualCenterDomain.candidateAnchors(recipient).filter(pos -> !level.isOutsideBuildHeight(pos)).forEach(pos -> {
+            long pool = pos.asLong();
+            capacities.put(pool, RitualPlane.observe(level, pos).points()); pools.add(pool);
+        });
+        var requests = new ArrayList<RitualPointAllocation.Request>();
+        for (var request : column.requests) if (column.grants.containsKey(request.id())) requests.add(request);
+        UUID candidate = UUID.randomUUID();
+        requests.add(new RitualPointAllocation.Request(candidate, cost, origin.asLong(), Long.MAX_VALUE, List.copyOf(pools), false));
+        dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
+        refreshActivity(level, column);
+        if (revision != column.revision || column.dirty) return false;
+        var grants = RitualPointAllocation.allocate(capacities, requests, List.of()).grants().keySet();
+        return grants.contains(candidate) && grants.containsAll(column.grants.keySet());
+    }
     public static boolean quote(ServerLevel level, UUID id, int cost) {
         var store = StructuralRitualStore.get(level);
         if (store.handle(id).isEmpty()) return false;
@@ -154,7 +181,7 @@ public final class RitualPoints {
                 if (pending || revision != column.revision) continue;
                 demands = store.demands(level, key(source));
                 var planes = new HashSet<Integer>();
-                for (var demand : demands) RitualPlane.supplyPositions(demand.recipient())
+                for (var demand : demands) RitualCenterDomain.candidateAnchors(demand.recipient())
                         .forEach(pos -> planes.add(pos.getY()));
                 // Includes missing recipients and empty planes; saving stations never extend this dependency space.
                 column.planes = Set.copyOf(planes);
@@ -167,7 +194,7 @@ public final class RitualPoints {
                     BlockPos recipient = demand.recipient();
                     if (RitualCenters.state(level, demand.id()).present()
                             && recipient.getX() == source.getX() && recipient.getZ() == source.getZ())
-                        RitualPlane.supplyPositions(recipient).filter(pos -> !level.isOutsideBuildHeight(pos)).forEach(pos -> {
+                        RitualCenterDomain.candidateAnchors(recipient).filter(pos -> !level.isOutsideBuildHeight(pos)).forEach(pos -> {
                             long pool = pos.asLong();
                             var layout = observations.computeIfAbsent(pool, unused -> RitualPlane.observe(level, pos));
                             capacities.put(pool, layout.points());
@@ -193,6 +220,7 @@ public final class RitualPoints {
                     masks.put(pool, known);
                 });
                 losses.sort(Comparator.comparingInt(RitualPointAllocation.Loss::points).thenComparingLong(RitualPointAllocation.Loss::pool));
+                dev.senluo.witchcraft.world.ChunkActivity.fresh(level);
                 refreshActivity(level, column);
                 if (revision != column.revision || LEVELS.get(level) != index) continue;
                 masks.forEach((pool, mask) -> store.rememberPool(level, BlockPos.of(pool), mask));

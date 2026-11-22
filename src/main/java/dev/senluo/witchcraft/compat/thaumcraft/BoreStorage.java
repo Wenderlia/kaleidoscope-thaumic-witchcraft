@@ -35,7 +35,6 @@ final class BoreStorage implements INBTSerializable<CompoundTag> {
 
     static final class Account {
         final String id;
-        CompoundTag legacyMine, legacyWork;
         final BoreRepair repair = new BoreRepair();
         Account(String id) { this.id = id; }
     }
@@ -69,9 +68,7 @@ final class BoreStorage implements INBTSerializable<CompoundTag> {
         accounts.forEach((pos, account) -> {
             CompoundTag data = new CompoundTag();
             data.putLong("Pos", pos); data.putString("Id", account.id);
-            if (account.legacyMine != null) data.put("Mine", account.legacyMine);
             data.put("Repair", account.repair.serializeNBT(lookup));
-            if (account.legacyWork != null) data.put("Work", account.legacyWork);
             entries.add(data);
         });
         CompoundTag tag = new CompoundTag(); tag.put("Accounts", entries); return tag;
@@ -82,9 +79,7 @@ final class BoreStorage implements INBTSerializable<CompoundTag> {
         for (Tag entry : tag.getList("Accounts", Tag.TAG_COMPOUND)) {
             CompoundTag data = (CompoundTag) entry;
             Account account = new Account(data.getString("Id"));
-            account.legacyMine = data.contains("Mine", Tag.TAG_COMPOUND) ? data.getCompound("Mine") : null;
             account.repair.deserializeNBT(lookup, data.getCompound("Repair"));
-            account.legacyWork = data.contains("Work", Tag.TAG_COMPOUND) ? data.getCompound("Work") : null;
             accounts.put(data.getLong("Pos"), account);
         }
     }

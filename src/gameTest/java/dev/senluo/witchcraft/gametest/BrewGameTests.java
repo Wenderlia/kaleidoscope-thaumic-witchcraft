@@ -4,10 +4,13 @@ import com.mojang.authlib.GameProfile;
 import dev.senluo.witchcraft.brew.*;
 import dev.senluo.witchcraft.time.TemporalContent;
 import java.util.UUID;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.item.*;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -64,8 +67,10 @@ public final class BrewGameTests {
         ItemStack wine=LiujinVodkaItem.sample();wine.setCount(2);
         ItemStack left=wine.finishUsingItem(h.getLevel(),p);
         h.assertTrue(left.getCount()==1 && time.baseTicks()==6000 && p.hasEffect(BrewContent.YEARS_ABUNDANCE),"Drink credits once and presents registered icon");
-        int bottles=p.getInventory().items.stream().filter(i->i.getItem().toString().contains("empty_bottle") || i.is(Items.GLASS_BOTTLE)).mapToInt(ItemStack::getCount).sum();
-        h.assertTrue(bottles==1,"One consumed wine returns one bottle");
+        Item bottle = ModList.get().isLoaded("kaleidoscope_tavern")
+                ? BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("kaleidoscope_tavern", "empty_bottle"))
+                : Items.GLASS_BOTTLE;
+        h.assertTrue(!bottle.equals(Items.AIR) && p.getInventory().countItem(bottle) == 1, "One matching empty bottle is returned");
         p.removeAllEffects();ExtraTime.sync(p,time);
         h.assertTrue(p.hasEffect(BrewContent.YEARS_ABUNDANCE) && time.baseTicks()==6000,"Clearing display cannot erase internal time");
         MobEffectInstance poison=new MobEffectInstance(MobEffects.POISON,200,1);
@@ -93,6 +98,31 @@ public final class BrewGameTests {
         h.assertTrue(!p.isUsingItem() && time.baseTicks()==6000,"Food conditions remain enforced");
         h.succeed();
     }
+    @GameTest(templateNamespace="kaleidoscope_witchcraft", template="empty")
+    public static void wineRecipesAndPlacedBottlesFollowTavern(GameTestHelper h) {
+        boolean tavern = ModList.get().isLoaded("kaleidoscope_tavern");
+        var recipes = h.getLevel().getRecipeManager();
+        var player = player(h);
+        var vodka = BuiltInRegistries.ITEM.getKey(TemporalContent.LIUJIN_VODKA.get());
+        h.assertTrue(BuiltInRegistries.BLOCK.containsKey(vodka) == tavern, "Vodka bottle block");
+        h.assertTrue(recipes.byKey(vodka.withPrefix("barrel/")).isPresent() == tavern, "Vodka barrel recipe");
+        for (var entry : AmberFerments.ENTRIES) {
+            Item wine = entry.wine.get();
+            var id = BuiltInRegistries.ITEM.getKey(wine);
+            h.assertTrue(BuiltInRegistries.BLOCK.containsKey(id) == tavern, "Placed bottle: " + id);
+            h.assertTrue(recipes.byKey(id.withPrefix("barrel/")).isPresent() == tavern, "Brewing: " + id);
+            var pulp = BuiltInRegistries.FLUID.getKey(entry.source.get());
+            h.assertTrue(recipes.byKey(pulp.withPrefix("pressing_tub/")).isPresent() == tavern, "Pressing: " + pulp);
+            if (!tavern) {
+                var stack = wine.getDefaultInstance();
+                player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+                h.assertTrue(!stack.use(h.getLevel(), player, InteractionHand.MAIN_HAND).getResult().consumesAction()
+                        && !player.isUsingItem(), "Base item does not start a Tavern drink: " + id);
+            }
+        }
+        h.succeed();
+    }
+
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=180)
     public static void wineBarrelLifecycle(GameTestHelper h) { WineBarrelCases.lifecycle(h); }
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=60)

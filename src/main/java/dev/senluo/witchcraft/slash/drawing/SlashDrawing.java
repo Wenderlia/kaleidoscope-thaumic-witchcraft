@@ -46,8 +46,7 @@ public final class SlashDrawing {
         }
         boolean matches(ServerPlayer p) {
             return p.getItemInHand(hand) == wand && dimension.equals(p.level().dimension().location())
-                    && catalogGeneration == dev.senluo.witchcraft.compat.thaumcraft.SlashFocus.catalogGeneration()
-                    && Objects.equals(focus, dev.senluo.witchcraft.compat.thaumcraft.SlashFocus.state(wand));
+                    && dev.senluo.witchcraft.compat.thaumcraft.SlashFocus.sameCore(wand, focus, catalogGeneration);
         }
     }
     public record Control(int id, ResourceLocation dimension, int action) implements CustomPacketPayload {
@@ -55,6 +54,23 @@ public final class SlashDrawing {
         public static final StreamCodec<RegistryFriendlyByteBuf, Control> CODEC = StreamCodec.of(
                 (b,p) -> { b.writeInt(p.id); b.writeResourceLocation(p.dimension); b.writeByte(p.action); },
                 b -> new Control(b.readInt(), b.readResourceLocation(), b.readUnsignedByte()));
+        public void handle(ServerPlayer p) {
+            Session s = SESSIONS.get(p);
+            if (s == null || s.id != id || !s.dimension.equals(dimension) || action > CHAT_LATCH) return;
+            if (action == CHAT_LATCH) {
+                if (eligible(p, s.hand) && s.matches(p)) {
+                    s.latched = true; s.stopped = -1; s.heartbeat = p.server.getTickCount();
+                }
+                return;
+            }
+            if (action == KEEP_ALIVE) { s.heartbeat = p.server.getTickCount(); return; }
+            boolean release = action == RELEASE && eligible(p, s.hand) && s.matches(p);
+            if (release) s.trace.finish(s.sphere.project(p.getLookAngle()));
+            close(p, s); // Idempotent before any join/debit callbacks; later release packets cannot cast twice.
+            if (p.isUsingItem() && p.getUsedItemHand() == s.hand && p.getUseItem() == s.wand) p.stopUsingItem();
+            if (release && s.matches(p) && SlashRequests.room(p) && s.trace.fitted().size() >= 2)
+                dev.senluo.witchcraft.compat.thaumcraft.SlashFocus.castDrawing(p, s.hand, s.sphere, s.trace);
+        }
         @Override public Type<Control> type() { return TYPE; }
     }
     public record Status(int id, ResourceLocation dimension, boolean open, InteractionHand hand, Vec3 forward) implements CustomPacketPayload {
@@ -68,7 +84,7 @@ public final class SlashDrawing {
     public static void register(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar(KaleidoscopeWitchcraft.NETWORK_VERSION);
         registrar.playToServer(Control.TYPE, Control.CODEC, (packet, context) -> context.enqueueWork(() -> {
-            if (context.player() instanceof ServerPlayer player) accept(player, packet);
+            if (context.player() instanceof ServerPlayer player) packet.handle(player);
         }));
         registrar.playToClient(Status.TYPE, Status.CODEC, (packet, context) -> context.enqueueWork(() ->
                 dev.senluo.witchcraft.client.SlashDrawingClient.status(packet)));
@@ -102,23 +118,6 @@ public final class SlashDrawing {
         if (s.sampled == tick || s.trace.ticks() >= StrokeTrace.MAX_TICKS) return;
         s.sampled = tick;
         s.trace.sample(s.sphere.project(p.getLookAngle()));
-    }
-    private static void accept(ServerPlayer p, Control request) {
-        Session s = SESSIONS.get(p);
-        if (s == null || s.id != request.id || !s.dimension.equals(request.dimension) || request.action > CHAT_LATCH) return;
-        if (request.action == CHAT_LATCH) {
-            if (eligible(p, s.hand) && s.matches(p)) {
-                s.latched = true; s.stopped = -1; s.heartbeat = p.server.getTickCount();
-            }
-            return;
-        }
-        if (request.action == KEEP_ALIVE) { s.heartbeat = p.server.getTickCount(); return; }
-        boolean release = request.action == RELEASE && eligible(p, s.hand) && s.matches(p);
-        if (release) s.trace.finish(s.sphere.project(p.getLookAngle()));
-        close(p, s); // Idempotent before any join/debit callbacks; later release packets cannot cast twice.
-        if (p.isUsingItem() && p.getUsedItemHand() == s.hand && p.getUseItem() == s.wand) p.stopUsingItem();
-        if (release && s.matches(p) && SlashRequests.room(p) && s.trace.fitted().size() >= 2)
-            dev.senluo.witchcraft.compat.thaumcraft.SlashFocus.castDrawing(p, s.hand, s.sphere, s.trace);
     }
     @SubscribeEvent public static void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;

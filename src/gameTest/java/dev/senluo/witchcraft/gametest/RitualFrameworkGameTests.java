@@ -19,7 +19,7 @@ public final class RitualFrameworkGameTests {
         var revoked = new java.util.concurrent.atomic.AtomicInteger();
         RitualCenters.observeAvailability(kind, (world, handle) -> revoked.incrementAndGet());
         var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 1, java.util.Optional.empty());
-        var id = store.begin(level, definition, center, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var id = store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(center.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
         store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
         h.assertTrue(store.running(level, id), "The paid receipt initially runs");
@@ -48,7 +48,7 @@ public final class RitualFrameworkGameTests {
         var pos = h.absolutePos(new BlockPos(8, 3, 8));
         circle(h, pos, RitualShape.SMALL);
         var center = center(h, pos.above());
-        var id = store.begin(level, definition, center, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var id = store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(center.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
         store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> {
                     allowed.set(false);
@@ -69,12 +69,12 @@ public final class RitualFrameworkGameTests {
     }
     static RitualCenters.Center center(GameTestHelper h, BlockPos pos) {
         h.getLevel().setBlock(pos, Blocks.BARREL.defaultBlockState(), 3);
-        return RitualCenters.observe(h.getLevel().getBlockEntity(pos)).orElseThrow();
+        return RitualCenters.bind(h.getLevel().getBlockEntity(pos)).orElseThrow();
     }
     static RitualCenters.Center savingCenter(GameTestHelper h, BlockPos axis) {
         h.getLevel().setBlock(axis, Blocks.STONE.defaultBlockState(), 3);
         h.getLevel().setBlock(axis.above(), RitualContent.GOLDEN_HEART.get().defaultBlockState(), 3);
-        return RitualCenters.observe(h.getLevel().getBlockEntity(axis.above())).orElseThrow();
+        return RitualCenters.bind(h.getLevel().getBlockEntity(axis.above())).orElseThrow();
     }
 
     @GameTest(templateNamespace="kaleidoscope_witchcraft",template="empty",timeoutTicks=20)
@@ -90,7 +90,7 @@ public final class RitualFrameworkGameTests {
         var kind = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "direct_supply_" + java.util.UUID.randomUUID());
         RitualCenters.registerHost(kind, entity -> entity instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity);
         var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 2, java.util.Optional.empty());
-        var id = store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var id = store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(work.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
         var payments = new java.util.concurrent.atomic.AtomicInteger();
         store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> { payments.incrementAndGet(); return true; })));
@@ -117,7 +117,7 @@ public final class RitualFrameworkGameTests {
         savingCenter(h, plane.above(7));
         var kind = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "saved_execution_" + java.util.UUID.randomUUID());
         var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 1, java.util.Optional.empty());
-        var id = store.begin(level, definition, primary, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var id = store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(primary.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
         store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
         h.assertTrue(store.running(level, id), "A generic rite can start with a saving station as its original center");
@@ -150,9 +150,9 @@ public final class RitualFrameworkGameTests {
         var kind = net.minecraft.resources.ResourceLocation.parse("kaleidoscope_witchcraft:member_fixture");
         RitualCenters.registerHost(kind, entity -> entity instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity);
         var definition = new StructuralRitualStore.Definition(kind, 1, 1, new int[]{1}, 3, java.util.Optional.empty());
-        var id = store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
+        var id = store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(work.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).orElseThrow();
         h.assertTrue(store.members(id).size() == 3 && store.eligible(level, id), "Small plus medium funds one three-point receipt with three members");
-        h.assertTrue(store.begin(level, definition, work, java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).isEmpty(), "Members cannot duplicate shared capacity");
+        h.assertTrue(store.begin(level, definition, RitualCenters.candidate(level.getBlockEntity(work.reference().position())).orElseThrow(), java.util.UUID.randomUUID(), new net.minecraft.nbt.CompoundTag()).isEmpty(), "Members cannot duplicate shared capacity");
         store.advance(level, id, definition, StructuralRitualStore.Presence.PRESENT, RitualShape.Match.VALID,
                 (token, terms) -> java.util.Optional.of(new StructuralRitualStore.PreparedStep(terms, () -> true)));
         var load = StructuralRitualStore.class.getDeclaredMethod("load", net.minecraft.nbt.CompoundTag.class, net.minecraft.core.HolderLookup.Provider.class);
@@ -253,7 +253,7 @@ public final class RitualFrameworkGameTests {
         level.setBlock(pos.below(),Blocks.FARMLAND.defaultBlockState(),3);
         level.setBlock(pos,TemporalContent.CORE.get().defaultBlockState(),3);
         var tree=(LivingEntity)level.getBlockEntity(pos);tree.tissue.tree=true;
-        var center=RitualCenters.observe(tree).orElseThrow();BlockPos support=center.axis().below();
+        var center=RitualCenters.bind(tree).orElseThrow();BlockPos support=center.axis().below();
         for(var offset:RitualShape.SMALL.marks()) {
             BlockPos at=support.offset(offset);level.setBlock(at,Blocks.STONE.defaultBlockState(),3);
             level.setBlock(at.above(),RitualContent.CHALK_SURFACE.get().defaultBlockState(),3);

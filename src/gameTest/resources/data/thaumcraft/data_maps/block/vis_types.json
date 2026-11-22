@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": {
+    "thaumcraft:energized_aura_node": {
+      "types": [
+        "kaleidoscope_witchcraft:calibration",
+        "thaumcraft:aer"
+      ]
+    }
+  }
+}

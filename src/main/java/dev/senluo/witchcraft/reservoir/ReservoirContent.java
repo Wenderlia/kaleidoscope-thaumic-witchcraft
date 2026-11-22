@@ -22,10 +22,19 @@ public final class ReservoirContent {
     public static final DeferredItem<ReservoirItem> BACKPACK=ITEMS.register("alchemy_backpack",()->new ReservoirItem(BLOCK.get(),new Item.Properties().stacksTo(1),ReservoirProfile.STANDARD));
     public static final DeferredBlock<ReservoirBlock> SILVER_BLOCK=BLOCKS.register("silverwood_alchemy_backpack",()->new ReservoirBlock(BlockBehaviour.Properties.of().strength(1.5F).noOcclusion().noLootTable()));
     public static final DeferredItem<ReservoirItem> SILVER_BACKPACK=ITEMS.register("silverwood_alchemy_backpack",()->new ReservoirItem(SILVER_BLOCK.get(),new Item.Properties().stacksTo(1),ReservoirProfile.SILVERWOOD));
+    private static final ReservoirPluginItem.Handler CHARGING = new ReservoirPluginItem.Handler() {
+        @Override public void tick(net.minecraft.server.level.ServerPlayer player, ItemStack bag, int slot, ItemStack plugin) {
+            bridge.charge(player, bag, slot, plugin);
+        }
+        @Override public void fromSlot(ReservoirPluginItem item, net.minecraft.server.level.ServerPlayer player,
+                                       ItemStack bag, int slot, ReservoirData.View.Slot stored) {
+            bridge.charge(player, bag, slot, stored);
+        }
+    };
     public static final DeferredItem<ReservoirTransducerItem> CONVERTER=ITEMS.register("essentia_transducer",()->new ReservoirTransducerItem(new Item.Properties().stacksTo(64),ReservoirTransducerItem.Grade.STANDARD,
-            (player,bag,slot,device)->bridge.charge(player,bag,slot,device)));
+            CHARGING));
     public static final DeferredItem<ReservoirTransducerItem> VOID_CONVERTER=ITEMS.register("void_essentia_transducer",()->new ReservoirTransducerItem(new Item.Properties().stacksTo(64),ReservoirTransducerItem.Grade.VOID,
-            (player,bag,slot,device)->bridge.charge(player,bag,slot,device)));
+            CHARGING));
     public static final DeferredItem<FrostModuleItem> FROST_MODULE=ITEMS.register("frost_module",()->new FrostModuleItem(new Item.Properties().stacksTo(1)));
     public static final java.util.function.Supplier<BlockEntityType<ReservoirBlockEntity>> ENTITY=BES.register("alchemy_backpack",()->BlockEntityType.Builder.of(ReservoirBlockEntity::new,BLOCK.get(),SILVER_BLOCK.get()).build(null));
     public static final java.util.function.Supplier<MenuType<ReservoirMenu>> MENU=MENUS.register("alchemy_backpack",()->new MenuType<>((id,inventory)->new ReservoirMenu(id,inventory,ReservoirProfile.STANDARD),net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS));

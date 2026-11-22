@@ -76,7 +76,7 @@ public final class SlashFlight {
         double sight = Math.min(range, 120);
         Vec3 from = player.getEyePosition(), end = from.add(aim.scale(sight));
         AABB bounds = new AABB(from, end).inflate(1);
-        if (!SlashCollision.loaded(player.serverLevel(), bounds)) return from.add(aim.scale(Math.min(12, sight)));
+        if (!SlashQueries.loaded(player.serverLevel(), bounds)) return from.add(aim.scale(Math.min(12, sight)));
         HitResult block = player.level().clip(SlashBlockPassage.ray(from, end, ClipContext.Block.OUTLINE, player));
         Vec3 closest = block.getType() == HitResult.Type.MISS ? null : block.getLocation();
         double limit = closest == null ? sight * sight : from.distanceToSqr(closest);

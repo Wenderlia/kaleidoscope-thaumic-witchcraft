@@ -20,10 +20,10 @@ public final class TaglockItem extends Item {
     public net.minecraft.world.InteractionResultHolder<ItemStack> use(net.minecraft.world.level.Level level,
             net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        if (!TaglockSampling.canSampleSelf(player, hand))
-            return net.minecraft.world.InteractionResultHolder.pass(held);
-        if (player instanceof ServerPlayer serverPlayer) TaglockSampling.fromSelf(serverPlayer, hand);
-        return net.minecraft.world.InteractionResultHolder.sidedSuccess(held, level.isClientSide);
+        boolean attempted = player instanceof ServerPlayer serverPlayer
+                ? TaglockSampling.fromSelf(serverPlayer, hand) : TaglockSampling.canSampleSelf(player, hand);
+        return attempted ? net.minecraft.world.InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide)
+                : net.minecraft.world.InteractionResultHolder.pass(held);
     }
 
     @Override

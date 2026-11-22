@@ -23,7 +23,6 @@ public final class BoreRepair implements INBTSerializable<CompoundTag> {
     private static final RingBonus RATE = RingBonus.multiplicative(1.6, 2, 2.5, 5);
     private static final TagKey<Item> TOOLS = ItemTags.create(ResourceLocation.fromNamespaceAndPath(
             KaleidoscopeWitchcraft.MOD_ID, "bore_warp_repair_tools"));
-    private static final VisChannel[] CHANNELS = VisChannel.values();
     private static final RepairPrice PRICES = new RepairPrice(); // server thread; shared immutable graph expansions
     private final Ledger ledger = new Ledger();
 
@@ -52,8 +51,8 @@ public final class BoreRepair implements INBTSerializable<CompoundTag> {
         var registry = AspectApi.registry();
         int[] price = PRICES.quote(registry, AspectQueryApi.item(quoted));
         if (price == null || !current(level, bore, inventory, tool, quoted, mask)) return;
-        for (var channel : CHANNELS) {
-            int i = channel.index();
+        for (int i = 0; i < RepairPrice.CURRENCIES.size(); i++) {
+            var channel = RepairPrice.CURRENCIES.get(i);
             int request = service.ledger.missing(price, due, i);
             if (request == 0) continue;
             int received = VisNetworkApi.drain(level, bore.getBlockPos(), channel, request, VisAction.EXECUTE);

@@ -14,7 +14,7 @@ public final class SlashLaunch {
         Vec3 delta = requested.subtract(eye);
         double length = delta.length();
         if (!Double.isFinite(length) || length > 3 || length < 1.0E-6) return eye;
-        if (!SlashCollision.loaded(player.serverLevel(), new AABB(eye, requested).inflate(.1))) return eye;
+        if (!SlashQueries.loaded(player.serverLevel(), new AABB(eye, requested).inflate(.1))) return eye;
         var hit = player.level().clip(SlashBlockPassage.ray(eye, requested, ClipContext.Block.COLLIDER, player));
         double allowed = hit.getType() == HitResult.Type.MISS ? 1 : Math.max(0, eye.distanceTo(hit.getLocation()) / length - .01);
         // A hand offset is not a free teleport across someone else's barrier.

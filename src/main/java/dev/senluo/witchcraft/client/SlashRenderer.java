@@ -54,6 +54,7 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
         if (!slash.hasFragments() && slash.hasRadialGeometry() && slash.radial() == null) return;
         float alpha = slash.fade(partial) * (.6F + .4F * (float) Math.sqrt(slash.strength()));
         if (alpha <= 0) return;
+        SlashAppearance appearance = SlashAppearanceResources.current();
         SlashRenderView state = views.computeIfAbsent(slash, SlashRenderView::new);
         int segments = slash.fragments() != null ? slash.fragments().size() : slash.radial() != null ? slash.radial().size()
                 : 1;
@@ -75,10 +76,10 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
                 Vec3 axis = fragments.blade(i), direction = fragments.direction(i);
                 Vec3 normal = state.across(i, axis, towardCamera, direction);
                 if (slash.visual() == SlashVisual.BLACK_RED)
-                    blackRed(slash, out, pose, center, axis, normal, towardCamera, direction,
+                    blackRed(appearance, slash, out, pose, center, axis, normal, towardCamera, direction,
                             SlashFragments.HALF_LENGTH, SlashFragments.HALF_LENGTH * 2, opacity, partial, true);
-                else bands(out, pose, center, axis, normal, towardCamera, SlashFragments.HALF_LENGTH,
-                        SlashFragments.HALF_LENGTH * 2, opacity);
+                else bands(appearance, out, pose, center, axis, normal, towardCamera, SlashFragments.HALF_LENGTH,
+                        SlashFragments.HALF_LENGTH * 2, opacity, false);
             }
         } else if (slash.radial() != null) {
             var radial = slash.radial();
@@ -90,25 +91,20 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
                 Vec3 towardCamera = entityRenderDispatcher.camera.getPosition().subtract(slash.getPosition(partial).add(center)).normalize();
                 Vec3 normal = state.across(i, edge.axis(), towardCamera, edge.middle());
                 if (slash.visual() == SlashVisual.BLACK_RED) {
-                    blackRed(slash, out, pose, center, edge.axis(), normal, towardCamera,
+                    blackRed(appearance, slash, out, pose, center, edge.axis(), normal, towardCamera,
                             edge.middle().normalize(), edge.half()*radius, radius*2, opacity, partial, true);
                     continue;
                 }
-                int layer = 0;
-                double widthScale = SlashAppearance.widthScale(radius * 2);
-                for (var band : SlashAppearance.BANDS) {
-                    ribbonGradient(out, pose, center.add(normal.scale(band.offset()*widthScale)).add(towardCamera.scale(layer++ * .001)),
-                            edge.axis(), normal, edge.half() * radius, band.width()*widthScale, band.red(), band.green(), band.blue(),
-                            opacity * band.lowOpacity(), opacity * band.highOpacity(), .4F, .6F);
-                }
+                bands(appearance, out, pose, center, edge.axis(), normal, towardCamera, edge.half() * radius,
+                        radius * 2, opacity, true);
             }
         } else {
             across = state.across(0, blade, view, forward);
             if (slash.visual() == SlashVisual.BLACK_RED)
-                blackRed(slash, out, pose, launchOffset, blade, across, view, forward,
+                blackRed(appearance, slash, out, pose, launchOffset, blade, across, view, forward,
                         slash.renderHalfLength(partial), slash.renderHalfLength(partial)*2, alpha, partial, false);
-            else bands(out, pose, launchOffset, blade, across, view, slash.renderHalfLength(partial),
-                    slash.renderHalfLength(partial)*2, alpha);
+            else bands(appearance, out, pose, launchOffset, blade, across, view, slash.renderHalfLength(partial),
+                    slash.renderHalfLength(partial)*2, alpha, false);
         }
         float flash = slash.contactFlash(partial);
         if (flash > 0) {
@@ -131,10 +127,10 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
         }
     }
 
-    private static void blackRed(SlashEntity slash, VertexConsumer out, PoseStack.Pose pose, Vec3 center, Vec3 axis,
+    private static void blackRed(SlashAppearance appearance, SlashEntity slash, VertexConsumer out, PoseStack.Pose pose, Vec3 center, Vec3 axis,
                                  Vec3 cross, Vec3 view, Vec3 forward, double half, double widthLength,
                                  float opacity, float partial, boolean joined) {
-        BlackRedSlashMesh.emit(half, widthLength, slash.tickCount+partial, slash.getUUID().hashCode(), joined, opacity,
+        BlackRedSlashMesh.emit(appearance, half, widthLength, slash.tickCount+partial, slash.getUUID().hashCode(), joined, opacity,
                 (along, across, lag, layer, rgb, alpha) -> {
                     // Exact texel center: neutral white, no repeated tip alpha on tessellated segments.
                     out.addVertex(pose,
@@ -147,15 +143,12 @@ public final class SlashRenderer extends EntityRenderer<SlashEntity> {
                 });
     }
 
-    private static void bands(VertexConsumer out, PoseStack.Pose pose, Vec3 center, Vec3 blade, Vec3 across, Vec3 view,
-                              double half, double widthLength, float alpha) {
-        int layer = 0;
-        double scale = SlashAppearance.widthScale(widthLength);
-        for (var band : SlashAppearance.BANDS) {
-            ribbonGradient(out, pose, center.add(across.scale(band.offset()*scale)).add(view.scale(layer++ * .001)), blade, across,
-                    half * band.length(), band.width()*scale, band.red(), band.green(), band.blue(),
-                    alpha * band.lowOpacity(), alpha * band.highOpacity(), 0, 1);
-        }
+    private static void bands(SlashAppearance appearance, VertexConsumer out, PoseStack.Pose pose, Vec3 center, Vec3 blade,
+                              Vec3 across, Vec3 view, double half, double widthLength, float alpha, boolean joined) {
+        appearance.ribbons(half, widthLength, joined, (band, extent, offset, width, depth) ->
+                ribbonGradient(out, pose, center.add(across.scale(offset)).add(view.scale(depth)), blade, across,
+                        extent, width, band.red(), band.green(), band.blue(), alpha * band.lowOpacity(),
+                        alpha * band.highOpacity(), joined ? .4F : 0, joined ? .6F : 1));
     }
 
     static void ribbon(VertexConsumer out, PoseStack.Pose pose, Vec3 center, Vec3 axis, Vec3 cross,

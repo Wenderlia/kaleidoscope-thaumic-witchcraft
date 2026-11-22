@@ -126,7 +126,8 @@ public final class TemporalWorld {
         if (before != after) production.cropChanged(pos, before, after);
         crops.blockChanged(pos, before, after);
         machines.blockChanged(pos, before, after);
-        if (before.is(dev.senluo.witchcraft.time.TreeWood.LOGS) != after.is(dev.senluo.witchcraft.time.TreeWood.LOGS)) {
+        if (before.is(dev.senluo.witchcraft.time.TreeWood.LOGS) != after.is(dev.senluo.witchcraft.time.TreeWood.LOGS)
+                || before.is(TemporalContent.CORE.get()) != after.is(TemporalContent.CORE.get())) {
             long chunk = ChunkPos.asLong(pos);
             connectedWood.changed(chunk);
             connectionsChanged(chunk);
@@ -347,10 +348,11 @@ public final class TemporalWorld {
             biomeGrowth.tick(level, entity, tick);
         }
         biomeGrowth.flush(level);
+        trees.prepareRepairs();
         production.flush(producers);
         scheduled.tick();
         FluidTime.get(level).tick();
-        trees.flush();
+        trees.finishRepairs();
         if (tick % 20 != 0) return;
         List<LivingEntity> nodes = livingNodes();
         Set<LivingEntity> developed = Collections.newSetFromMap(new IdentityHashMap<>());

@@ -44,10 +44,12 @@ public final class FruitTimeGameTests {
         player.getFoodData().setFoodLevel(0);player.getFoodData().setSaturation(0);
         FruitItem.stack(5).finishUsingItem(h.getLevel(),player);
         h.assertTrue(!time.active() && time.grade()==0,"Food alone cannot create Years Abundance");
-        time.drink(401);double before=time.baseTicks();
+        time.drink(200);
+        h.assertTrue(time.grade() == 3, "Start with a partially filled third-tier ledger");
+        double before = time.baseTicks();
         FruitItem.stack(1).finishUsingItem(h.getLevel(),player);
-        h.assertTrue(time.grade()==3 && time.baseTicks()==before+8_000,
-                "A first-grade fruit adds 400 base-use seconds to the current compression tier, without discounting the grant");
+        h.assertTrue(time.grade()==3 && time.baseTicks()==before + 1_200,
+                "A first-grade fruit adds 60 base-use seconds to the current tier, without discounting the grant");
         FruitItem.stack(5).finishUsingItem(h.getLevel(),player);
         h.assertTrue(time.grade()==3 && time.baseTicks()==time.capacity(),
                 "Even a fifth-grade fruit only fills the existing tier; overflow never buys an upgrade");

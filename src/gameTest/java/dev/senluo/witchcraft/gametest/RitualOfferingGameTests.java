@@ -2,6 +2,7 @@ package dev.senluo.witchcraft.gametest;
 
 import dev.senluo.witchcraft.ritual.*;
 import dev.tc4port.thaumcraft.api.aspect.AspectId;
+import dev.tc4port.thaumcraft.api.machine.InfusionPedestalApi;
 import dev.tc4port.thaumcraft.block.entity.CrucibleBlockEntity;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public final class RitualOfferingGameTests {
         h.runAtTickTime(50, () -> {
             h.assertTrue(store.progress(id).orElseThrow().committedSteps() == 1,
                     "A missing pedestal ingredient waits; a previously observed stack is not a payment");
-            wood.setFromInfusion(new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse("thaumcraft:silverwood_log")), 2));
+            fillPedestal(level, wood.getBlockPos(), "thaumcraft:silverwood_log", 2);
         });
         h.runAtTickTime(115, () -> {
             h.assertTrue(store.progress(id).orElseThrow().phase() == StructuralRitualStore.Phase.ACTIVE
@@ -62,9 +63,14 @@ public final class RitualOfferingGameTests {
             ServerLevel level, BlockPos pos, String item, int count) {
         level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
         level.setBlock(pos, BuiltInRegistries.BLOCK.get(ResourceLocation.parse("thaumcraft:arcane_pedestal")).defaultBlockState(), 3);
-        var result = (dev.tc4port.thaumcraft.block.entity.ArcanePedestalBlockEntity) level.getBlockEntity(pos);
-        result.setFromInfusion(new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)), count));
-        return result;
+        fillPedestal(level, pos, item, count);
+        return (dev.tc4port.thaumcraft.block.entity.ArcanePedestalBlockEntity) level.getBlockEntity(pos);
+    }
+
+    private static void fillPedestal(ServerLevel level, BlockPos pos, String item, int count) {
+        var writer = InfusionPedestalApi.findWriteAccess(level, pos);
+        if (writer == null || !writer.replace(ItemStack.EMPTY, new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(item)), count)))
+            throw new AssertionError("Expected an empty live pedestal at " + pos);
     }
 
     private static void ring(ServerLevel level, BlockPos anchor, RitualShape shape) {
@@ -103,7 +109,7 @@ public final class RitualOfferingGameTests {
     }
     private static UUID prepare(GameTestHelper h, CrucibleBlockEntity pot, String research) {
         var level = h.getLevel(); var store = StructuralRitualStore.get(level);
-        var center = RitualCenters.observe(pot).orElseThrow().reference();
+        var center = RitualCenters.bind(pot).orElseThrow().reference();
         var before = store.allAt(center).stream().map(StructuralRitualStore.Handle::id).toList();
         var stack = new ItemStack(RitualContent.TAGLOCK.get(), 2);
         var player=SteamRitualGameTests.researchedPlayer(h,"offering-test","STRUCTURAL_RITUALS",research);
@@ -164,11 +170,15 @@ public final class RitualOfferingGameTests {
         h.runAtTickTime(25, () -> {
             h.assertTrue(coal.getItem().getCount() == 1 && wood.getItem().getCount() == 2, "First payment consumes only one outer coal");
             level.removeBlock(large, false); level.removeBlock(medium, false);
+            h.assertTrue(store.eligible(level, id) && RitualOfferingArea.outermost(store.site(level, id).footprint()).containsHorizontal(wood.position()),
+                    "Remaining points retain the receipt's original offering footprint after a ring loss");
+            move(wood, pos.offset(7, 0, 7));
         });
         h.runAtTickTime(50, () -> {
             h.assertTrue(store.progress(id).orElseThrow().committedSteps() == 1 && wood.getItem().getCount() == 2,
-                    "A smaller offering area waits for the unpaid material instead of charging outside it");
+                    "An unpaid material outside the retained footprint waits without replaying the first payment");
             level.setBlock(large, RitualContent.CHALK_SURFACE.get().defaultBlockState(), 3);
+            move(wood, pos.west(6));
         });
         h.runAtTickTime(55, () -> {
             h.assertTrue(store.progress(id).orElseThrow().committedSteps() == 2 && wood.getItem().getCount() == 1,

@@ -8,8 +8,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public final class AccelerationSources {
     private static final ThreadLocal<Set<UUID>> CURRENT = new ThreadLocal<>();
     private static final Map<BlockEntity, Map<UUID, Long>> LEASES = new WeakHashMap<>();
-    private static final Map<BlockEntity, Long> OBSERVED = new WeakHashMap<>();
-    private static final List<java.util.function.BiConsumer<ServerLevel, BlockEntity>> OBSERVERS = new ArrayList<>();
+    @FunctionalInterface public interface Source {
+        boolean protects(ServerLevel level, BlockEntity target, UUID owner);
+    }
+    private static final List<Source> SOURCES = new ArrayList<>();
     private AccelerationSources() {}
 
     /** Wrap the actual additional work; a missing source owner never matches another missing owner. */
@@ -44,34 +46,29 @@ public final class AccelerationSources {
         owners.values().removeIf(until -> until < now);
         owners.put(owner, expiry);
     }
-    static void observe(ServerLevel level, BlockEntity target) {
+    static void recordWork(ServerLevel level, BlockEntity target) {
         Set<UUID> current = CURRENT.get();
         if (current != null) for (UUID owner : current) renew(level, target, owner, 2);
-        long now = level.getGameTime();
-        Long previous = OBSERVED.get(target);
-        if (previous != null && previous == now) return;
-        OBSERVED.put(target, now);
-        for (var observer : OBSERVERS) observer.accept(level, target);
     }
-    /** Register once during setup. Observers report active accelerators; they must not run work. */
-    public static void registerObserver(java.util.function.BiConsumer<ServerLevel, BlockEntity> observer) {
-        OBSERVERS.add(Objects.requireNonNull(observer));
+    /** Fixed fields answer on demand using their existing indices and live permissions. */
+    public static void registerSource(Source source) {
+        SOURCES.add(Objects.requireNonNull(source));
     }
     public static boolean protects(ServerLevel level, BlockEntity target, UUID owner) {
         if (owner == null || target == null || target.isRemoved() || target.getLevel() != level) return false;
         if (currentOwner(owner)) return true;
         Map<UUID, Long> owners = LEASES.get(target);
-        if (owners == null) return false;
-        long now = level.getGameTime();
-        Long until = owners.get(owner);
-        if (until == null) return false;
-        if (until >= now) return true;
-        owners.remove(owner);
-        if (owners.isEmpty()) LEASES.remove(target);
+        if (owners != null) {
+            long now = level.getGameTime();
+            Long until = owners.get(owner);
+            if (until != null && until >= now) return true;
+            owners.values().removeIf(expiry -> expiry < now);
+            if (owners.isEmpty()) LEASES.remove(target);
+        }
+        for (Source source : SOURCES) if (source.protects(level, target, owner)) return true;
         return false;
     }
     public static void unload(ServerLevel level) {
         LEASES.keySet().removeIf(entity -> entity.getLevel() == level);
-        OBSERVED.keySet().removeIf(entity -> entity.getLevel() == level);
     }
 }

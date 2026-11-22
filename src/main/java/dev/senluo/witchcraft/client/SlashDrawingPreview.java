@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.senluo.witchcraft.slash.SlashContent;
 import dev.senluo.witchcraft.slash.drawing.StrokeSphere;
 import dev.senluo.witchcraft.slash.drawing.StrokeTrace;
-import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -34,7 +33,7 @@ final class SlashDrawingPreview {
             return create("witchcraft_stroke_preview", DefaultVertexFormat.POSITION_TEX_COLOR,
                     VertexFormat.Mode.TRIANGLES, 65536, false, false,
                     CompositeState.builder().setShaderState(new ShaderStateShard(GameRenderer::getPositionTexColorShader))
-                            .setTextureState(new TextureStateShard(SlashContent.id("textures/effect/slash_edge.png"), true, false))
+                            .setTextureState(new TextureStateShard(SlashContent.id("textures/effect/stroke_guide.png"), true, false))
                             .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(NO_CULL)
                             .setDepthTestState(NO_DEPTH_TEST).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
         }
@@ -63,55 +62,19 @@ final class SlashDrawingPreview {
         var buffers = gui.bufferSource();
         VertexConsumer out = buffers.getBuffer(MATERIAL);
         try {
-            draw(out, gui.pose().last(), sphere, trace.raw(), .009, 61, 141, 189, 201);
-            draw(out, gui.pose().last(), sphere, trace.fitted(), .022, 217, 224, 246, 242);
-            // Match the confirmed stroke's bright edge up to this frame's cursor. Do not add a
-            // per-frame sample: authority and the local trace still count simulation ticks only.
-            if (liveTip != null && trace.ticks() < StrokeTrace.MAX_TICKS)
-                line(out, gui.pose().last(), sphere, trace.fitted().getLast(), liveTip, .022, 217, 224, 246, 242);
+            var pose = gui.pose().last();
+            StrokeGuideMesh.draw(sphere, trace, liveTip, (a, b, c, d, alpha, red, green, blue) -> {
+                if (!PROJECTION.quad(LOCAL_TO_CLIP, a, b, c, d)) return;
+                for (int i = 1; i < PROJECTION.size() - 1; i++) {
+                    vertex(out, pose, 0, alpha, red, green, blue);
+                    vertex(out, pose, i, alpha, red, green, blue);
+                    vertex(out, pose, i + 1, alpha, red, green, blue);
+                }
+            });
         } finally {
             // Flush only our dedicated type. Do not flush or bind a different world/GUI render target.
             buffers.endBatch(MATERIAL);
         }
-    }
-
-    private static void draw(VertexConsumer out, PoseStack.Pose pose, StrokeSphere sphere, List<Vec3> points,
-                             double thickness, int alpha, int red, int green, int blue) {
-        for (int i = 1; i < points.size(); i++)
-            line(out, pose, sphere, points.get(i - 1), points.get(i), thickness, alpha, red, green, blue);
-    }
-
-    private static void line(VertexConsumer out, PoseStack.Pose pose, StrokeSphere sphere, Vec3 from, Vec3 to,
-                             double thickness, int alpha, int red, int green, int blue) {
-        double angle = StrokeSphere.arc(from, to) / StrokeSphere.RADIUS;
-        int count = Math.max(1, (int) Math.ceil(angle / .08));
-        Vec3 a = from;
-        for (int n = 1; n <= count; n++) {
-            Vec3 b = n == count ? to : StrokeSphere.between(from, to, (double) n / count).scale(StrokeSphere.RADIUS);
-            segment(out, pose, sphere, a, b, thickness, alpha, red, green, blue); a = b;
-        }
-    }
-
-    private static void segment(VertexConsumer out, PoseStack.Pose pose, StrokeSphere sphere, Vec3 from, Vec3 to,
-                                double thickness, int alpha, int red, int green, int blue) {
-        Vec3 delta = to.subtract(from);
-        if (delta.lengthSqr() < 1.0E-8) return;
-        Vec3 across = delta.cross(from.add(to)).normalize().scale(thickness);
-        corner(0, sphere, from.subtract(across), .4F, 1);
-        corner(1, sphere, to.subtract(across), .6F, 1);
-        corner(2, sphere, to.add(across), .6F, 0);
-        corner(3, sphere, from.add(across), .4F, 0);
-        if (!PROJECTION.clip()) return;
-        for (int i = 1; i < PROJECTION.size() - 1; i++) {
-            vertex(out, pose, 0, alpha, red, green, blue);
-            vertex(out, pose, i, alpha, red, green, blue);
-            vertex(out, pose, i + 1, alpha, red, green, blue);
-        }
-    }
-
-    private static void corner(int index, StrokeSphere sphere, Vec3 point, float u, float v) {
-        Vec3 offset = sphere.offset(point);
-        PROJECTION.corner(index, LOCAL_TO_CLIP, (float) offset.x, (float) offset.y, (float) offset.z, u, v);
     }
 
     private static void vertex(VertexConsumer out, PoseStack.Pose pose, int index, int alpha, int red, int green, int blue) {

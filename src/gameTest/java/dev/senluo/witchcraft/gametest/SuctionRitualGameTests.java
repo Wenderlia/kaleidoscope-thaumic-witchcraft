@@ -109,15 +109,16 @@ public final class SuctionRitualGameTests {
         var plane = h.absolutePos(new BlockPos(8, 3, 8));
         RitualFrameworkGameTests.circle(h, plane, RitualShape.SMALL, RitualShape.MEDIUM, RitualShape.LARGE);
         var center = RitualFrameworkGameTests.center(h, plane.above()); var ref = center.reference();
+        var candidate = RitualCenters.candidate(level.getBlockEntity(ref.position())).orElseThrow();
         UUID player = UUID.randomUUID(); var terms = new CompoundTag();
         var small = new StructuralRitualStore.Definition(ResourceLocation.parse("kaleidoscope_witchcraft:small_fixture"), 1, 1, new int[]{1}, 1, Optional.empty());
         var medium = new StructuralRitualStore.Definition(ResourceLocation.parse("kaleidoscope_witchcraft:medium_fixture"), 1, 1, new int[]{1}, 2, Optional.empty());
-        UUID first = store.begin(level, small, center, player, terms).orElseThrow();
-        UUID second = store.begin(level, medium, center, player, terms).orElseThrow();
-        UUID third = store.begin(level, small, center, player, terms).orElseThrow();
-        UUID fourth = store.begin(level, small, center, player, terms).orElseThrow();
-        UUID fifth = store.begin(level, small, center, player, terms).orElseThrow();
-        h.assertTrue(store.begin(level, small, center, player, terms).isEmpty(), "Six points admit five receipts costing 1+2+1+1+1, without an old three-receipt limit");
+        UUID first = store.begin(level, small, candidate, player, terms).orElseThrow();
+        UUID second = store.begin(level, medium, candidate, player, terms).orElseThrow();
+        UUID third = store.begin(level, small, candidate, player, terms).orElseThrow();
+        UUID fourth = store.begin(level, small, candidate, player, terms).orElseThrow();
+        UUID fifth = store.begin(level, small, candidate, player, terms).orElseThrow();
+        h.assertTrue(store.begin(level, small, candidate, player, terms).isEmpty(), "Six points admit five receipts costing 1+2+1+1+1, without an old three-receipt limit");
         CompoundTag runtime = new CompoundTag(); runtime.putLong("FlowCredit", 13); store.runtime(level, second, runtime);
         var load = StructuralRitualStore.class.getDeclaredMethod("load", CompoundTag.class, HolderLookup.Provider.class); load.setAccessible(true);
         var restored = (StructuralRitualStore)load.invoke(null, store.save(new CompoundTag(), level.registryAccess()), level.registryAccess());
@@ -140,8 +141,8 @@ public final class SuctionRitualGameTests {
         var kind=ResourceLocation.parse("kaleidoscope_witchcraft:test_research_receipt");
         var legacy=new StructuralRitualStore.Definition(kind,1,1,new int[]{1},1,Optional.empty());
         var current=new StructuralRitualStore.Definition(kind,1,1,new int[]{1},1,RitualResearch.thaumcraft("CRUCIBLE_STABILITY"));
-        var preparing=store.begin(level,legacy,center,player.getUUID(),new CompoundTag()).orElseThrow();
-        var active=store.begin(level,legacy,center,player.getUUID(),new CompoundTag()).orElseThrow();
+        var preparing=store.begin(level,legacy,RitualCenters.candidate(level.getBlockEntity(center.reference().position())).orElseThrow(),player.getUUID(),new CompoundTag()).orElseThrow();
+        var active=store.begin(level,legacy,RitualCenters.candidate(level.getBlockEntity(center.reference().position())).orElseThrow(),player.getUUID(),new CompoundTag()).orElseThrow();
         var payments=new java.util.concurrent.atomic.AtomicInteger();
         StructuralRitualStore.StepAction pay=(token,terms)->Optional.of(new StructuralRitualStore.PreparedStep(terms,()->{
             payments.incrementAndGet();return true;
@@ -164,13 +165,23 @@ public final class SuctionRitualGameTests {
         var journal = new SuctionTransferStore();
         var outlet = new SuctionTransferStore.Outlet(h.getLevel().dimension().location(), h.absolutePos(new BlockPos(2, 2, 2)));
         var receipt = journal.record(outlet, Direction.EAST, ResourceLocation.parse("thaumcraft:aer"), 8);
+        var firstSnapshot = journal.inDimension(outlet.dimension());
         journal.accepted(receipt, 3);
         var remainder = journal.inDimension(outlet.dimension()).getFirst();
+        h.assertTrue(firstSnapshot.getFirst().amount() == 8 && journal.hasReceipts(outlet.dimension(), outlet.scope())
+                && !journal.hasReceipts(outlet.dimension(), SuctionTransferStore.Scope.CONDUIT),
+                "A snapshot survives callbacks, while the membership query sees only its dimension and scope");
+        var pipe = new SuctionTransferStore.Outlet(outlet.dimension(), outlet.position(), SuctionTransferStore.Scope.CONDUIT);
+        var buffered = journal.recordBuffer(pipe, receipt.aspect(), 2);
+        journal.accepted(buffered, 2);
+        h.assertTrue(!journal.hasReceipts(pipe.dimension(), pipe.scope()) && journal.hasReceipts(outlet.dimension(), outlet.scope()),
+                "Consuming the last conduit receipt leaves the ritual group intact");
         h.assertTrue(remainder.amount() == 5 && journal.holds(outlet), "Partial insertion retains only the undelivered units and blocks another extraction");
         journal.quarantine(remainder);
         var load = SuctionTransferStore.class.getDeclaredMethod("load", CompoundTag.class, HolderLookup.Provider.class); load.setAccessible(true);
         var restored = (SuctionTransferStore)load.invoke(null, journal.save(new CompoundTag(), h.getLevel().registryAccess()), h.getLevel().registryAccess());
-        h.assertTrue(restored.inDimension(outlet.dimension()).getFirst().uncertain() && restored.inDimension(outlet.dimension()).getFirst().amount() == 5,
+        h.assertTrue(restored.hasReceipts(outlet.dimension(), outlet.scope())
+                && restored.inDimension(outlet.dimension()).getFirst().uncertain() && restored.inDimension(outlet.dimension()).getFirst().amount() == 5,
                 "An ambiguous foreign commit is saved and never retried as a new transfer");
         h.succeed();
     }

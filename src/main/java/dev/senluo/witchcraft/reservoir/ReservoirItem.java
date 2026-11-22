@@ -18,6 +18,9 @@ public final class ReservoirItem extends BlockItem {
     private final ReservoirProfile profile;
     public ReservoirItem(Block block,Properties properties,ReservoirProfile profile){super(block,properties);this.profile=profile;}
     public ReservoirProfile profile(){return profile;}
+    @Override public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slot, boolean selected){
+        if(entity instanceof ServerPlayer player)ReservoirRuntime.carried(player,stack,slot);
+    }
     @Override public EquipmentSlot getEquipmentSlot(ItemStack stack){return EquipmentSlot.CHEST;}
     @Override public InteractionResultHolder<ItemStack> use(Level level,Player player,InteractionHand hand){
         ItemStack bag=player.getItemInHand(hand);

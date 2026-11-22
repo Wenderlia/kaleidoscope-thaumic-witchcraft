@@ -106,7 +106,7 @@ public final class SustainedRitual {
             offerings.release(); return;
         }
         Session session = new Session(target, tree, initiator, sample, circle, offerings);
-        SESSIONS.put(target.getUUID(), session);
+        if (SESSIONS.putIfAbsent(target.getUUID(), session) != null) { offerings.release(); return; }
         if (!RitualVial.reserve(initiator, hand, session.id)) {
             SESSIONS.remove(target.getUUID(), session); offerings.release();
         }

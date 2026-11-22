@@ -11,11 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class GoldenHeartEntity extends BlockEntity {
     private long nextInteractionSound;
     public GoldenHeartEntity(BlockPos pos, BlockState state) { super(RitualContent.GOLDEN_HEART_ENTITY.get(), pos, state); }
-    public RitualCenters.Center center(ServerLevel level) {
-        var data = getData(RitualContent.RITUAL_ANCHOR);
-        return new RitualCenters.Center(new RitualCenters.Reference(level.dimension().location(),
-                worldPosition, data.identity()), worldPosition.below(), data.supported());
-    }
     public InteractionResult activate(ServerLevel level, Player player) {
         var result = player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
                 ? RitualCenters.activate(serverPlayer, this) : InteractionResult.PASS;
@@ -29,6 +24,7 @@ public final class GoldenHeartEntity extends BlockEntity {
         return result;
     }
     public void removed(ServerLevel level) {
-        RitualCenters.removed(level, center(level).reference());
+        if (hasData(RitualContent.RITUAL_ANCHOR)) RitualCenters.removed(level, new RitualCenters.Reference(
+                level.dimension().location(), worldPosition, getData(RitualContent.RITUAL_ANCHOR).identity()));
     }
 }

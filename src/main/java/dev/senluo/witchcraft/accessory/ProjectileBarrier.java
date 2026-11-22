@@ -295,6 +295,7 @@ public final class ProjectileBarrier {
         private final PropagationField field;
         private final Vec3 offset;
         private FlightSpace(PropagationField field, Vec3 offset) { this.field = field; this.offset = offset; }
+        public boolean hasFields() { return !field.isEmpty(); }
         @Override public TravelStep quote(Vec3 from, Vec3 direction, double budget, double maximum) {
             return TravelStep.quote(from, direction, budget, maximum,
                     field.gap(from.add(offset), direction, budget + FlightPath.MAPPING_WIDTH), FlightPath.MAPPING_WIDTH);

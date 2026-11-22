@@ -19,6 +19,7 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 
 public final class TemporalInfusion implements RitualCenters.Behavior {
     @Override public int activationPriority() { return 20; }
+    @Override public boolean continuous() { return false; }
     private static final StructuralRitualStore.Definition RITE = new StructuralRitualStore.Definition(
             ResourceLocation.fromNamespaceAndPath("kaleidoscope_witchcraft", "temporal_infusion"),
             1, 60, new int[]{20,40,60}, RitualRings.MEDIUM, RitualResearch.thaumcraft("WITCHERY_CIRCLE_BASICS"));
@@ -68,39 +69,31 @@ public final class TemporalInfusion implements RitualCenters.Behavior {
             axes.stream().flatMap(RitualCenters::positionsAtAxis).distinct().forEach(pos -> WorkTicks.invalidateAt(level, pos));
         }
     }
-    private static CenterOfferings offerings;
+    private static RitualRecipe recipe;
     private TemporalInfusion() {}
     public static void register() {
-        offerings = new CenterOfferings(RITE, List.of(
+        recipe = new RitualRecipe(RITE, List.of(
                 stack -> stack.is(TemporalContent.FRUIT_ITEM.get()) && dev.senluo.witchcraft.time.FruitItem.grade(stack) == 5,
                 stack -> stack.is(TemporalContent.LOG_ITEM.get()), stack -> stack.is(Items.GLASS_BOTTLE)),
                 List.of(scale(RitualRings.MEDIUM, 1, 2), scale(RitualRings.LARGE, 2, 5)));
         RitualCenters.register(new TemporalInfusion());
         WorkTicks.registerEffect((level, entity) -> influence(level, entity) != null, TemporalInfusion::afterNative);
-        AccelerationSources.registerObserver((level, entity) -> {
-            for (var owner : owners(level, entity)) AccelerationSources.renew(level, entity, owner, 1);
-        });
+        AccelerationSources.registerSource((level, entity, owner) -> owners(level, entity).contains(owner));
         NeoForge.EVENT_BUS.addListener((LevelEvent.Unload event) -> ACTIVE.remove(event.getLevel()));
     }
-    @Override public StructuralRitualStore.Definition definition() { return RITE; }
-    private static CenterOfferings.Scale scale(int points, int copies, int extraWork) {
+    @Override public RitualRecipe recipe() { return recipe; }
+    private static RitualRecipe.Scale scale(int points, int copies, int extraWork) {
         var parameters = new CompoundTag(); parameters.putInt("ExtraWork", extraWork);
-        return new CenterOfferings.Scale(points, copies, parameters);
-    }
-    @Override public net.minecraft.world.InteractionResult activate(ServerLevel level, RitualSite site, ServerPlayer player) {
-        return activateCandidates(level, List.of(site), player);
-    }
-    @Override public net.minecraft.world.InteractionResult activateCandidates(ServerLevel level, List<RitualSite> sites, ServerPlayer player) {
-        return offerings.activate(player, sites, new CompoundTag());
+        return new RitualRecipe.Scale(points, copies, parameters);
     }
 
     @Override public void tick(ServerLevel level, RitualSite site, StructuralRitualStore.Handle h) {
         var store = StructuralRitualStore.get(level);
-        if (!offerings.tick(level, site, h.id(), true)) {
+        if (!recipe.tick(level, site, h.id(), true)) {
             if (!store.pending(h.id())) unavailable(level, h);
             return;
         }
-        var scale = offerings.scale(h.definition(), store.progress(h.id()).orElseThrow().terms());
+        var scale = recipe.scale(h.definition(), store.progress(h.id()).orElseThrow());
         if (scale != null) ACTIVE.computeIfAbsent(level, unused -> new Fields()).update(level, h.id(),
                 store.initiator(h.id()).orElseThrow(), site, scale.parameters().getInt("ExtraWork"));
     }
@@ -120,8 +113,8 @@ public final class TemporalInfusion implements RitualCenters.Behavior {
             int extraWork = 0;
             var owners = new HashSet<UUID>();
             for (var effect : effects) if (StructuralRitualStore.get(level).running(level, effect.site.session())) {
-                if (effect.extraWork > extraWork) { extraWork = effect.extraWork; owners.clear(); }
-                if (effect.extraWork == extraWork) owners.add(effect.owner);
+                extraWork += effect.extraWork;
+                owners.add(effect.owner);
             }
             // A later permission query may revoke a source already counted above.
             if (influence(level, entity) == influence && influence.effects == effects) return new Quote(extraWork, Set.copyOf(owners));

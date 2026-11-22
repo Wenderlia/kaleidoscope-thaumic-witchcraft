@@ -9,16 +9,12 @@ public final class FruitFeeding {
 
     public static long reserve(Colony group) {
         if (group.members.isEmpty() || !(group.members.getFirst().getLevel() instanceof ServerLevel level)) return 0;
-        long now = level.getGameTime();
-        if (group.reserveTick != Long.MIN_VALUE && now >= group.reserveTick && now - group.reserveTick < 20)
-            return group.reserveAmount;
+        TreeLogic trees = TemporalWorld.get(level).trees;
         long reserve = 0;
         for (LivingEntity member : group.members) {
-            if (member.tree()) reserve += TemporalWorld.get(level).trees.restorationReserve(member);
+            if (member.tree()) reserve += trees.restorationReserve(member);
         }
-        group.reserveTick = now;
-        group.reserveAmount = reserve;
-        return group.reserveAmount;
+        return reserve;
     }
 
     public static long available(Colony group) {

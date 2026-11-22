@@ -1,68 +1,69 @@
 package dev.senluo.witchcraft.compat.thaumcraft;
 
 import dev.tc4port.thaumcraft.api.MagicAttributes;
-import dev.tc4port.thaumcraft.api.ThaumcraftApiHelper;
 import dev.tc4port.thaumcraft.api.aspect.*;
 import dev.tc4port.thaumcraft.api.entity.AttributeTypes;
 import dev.tc4port.thaumcraft.api.focus.FocusApi;
-import dev.tc4port.thaumcraft.api.focus.FocusCostApi;
+import dev.tc4port.thaumcraft.api.focus.FocusUpgradeId;
+import dev.tc4port.thaumcraft.api.focus.behavior.FocusServerContext;
+import dev.senluo.witchcraft.slash.SlashCritical;
+import dev.senluo.witchcraft.slash.SlashRules;
+import dev.senluo.witchcraft.slash.drawing.StrokeTrace;
+import java.util.Map;
 import dev.tc4port.thaumcraft.api.focus.FocusCostQuote;
-import dev.tc4port.thaumcraft.api.wand.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.ItemStack;
 
-/** Native 20744 quote/payment bridge; power projects increases without undoing native discounts. */
-final class SlashVis {
-    private SlashVis() {}
-
-    private static VisCost base(ItemStack wand) {
-        // Presentation and payment read one synchronized catalog, including upgrade-sensitive costs.
-        return FocusApi.installedState(wand).filter(s -> s.focusId().equals(SlashFocus.ID))
-                .flatMap(s -> FocusApi.registry().profile(s.focusId()).flatMap(p -> p.fixedCost(s.upgradeLevels())))
-                .filter(cost -> cost.amounts().getOrDefault(VisChannel.PERDITIO, 0) > 0).orElse(null);
+/** Native pricing and gameplay power share the original, unrounded cost of the same cast phase. */
+record SlashVis(FocusCostQuote price, double potential, SlashEfficacy.Parameters parameters) {
+    static SlashVis quote(FocusServerContext<?, ?> context, Map<FocusUpgradeId, Integer> levels,
+                          SlashRules rules, StrokeTrace trace) {
+        var raw = FocusApi.registry().profile(SlashFocus.ID).flatMap(p -> p.fixedCost(levels)).orElse(null);
+        if (raw == null || raw.amounts().getOrDefault(BuiltinAspects.PERDITIO, 0) <= 0) return null;
+        var wand = context.carrier();
+        double chaos = raw.amounts().get(BuiltinAspects.PERDITIO) / 100.0 * SlashEfficacy.baseMultiplier(wand, levels);
+        double attribute = positiveAttribute(context.player());
+        var base = context.quote(raw, FocusCostQuote.Cadence.PER_PAYMENT, 0);
+        double power = chaos * surcharge(base) * attribute * dev.senluo.witchcraft.slash.SlashPotential.PER_CHAOS_VIS;
+        if (!validPower(power)) return null;
+        var parameters = SlashEfficacy.Parameters.read(wand, levels);
+        double scale = trace == null ? 1 : trace.multiplier(parameters.flight(power, 1).shape().initialLength());
+        var scaled = scaled(raw, scale);
+        power *= rules.bindingPower() * (trace == null ? 1 : rules.drawingPower(scale));
+        if (scaled == null || !validPower(power)) return null;
+        var price = scaled.equals(raw) ? base : context.quote(scaled, FocusCostQuote.Cadence.PER_PAYMENT, 0);
+        return new SlashVis(price, power, parameters);
     }
 
-    static boolean pay(ItemStack wand, ServerPlayer player, VisAction action) {
-        return pay(wand, player, action, 1);
+    private static boolean validPower(double power) {
+        return Double.isFinite(power) && power > 0 && power <= SlashCritical.MAX_BASE;
     }
 
-    static boolean pay(ItemStack wand, ServerPlayer player, VisAction action, double scale) {
-        VisCost cost = base(wand);
-        if (cost == null || !Double.isFinite(scale) || scale <= 0
-                || scale > dev.senluo.witchcraft.slash.drawing.StrokeTrace.MAX_MULTIPLIER) return false;
-        if (scale != 1) {
-            java.util.Map<VisChannel, Integer> amounts = new java.util.EnumMap<>(VisChannel.class);
-            for (var entry : cost.amounts().entrySet()) {
-                double scaled = entry.getValue() * scale;
-                if (scaled > Integer.MAX_VALUE) return false;
-                // Minimum native centivis prevents a nonzero drawn cast becoming free by quantization.
-                amounts.put(entry.getKey(), Math.max(1, (int) Math.ceil(scaled)));
-            }
-            cost = VisCost.ofCentivis(amounts);
+    private static VisCost scaled(VisCost raw, double scale) {
+        if (scale == 1) return raw;
+        if (!Double.isFinite(scale) || scale <= 0 || scale > StrokeTrace.MAX_MULTIPLIER) return null;
+        var amounts = new java.util.LinkedHashMap<AspectId, Integer>();
+        for (var entry : raw.amounts().entrySet()) {
+            double scaled = entry.getValue() * scale;
+            if (scaled > Integer.MAX_VALUE) return null;
+            amounts.put(entry.getKey(), Math.max(1, (int) Math.ceil(scaled)));
         }
-        var result = ThaumcraftApiHelper.consumeVisFromWand(wand, player, cost, action, VisConsumptionContext.CASTING);
-        return action == VisAction.EXECUTE ? result.consumed() : result.affordable();
+        return VisCost.ofCentivis(amounts);
     }
 
-    static double potential(ItemStack wand, ServerPlayer player, WandView view) {
-        VisCost cost = base(wand);
-        if (cost == null) return Double.NaN;
-        var quote = FocusCostApi.quote(wand, player, cost, FocusCostQuote.Cadence.PER_PAYMENT, 0);
-        var modifier = quote.modifiers().get(VisChannel.PERDITIO);
-        if (modifier == null) return Double.NaN;
+    private static double surcharge(FocusCostQuote quote) {
+        var modifier = quote.modifiers().get(BuiltinAspects.PERDITIO);
+        if (modifier == null) return 1;
         double rate = 1;
         for (var term : modifier.terms()) {
             switch (term.kind()) {
                 case CAP -> rate *= Math.max(1, term.amount());
                 case CARRIER_DIVISOR -> rate /= Math.min(1, term.amount());
                 case EXHAUSTION -> rate += Math.max(0, term.amount());
-                default -> { /* Discounts never reduce power. Attribute terms are projected below. */ }
+                default -> { }
             }
         }
-        double result = SlashEfficacy.chaosUsage(wand) * rate * positiveAttribute(player)
-                * dev.senluo.witchcraft.slash.SlashPotential.PER_CHAOS_VIS;
-        return Double.isFinite(result) && result > 0 && result <= 1_000_000 ? result : Double.NaN;
+        return rate;
     }
 
     // The public quote exposes the net ATTRIBUTE factor, not individual signed modifiers.

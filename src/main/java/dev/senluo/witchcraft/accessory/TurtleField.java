@@ -2,8 +2,11 @@ package dev.senluo.witchcraft.accessory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -21,7 +24,12 @@ import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 public final class TurtleField {
     private static final double PROJECTILE_RADIUS = 4;
     private static final Vec3 LOCK_PROBE = new Vec3(0, 1, 0);
-    private record Sources(long tick, List<Player> wearers) {}
+    private static final class Sources {
+        final Set<Player> candidates = new LinkedHashSet<>(), dirty = new HashSet<>();
+        List<Player> wearers = List.of();
+        long clientTick = Long.MIN_VALUE;
+        boolean initialized;
+    }
     private static final Map<Level, Sources> SOURCES = Collections.synchronizedMap(new WeakHashMap<>());
     private static Predicate<Player> equipment = ignored -> false;
     private static boolean enabled;
@@ -31,11 +39,22 @@ public final class TurtleField {
     public static void equipmentQuery(Predicate<Player> query) {
         equipment = query;
         enabled = true;
+        SOURCES.clear();
     }
 
-    public static void invalidate(Level level) {
-        SOURCES.remove(level);
+    public static void equipmentChanged(Player player) {
+        Sources sources = SOURCES.get(player.level());
+        if (sources != null) sources.dirty.add(player);
     }
+
+    public static void playerLeft(Level level, Player player) {
+        Sources sources = SOURCES.get(level);
+        if (sources == null) return;
+        sources.dirty.remove(player);
+        if (sources.candidates.remove(player)) sources.wearers = List.copyOf(sources.candidates);
+    }
+
+    public static void invalidate(Level level) { SOURCES.remove(level); }
 
     public static void unload(Level level) {
         invalidate(level);
@@ -49,15 +68,20 @@ public final class TurtleField {
 
     private static List<Player> wearers(Level level) {
         if (!enabled) return List.of();
-        Sources cached = SOURCES.get(level);
-        if (cached == null || cached.tick != level.getGameTime()) {
-            List<Player> found = new ArrayList<>();
-            for (Player player : level.players()) {
-                if (active(player, level) && equipment.test(player)) found.add(player);
-            }
-            cached = new Sources(level.getGameTime(), List.copyOf(found));
-            SOURCES.put(level, cached);
+        Sources cached = SOURCES.computeIfAbsent(level, ignored -> new Sources());
+        // Curios posts server equipment/slot-state events, but client packets mutate slots directly.
+        if (!cached.initialized || (level.isClientSide && cached.clientTick != level.getGameTime())) {
+            cached.dirty.addAll(level.players());
+            cached.initialized = true;
+            cached.clientTick = level.getGameTime();
         }
+        boolean changed = false;
+        for (Player player : cached.dirty) {
+            boolean wearing = player.level() == level && !player.isRemoved() && equipment.test(player);
+            changed |= wearing ? cached.candidates.add(player) : cached.candidates.remove(player);
+        }
+        cached.dirty.clear();
+        if (changed) cached.wearers = List.copyOf(cached.candidates);
         return cached.wearers;
     }
 

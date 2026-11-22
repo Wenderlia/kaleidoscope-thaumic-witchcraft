@@ -1,5 +1,6 @@
 package dev.senluo.witchcraft.gametest;
 
+import dev.senluo.witchcraft.brew.AmberVintage;
 import dev.senluo.witchcraft.time.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +14,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Unit;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
@@ -37,23 +40,28 @@ public final class ItemPresentationGameTests {
         var lines=tooltip(TissueItem.stack(tissue));
         var hint=find(lines,"expand");
         Object[] keys=((TranslatableContents)hint.getContents()).getArgs();
-        h.assertTrue(((Component)keys[0]).getStyle().getColor().getValue()==0xFFAA00
-                && ((Component)keys[1]).getStyle().getColor().getValue()==0x55FFFF
+        h.assertTrue(((Component)keys[0]).getStyle().getColor().getValue()==0xFFD16F
+                && ((Component)keys[1]).getStyle().getColor().getValue()==0x71E6D5
                 && TemporalTooltips.source().getStyle().getColor().getValue()==ChatFormatting.BLUE.getColor(),
-                "Key hints use bright gold/aqua and the source uses conventional mod-name blue");
+                "The approved key palette uses pale gold and aqua, and the fallback source uses mod-name blue");
         TemporalTooltips.expand(TissueItem.stack(tissue),lines,true,false,true);
         h.assertTrue(find(lines,"controls_heading").getStyle().getColor().getValue()==TemporalText.SHIFT
                 && find(lines,"controls.unfinished")==null && find(lines,"controls.rooting")==null,
                 "User-deleted controls stay removed and the expanded heading retains its key color");
         var root=tooltip(RootItem.stack());
         h.assertTrue(find(root,"root.reset")==null,"Deleted root summary stays absent");
-        List<Component> fruit=new ArrayList<>();
-        FruitItem.stack(3).getItem().appendHoverText(FruitItem.stack(3),Item.TooltipContext.of(h.getLevel()),fruit,TooltipFlag.NORMAL);
-        h.assertTrue(fruit.size()==2 && find(fruit,"fruit.quality")!=null
-                && find(fruit,"fruit.time")==fruit.getLast()
-                && fruit.getLast().getStyle().getColor().getValue()==TemporalText.LORE
-                && fruit.getLast().getStyle().isItalic(),
-                "Fruit keeps its quality and one purple lore line without a new expanded instruction list");
+        ItemStack fruit = FruitItem.stack(3);
+        var context = Item.TooltipContext.of(h.getLevel());
+        var actual = new ArrayList<Component>();
+        fruit.getItem().appendHoverText(fruit, context, actual, TooltipFlag.NORMAL);
+        var expected = new ArrayList<Component>();
+        var food = fruit.get(DataComponents.FOOD);
+        PotionContents.addPotionTooltip(
+                food.effects().stream().map(FoodProperties.PossibleEffect::effect).toList(),
+                expected::add, 1.0F, context.tickRate());
+        expected.add(AmberVintage.FROST.lore());
+        h.assertTrue(actual.equals(expected) && actual.getLast().getStyle().getColor().getValue() == TemporalText.LORE
+                && actual.getLast().getStyle().isItalic(), "Grade-three fruit keeps native effects and its wine's single purple lore line");
         h.succeed();
     }
     private static void place(GameTestHelper h, Player player, ItemStack stack, BlockPos clicked) {
@@ -143,32 +151,41 @@ public final class ItemPresentationGameTests {
         ItemStack stack = TissueItem.stack(tissue);
         CustomData before = stack.get(DataComponents.CUSTOM_DATA);
         List<Component> lines = tooltip(stack);
-        Object[] total = ((TranslatableContents)find(lines, "total").getContents()).getArgs();
-        h.assertTrue(((Component) total[0]).getString().equals("173.456"), "Inventory summary counts the core plus its side, exactly once");
-        h.assertTrue(find(lines, "total").getStyle().getColor().getValue() == TemporalText.BODY
-                && ((Component) total[0]).getStyle().getColor().getValue() == TemporalText.AMOUNT
-                && ((Component) total[1]).getStyle().getColor().getValue() == TemporalText.CAPACITY,
-                "Labels, current storage and capacity have distinct shared semantic colors");
+        h.assertTrue(find(lines, "root_stage") != null && find(lines, "expand") != null && find(lines, "total_exact") == null,
+                "The collapsed summary exposes the stage and the controls for details");
         TemporalTooltips.expand(stack, lines, false, true, false);
+        Component total = find(lines, "total_exact");
+        h.assertTrue(total != null, "Ctrl shows total storage when a side is attached");
+        Object[] values = ((TranslatableContents)total.getContents()).getArgs();
+        h.assertTrue(((Component)values[0]).getString().equals("173.456")
+                && ((Component)values[0]).getStyle().getColor().getValue() == TemporalText.AMOUNT
+                && ((Component)values[1]).getStyle().getColor().getValue() == TemporalText.CAPACITY
+                && total.getStyle().getColor().getValue() == TemporalText.BODY,
+                "Total storage counts the core and side exactly once, with separate amount and capacity colors");
         Object[] core = ((TranslatableContents)find(lines, "core").getContents()).getArgs();
-        h.assertTrue(((Component) core[0]).getString().equals("123.456") && find(lines, "investment") != null && find(lines, "growth_time") != null,
-                "Core storage, spent investment and simulated growth are distinct facts");
-        h.assertTrue(find(lines, "harvest_ready") == null && before.equals(stack.get(DataComponents.CUSTOM_DATA)),
-                "A last unfinished growth tick prevents harvest; displaying must not mutate the item");
+        Object[] selected = ((TranslatableContents)find(lines, "selected").getContents()).getArgs();
+        h.assertTrue(((Component)core[0]).getString().equals("123.456") && find(lines, "growth_time") != null
+                && ((Component)selected[1]).getStyle().getColor().getValue() == TemporalText.PENDING
+                && before.equals(stack.get(DataComponents.CUSTOM_DATA)),
+                "One unfinished growth tick stays pending; reading the view leaves item data intact");
         side.tissue.growth.ticks++;
-        stack = TissueItem.stack(tissue); lines = tooltip(stack);
+        stack = TissueItem.stack(tissue);
+        lines = tooltip(stack);
         TemporalTooltips.expand(stack, lines, false, true, false);
-        h.assertTrue(find(lines, "harvest_ready") != null && find(lines, "harvest_ready").getStyle().getColor().getValue() == ChatFormatting.GREEN.getColor(),
-                "Maturity uses the harvest predicate and does not require full storage");
-        List<Component> fresh = tooltip(TissueItem.stack(new Tissue()));
-        h.assertTrue(find(fresh, "total") != null && find(fresh, "sides") == null, "Zero inventory remains visible; absent sides do not add noise");
-        side.tissue.growth.invested = 0;
-        Component missing = LivingBlock.growthMessage(side.tissue.growth);
-        Component cost = (Component)((TranslatableContents)missing.getContents()).getArgs()[0];
-        h.assertTrue(missing.getStyle().getColor().getValue() == TemporalText.BODY
-                && cost.getStyle().getColor().getValue() == TemporalText.CAPACITY
+        selected = ((TranslatableContents)find(lines, "selected").getContents()).getArgs();
+        h.assertTrue(((Component)selected[1]).getStyle().getColor().getValue() == TemporalText.READY
+                && find(lines, "growth_time") == null, "Finishing growth marks the selected side mature without filling its storage");
+        ItemStack empty = TissueItem.stack(new Tissue());
+        List<Component> fresh = tooltip(empty);
+        TemporalTooltips.expand(empty, fresh, false, true, false);
+        Object[] emptyCore = ((TranslatableContents)find(fresh, "core").getContents()).getArgs();
+        h.assertTrue(((Component)emptyCore[0]).getString().equals("0") && find(fresh, "side_storage") == null,
+                "Ctrl exposes an empty core balance and omits an absent side");
+        side.tissue.growth.ticks--;
+        Component waiting = LivingBlock.growthMessage(side.tissue.growth);
+        h.assertTrue(waiting.equals(TemporalText.message("side_wait_time", TemporalText.duration(1)))
                 && TemporalText.state(side.tissue).getStyle().getColor().getValue() == TemporalText.PENDING,
-                "The HUD uses the same target color for unpaid costs and yellow only for the pending state");
+                "The HUD shows remaining growth time and a pending root without inventing an entry fee");
         h.succeed();
     }
 
@@ -179,17 +196,19 @@ public final class ItemPresentationGameTests {
         stack.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("retained lore"))));
         List<Component> lines = tooltip(stack); lines.add(Component.literal("other mod"));
         TemporalTooltips.expand(stack, lines, true, true, false);
-        h.assertTrue(find(lines, "core") != null && find(lines, "controls.clock") == null,
+        h.assertTrue(find(lines, "core") != null && find(lines, "controls.inspect") == null,
                 "Ctrl details replace the hint and take precedence over Shift controls");
         h.assertTrue(lines.stream().anyMatch(c -> c.getString().equals("retained lore"))
                 && lines.stream().anyMatch(c -> c.getString().equals("other mod")), "Unowned lines must survive expansion");
         lines = tooltip(stack); TemporalTooltips.expand(stack, lines, true, false, false);
-        h.assertTrue(find(lines, "controls.clock") != null && find(lines, "controls.bottle") == null,
+        h.assertTrue(find(lines, "controls.inspect") != null && find(lines, "controls.bottle") == null,
                 "Controls are discoverable while absent integrations stay hidden");
         List<Component> hidden = tooltip(stack);
         stack.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
-        int count = hidden.size(); TemporalTooltips.expand(stack, hidden, true, true, true);
-        h.assertTrue(hidden.size() == count && find(tooltip(stack), "total") == null, "Hidden additional tooltips must not be reintroduced by the detail layer");
+        var original = List.copyOf(hidden);
+        TemporalTooltips.expand(stack, hidden, true, true, true);
+        h.assertTrue(hidden.equals(original) && find(tooltip(stack), "expand") == null,
+                "Hidden additional information stays hidden and expansion preserves the existing rows");
         h.succeed();
     }
 }

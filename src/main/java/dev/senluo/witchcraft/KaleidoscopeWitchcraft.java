@@ -67,7 +67,7 @@ public final class KaleidoscopeWitchcraft {
         bus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(() -> {
             dev.senluo.witchcraft.ritual.RitualCenters.registerRuntime();
             dev.senluo.witchcraft.time.WorkTicks.registerEffect(dev.senluo.witchcraft.ritual.SteamWork::affected, dev.senluo.witchcraft.ritual.SteamWork::afterNative);
-            dev.senluo.witchcraft.time.AccelerationSources.registerObserver(dev.senluo.witchcraft.ritual.SteamWork::observeSources);
+            dev.senluo.witchcraft.time.AccelerationSources.registerSource(dev.senluo.witchcraft.ritual.SteamWork::protectsSource);
             dev.senluo.witchcraft.ritual.TemporalInfusion.register();
             if (ModList.get().isLoaded("thaumcraft")) {
             dev.senluo.witchcraft.compat.thaumcraft.ReservoirThaumcraft.register();

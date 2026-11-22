@@ -18,7 +18,14 @@ public final class TurtleCurios {
             TurtleField.equipmentQuery(TurtleCurios::isWearing);
         }));
         NeoForge.EVENT_BUS.addListener((CurioChangeEvent event) -> {
-            if (event.getEntity() instanceof Player player) TurtleField.invalidate(player.level());
+            if (event.getIdentifier().equals("rune") && event.getEntity() instanceof Player player)
+                TurtleField.equipmentChanged(player);
+        });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) -> {
+            if (event.getEntity() instanceof Player player) TurtleField.equipmentChanged(player);
+        });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent event) -> {
+            if (event.getEntity() instanceof Player player) TurtleField.playerLeft(event.getLevel(), player);
         });
     }
 

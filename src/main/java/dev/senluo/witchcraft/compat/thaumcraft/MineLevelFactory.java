@@ -12,6 +12,9 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 public interface MineLevelFactory {
     @Nullable ServerLevel witchcraft$mineLevel(ServerLevel source, ResourceKey<Level> key);
 
+    /** Read-only construction identity; load callbacks may run before the level is published. */
+    boolean witchcraft$isCreatingMine(ResourceKey<Level> key);
+
     /** Background mines have no spawn-loading screen or forced spawn preparation. */
     enum QuietProgress implements ChunkProgressListener {
         INSTANCE;

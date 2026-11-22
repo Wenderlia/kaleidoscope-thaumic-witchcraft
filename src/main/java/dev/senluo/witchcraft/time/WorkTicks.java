@@ -157,7 +157,7 @@ public final class WorkTicks {
         try {
             boolean absorbed = false;
             if ((selected & DOMAIN) != 0) {
-                AccelerationSources.observe(level, entity);
+                AccelerationSources.recordWork(level, entity);
                 absorbed = TemporalWorld.get(level).absorbWork(entity.getBlockPos());
             }
             if (!absorbed || WorkSources.prepareSuppressedProgress(entity)) nativeTick.run();

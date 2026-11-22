@@ -12,7 +12,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 @PrefixGameTestTemplate(false)
 public final class SuctionPresentationGameTests {
-    @GameTest(template = "neoforge:empty", timeoutTicks = 5)
+    @GameTest(templateNamespace = "kaleidoscope_witchcraft", template = "empty", timeoutTicks = 5)
     public static void suctionColorsPassNativePayloadAndWireCodec(GameTestHelper helper) {
         Vec3 origin = new Vec3(0.5, 64.5, 0.5), target = new Vec3(12.5, 76.5, -11.5);
         boolean rejected = false;

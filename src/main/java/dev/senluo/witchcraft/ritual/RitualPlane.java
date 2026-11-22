@@ -38,7 +38,7 @@ public record RitualPlane(BlockPos anchor, RitualRings.Layout rings) {
     }
 
     public static Optional<RitualPlane> find(ServerLevel level, BlockPos axis) {
-        return RitualShapeCache.find(level, axis);
+        return dev.senluo.witchcraft.world.ChunkActivity.within(level, () -> RitualShapeCache.find(level, axis));
     }
 
     static Optional<RitualPlane> inspect(ServerLevel level, BlockPos axis) {
@@ -47,13 +47,7 @@ public record RitualPlane(BlockPos anchor, RitualRings.Layout rings) {
 
     /** Activation quotes every existing legal plane; a failed nearest candidate does not hide the others. */
     public static java.util.List<RitualPlane> candidates(ServerLevel level, BlockPos axis) {
-        var result = new java.util.ArrayList<RitualPlane>();
-        for (int index = 0; index <= HEIGHT_RADIUS * 2; index++) {
-            int offset = index == 0 ? 0 : (index % 2 == 1 ? -(index + 1) / 2 : index / 2);
-            BlockPos anchor = axis.offset(0, offset, 0);
-            if (!level.isOutsideBuildHeight(anchor)) at(level, anchor).ifPresent(result::add);
-        }
-        return java.util.List.copyOf(result);
+        return RitualCenterDomain.coveringPlanes(level, axis);
     }
 
     /** Custom templates share the height policy without depending on the three standard ring sizes. */
@@ -75,8 +69,8 @@ public record RitualPlane(BlockPos anchor, RitualRings.Layout rings) {
     }
 
     public static RitualRings.Layout observe(ServerLevel level, BlockPos anchor) {
-        return new RitualRings.Layout(RitualShape.SMALL.match(level, anchor),
-                RitualShape.MEDIUM.match(level, anchor), RitualShape.LARGE.match(level, anchor));
+        return dev.senluo.witchcraft.world.ChunkActivity.within(level, () -> new RitualRings.Layout(
+                RitualShape.SMALL.match(level, anchor), RitualShape.MEDIUM.match(level, anchor), RitualShape.LARGE.match(level, anchor)));
     }
 
     public static Optional<RitualPlane> at(ServerLevel level, BlockPos anchor) {

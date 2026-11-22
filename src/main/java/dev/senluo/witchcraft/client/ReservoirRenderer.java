@@ -10,6 +10,28 @@ import net.minecraft.world.item.*;
 import net.neoforged.fml.ModList;
 
 public final class ReservoirRenderer extends BlockEntityWithoutLevelRenderer implements BlockEntityRenderer<ReservoirBlockEntity> {
+    private record Device(ItemStack item, boolean lit, long lightTick, int color) {}
+    private record Display(ReservoirData.View source, ReservoirProfile profile,
+                           net.minecraft.core.HolderLookup.Provider registries, Device[] devices, int installed) {}
+    private static final java.util.Map<ItemStack, Display> DISPLAYS = new java.util.WeakHashMap<>();
+    static void clearDisplays() { DISPLAYS.clear(); }
+    private static Display display(ItemStack bag, ReservoirProfile profile, net.minecraft.core.HolderLookup.Provider registries) {
+        var view = ReservoirData.view(bag);
+        Display old = DISPLAYS.get(bag);
+        if (old != null && old.source == view && old.profile == profile && old.registries == registries) return old;
+        var mounts = profile == ReservoirProfile.SILVERWOOD ? ReservoirPluginMounts.SILVER_SLOTS : ReservoirPluginMounts.SLOTS;
+        Device[] devices = new Device[profile.plugins];
+        int installed = 0;
+        for (int i = 0; i < devices.length; i++) {
+            ItemStack item = registries == null ? ItemStack.EMPTY : view.slot(ReservoirData.FIRST_PLUGIN_SLOT + i, registries);
+            var data = ReservoirData.view(item);
+            devices[i] = new Device(item, data.contains("light_tick"), data.number("light_tick"), data.integer("light_color"));
+            if (i < mounts.length && (item.getItem() instanceof ReservoirTransducerItem || item.getItem() instanceof FrostModuleItem)) installed |= mounts[i].cap();
+        }
+        var next = new Display(view, profile, registries, devices, installed);
+        DISPLAYS.put(bag, next);
+        return next;
+    }
     public ReservoirRenderer(){super(Minecraft.getInstance().getBlockEntityRenderDispatcher(),Minecraft.getInstance().getEntityModels());}
     public void renderByItem(ItemStack stack,ItemDisplayContext context,PoseStack poses,MultiBufferSource buffers,int light,int overlay){
         poses.pushPose();
@@ -50,26 +72,21 @@ public final class ReservoirRenderer extends BlockEntityWithoutLevelRenderer imp
     private static void backpack(ItemStack bag,ReservoirProfile profile,PoseStack poses,MultiBufferSource buffers,int light,int overlay,boolean gui){
         var level=Minecraft.getInstance().level;
         var mounts=profile==ReservoirProfile.SILVERWOOD?ReservoirPluginMounts.SILVER_SLOTS:ReservoirPluginMounts.SLOTS;
-        var slots=ReservoirData.read(bag);
-        ItemStack[] devices=new ItemStack[profile.plugins];int installed=0;
-        for(int i=0;i<devices.length;i++){
-            devices[i]=level==null?ItemStack.EMPTY:ReservoirData.slot(slots,ReservoirData.FIRST_PLUGIN_SLOT+i,level.registryAccess());
-            if(i<mounts.length && (devices[i].getItem() instanceof ReservoirTransducerItem || devices[i].getItem() instanceof FrostModuleItem))installed|=mounts[i].cap();
-        }
+        var display=display(bag,profile,level==null?null:level.registryAccess());
+        var devices=display.devices; int installed=display.installed;
         if(gui)ReservoirGuiPose.backpack(profile,installed).apply(poses);
         ReservoirMesh.draw(profile.model+"_static",poses,buffers,light,overlay,installed,0xFFFFFFFF);
         ReservoirMesh.draw(profile.model+"_wood",poses,buffers,light,overlay,0,0xFFFFFFFF);
         if(ModList.get().isLoaded("thaumcraft"))dev.senluo.witchcraft.compat.thaumcraft.client.ReservoirDisplay.contents(bag,poses,buffers,light);
         for(int i=0;i<devices.length && i<mounts.length;i++)if((installed & mounts[i].cap())!=0){
-            ItemStack device=devices[i];
+            Device shown=devices[i]; ItemStack device=shown.item;
             // Preserve the old attachment at the middle socket; added slots use top and bottom.
             var mount=mounts[i];
             poses.pushPose();poses.translate(mount.x(),mount.y(),mount.z());poses.mulPose(Axis.YP.rotationDegrees(mount.rotation()));
             int tint=0xFFFFFFFF;
-            var data=ReservoirData.read(device);
-            if(level!=null && data.contains("light_tick")) {
-                long age=level.getGameTime()-data.getLong("light_tick");
-                if(age>=0 && age<10)tint=0xFF000000|data.getInt("light_color");
+            if(level!=null && shown.lit) {
+                long age=level.getGameTime()-shown.lightTick;
+                if(age>=0 && age<10)tint=0xFF000000|shown.color;
             }
             if(device.getItem() instanceof ReservoirTransducerItem transducer)converter(poses,buffers,light,overlay,tint,transducer.material());
             else frost(poses,buffers,light,overlay);
